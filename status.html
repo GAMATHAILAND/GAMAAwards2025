@@ -1,108 +1,199 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GAMA Awards Lookup</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <style>
     body {
+      margin: 0;
       font-family: 'Prompt', sans-serif;
-      background: linear-gradient(to bottom, #7B2CBF, #5A189A);
+      background: linear-gradient(to top, #6a11cb, #c94bdb);
       min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 20px;
       color: #fff;
     }
-    .modal {
-      background-color: white;
+
+    .card {
+      background: #fff;
       color: #333;
-      border-radius: 1rem;
       padding: 2rem;
-      max-width: 480px;
-      margin: 2rem auto;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      border-radius: 1rem;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     }
-    .qr-canvas {
-      margin: 1rem auto 0;
+
+    .logo {
+      width: 120px;
+      margin-bottom: 1rem;
+    }
+
+    .title {
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #eee;
+      margin-bottom: 2rem;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      background: #f3f3f3;
+    }
+
+    button {
+      background: linear-gradient(to right, #9b00e8, #6a11cb);
+      color: white;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
+      text-align: left;
+      max-width: 480px;
+      width: 90%;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      font-size: 1rem;
+    }
+
+    .modal-content h2 {
+      margin-top: 0;
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-content p {
+      margin: 0.25rem 0;
+    }
+
+    .modal-content .qrcode {
+      margin-top: 1rem;
+    }
+
+    .close-button {
+      position: absolute;
+      top: 12px;
+      right: 20px;
+      cursor: pointer;
+      font-size: 24px;
+      color: #999;
+    }
+
+    .error {
+      color: #c4004e;
+      font-weight: bold;
+      font-size: 1rem;
+      margin-top: 1rem;
     }
   </style>
 </head>
-<body class="flex flex-col items-center justify-center px-4 py-8">
+<body>
+  <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards" class="logo" />
+  <h1 class="title">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
+  <p class="subtitle">กรุณากรอกชื่อ-นามสกุล หรือรหัส เช่น “MMA001”</p>
 
-  <img src="https://hugmediacreation.com/wp-content/uploads/2025/04/cropped-logo-hug-B.png" alt="Logo" class="w-24 mb-4">
-
-  <h1 class="text-2xl font-bold mb-2">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
-  <p class="mb-6 text-center">กรุณากรอกชื่อ–นามสกุล หรือรหัสผู้ได้รับรางวัล</p>
-
-  <div class="bg-white rounded-xl p-6 text-black w-full max-w-md shadow-lg">
-    <input type="text" id="query" class="w-full p-3 border rounded-md mb-4" placeholder="เช่น ศรินยา นิยมสำรวจ / MAA001 / EYKYH87K8">
-    <button onclick="searchData()" class="w-full bg-purple-800 hover:bg-purple-700 text-white py-3 rounded-lg font-bold">ค้นหา</button>
-    <p id="error" class="text-red-600 text-center mt-4 hidden">เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง</p>
+  <div class="card">
+    <input type="text" id="searchInput" placeholder="พิมพ์ชื่อ หรือรหัสเพื่อค้นหา" />
+    <button onclick="search()">ค้นหา</button>
+    <div id="errorMsg" class="error"></div>
   </div>
 
-  <!-- Modal -->
-  <div id="resultModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
-    <div class="modal relative text-center">
-      <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-500 hover:text-black text-xl">&times;</button>
-      <img src="https://hugmediacreation.com/wp-content/uploads/2025/04/cropped-logo-hug-B.png" alt="Logo" class="w-16 mx-auto mb-4">
-      <h2 class="text-purple-800 font-bold text-xl mb-2" id="nameDisplay"></h2>
-      <div id="infoContainer" class="text-left text-sm space-y-2">
-        <p><span class="font-semibold">ID:</span> <span id="idDisplay"></span></p>
-        <p><span class="font-semibold">สังกัด:</span> <span id="orgDisplay"></span></p>
-        <p><span class="font-semibold">ประเภทรางวัล:</span> <span id="awardDisplay"></span></p>
-        <p><span class="font-semibold">ระดับ:</span> <span id="levelDisplay"></span></p>
-        <p><span class="font-semibold">รหัสใบอนุญาต:</span> <span id="licenseDisplay"></span></p>
-      </div>
-      <canvas id="qrCanvas" class="qr-canvas mt-6"></canvas>
+  <div id="resultModal" class="modal" onclick="closeModal(event)">
+    <div class="modal-content" id="resultContent">
+      <!-- ผลลัพธ์แสดงที่นี่ -->
     </div>
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzdgnfQL3xsKDpcQXqmdzR88OMFa7iWFdpoeUxmJ3QQd5pGy5tfmhlGBDVZNj2D8UiCRA/exec"; // เปลี่ยน URL ตามของคุณ
+    const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec";
 
-    function searchData() {
-      const q = document.getElementById("query").value.trim();
-      const errorEl = document.getElementById("error");
-      errorEl.classList.add("hidden");
+    async function search() {
+      const q = document.getElementById("searchInput").value.trim();
+      const errBox = document.getElementById("errorMsg");
+      errBox.textContent = "";
 
-      if (!q) return;
+      if (q.length < 2) {
+        errBox.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
+        return;
+      }
 
-      fetch(`${API_URL}?q=${encodeURIComponent(q)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) {
-            alert("ไม่พบข้อมูลของผู้เข้ารับรางวัลที่ท่านค้นหา\nกรุณาตรวจสอบชื่อหรือรหัสอีกครั้ง");
-            return;
-          }
+      try {
+        const res = await axios.get(`${API_URL}?q=${encodeURIComponent(q)}`);
+        const data = res.data;
 
-          document.getElementById("nameDisplay").textContent = data.name;
-          document.getElementById("idDisplay").textContent = data.id;
-          document.getElementById("orgDisplay").textContent = data.organization;
-          document.getElementById("awardDisplay").textContent = data.awardType;
-          document.getElementById("levelDisplay").textContent = data.level;
-          document.getElementById("licenseDisplay").textContent = data.licenseCode;
-
-          const qr = new QRious({
-            element: document.getElementById("qrCanvas"),
-            value: data.id,
-            size: 120,
-            background: 'white',
-            foreground: 'black'
-          });
-
-          document.getElementById("resultModal").classList.remove("hidden");
-        })
-        .catch(err => {
-          console.error(err);
-          errorEl.classList.remove("hidden");
-        });
+        if (!data || data.error) {
+          showModal(`
+            <span class="close-button" onclick="closeModal(event)">&times;</span>
+            <h2>ไม่พบข้อมูล</h2>
+            <p>กรุณาตรวจสอบชื่อ หรือรหัสอีกครั้ง</p>
+          `);
+        } else {
+          showModal(`
+            <span class="close-button" onclick="closeModal(event)">&times;</span>
+            <h2>${data.name}</h2>
+            <p><strong>รหัส:</strong> ${data.id}</p>
+            <p><strong>สังกัด:</strong> ${data.organization}</p>
+            <p><strong>ประเภท:</strong> ${data.awardType}</p>
+            <p><strong>ระดับ:</strong> ${data.level}</p>
+            <p><strong>รหัสใบอนุญาต:</strong> ${data.licenseCode}</p>
+            <canvas id="qrcode" class="qrcode"></canvas>
+          `);
+          setTimeout(() => {
+            QRCode.toCanvas(document.getElementById("qrcode"), data.id, { width: 120 });
+          }, 100);
+        }
+      } catch (e) {
+        errBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง";
+        console.error(e);
+      }
     }
 
-    function closeModal() {
-      document.getElementById("resultModal").classList.add("hidden");
+    function showModal(content) {
+      document.getElementById("resultContent").innerHTML = content;
+      document.getElementById("resultModal").style.display = "flex";
+    }
+
+    function closeModal(e) {
+      if (e.target.id === "resultModal" || e.target.className === "close-button") {
+        document.getElementById("resultModal").style.display = "none";
+      }
     }
   </script>
-
 </body>
 </html>
