@@ -1,45 +1,199 @@
-<script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec";
-
-  async function search() {
-    const q = document.getElementById("searchInput").value.trim();
-    const errBox = document.getElementById("errorMsg");
-    const resultBox = document.getElementById("resultContent");
-    errBox.textContent = "";
-    resultBox.innerHTML = "";
-
-    if (q.length < 2) {
-      errBox.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
-      return;
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Prompt', sans-serif;
+      background: linear-gradient(to top, #6a11cb, #c94bdb);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 20px;
+      color: #fff;
     }
 
-    try {
-      const res = await fetch(`${API_URL}?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
+    .card {
+      background: #fff;
+      color: #333;
+      padding: 2rem;
+      border-radius: 1rem;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
 
-      if (!data.name) {
-        errBox.textContent = "ไม่พบข้อมูล กรุณาลองใหม่";
+    .logo {
+      width: 120px;
+      margin-bottom: 1rem;
+    }
+
+    .title {
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #eee;
+      margin-bottom: 2rem;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      background: #f3f3f3;
+    }
+
+    button {
+      background: linear-gradient(to right, #9b00e8, #6a11cb);
+      color: white;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+      position: relative;
+    }
+
+    .modal-content h2 {
+      margin-bottom: 0.5rem;
+      font-size: 1.5rem;
+    }
+
+    .modal-content p {
+      margin: 0.25rem 0;
+    }
+
+    .modal-content .qrcode {
+      margin-top: 1rem;
+    }
+
+    .close-button {
+      position: absolute;
+      top: 12px;
+      right: 20px;
+      cursor: pointer;
+      font-size: 24px;
+      color: #999;
+    }
+
+    .error {
+      color: #c4004e;
+      font-weight: bold;
+      font-size: 1rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards" class="logo" />
+  <h1 class="title">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
+  <p class="subtitle">กรุณากรอกข้อมูลเพื่อตรวจสอบรายชื่อ</p>
+
+  <div class="card">
+    <input type="text" id="searchInput" placeholder="เช่น สมชาย ใจดี หรือ MMA-001" />
+    <button onclick="search()">ค้นหา</button>
+    <div id="errorMsg" class="error"></div>
+  </div>
+
+  <div id="resultModal" class="modal" onclick="closeModal(event)">
+    <div class="modal-content" id="resultContent">
+      <!-- ผลลัพธ์จะแสดงที่นี่ -->
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwoWiAkddtLavKFd-qxpuHcOYVqwRaMAqO125y3PbPPAXveLmKqf3erAiCxQIKcs6rI/exec";
+
+    async function search() {
+      const q = document.getElementById('searchInput').value.trim();
+      const errBox = document.getElementById('errorMsg');
+      errBox.textContent = "";
+
+      if (q.length < 2) {
+        errBox.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
         return;
       }
 
-      // แสดงผล
-      resultBox.innerHTML = `
-        <h3>รหัส: ${data.id}</h3>
-        <p>ชื่อ: ${data.name}</p>
-        <p>สังกัด: ${data.organization}</p>
-        <p>ประเภท: ${data.awardType}</p>
-        <p>ระดับ: ${data.level}</p>
-      `;
-      document.getElementById("resultModal").style.display = "block";
+      try {
+        const res = await axios.get(API_URL + `?q=${encodeURIComponent(q)}`);
+        const data = res.data;
 
-    } catch (error) {
-      errBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่";
-    }
-  }
+        if (!data || !data.name) {
+          showModal(`
+            <span class="close-button" onclick="closeModal(event)">&times;</span>
+            <h2>ขออภัย</h2>
+            <p>ไม่พบข้อมูลของท่าน</p>
+            <p>กรุณาตรวจสอบอีกครั้ง</p>
+          `);
+        } else {
+          showModal(`
+            <span class="close-button" onclick="closeModal(event)">&times;</span>
+            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" style="height: 40px; margin-bottom: 1rem;">
+            <h2>${data.name}</h2>
+            <p><strong>สังกัด:</strong> ${data.organization}</p>
+            <p><strong>ประเภท:</strong> ${data.awardType}</p>
+            <p><strong>ระดับ:</strong> ${data.level}</p>
+            <p><strong>รหัส:</strong> ${data.id}</p>
+            <p><strong>รหัสใบอนุญาต:</strong> ${data.licenseCode}</p>
+            <canvas id="qrcode" class="qrcode"></canvas>
+          `);
 
-  function closeModal(event) {
-    if (event.target.id === "resultModal") {
-      document.getElementById("resultModal").style.display = "none";
+          setTimeout(() => {
+            QRCode.toCanvas(document.getElementById("qrcode"), data.licenseCode, { width: 120 });
+          }, 100);
+        }
+      } catch (e) {
+        errBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง";
+        console.error(e);
+      }
     }
-  }
-</script>
+
+    function showModal(content) {
+      document.getElementById("resultContent").innerHTML = content;
+      document.getElementById("resultModal").style.display = "flex";
+    }
+
+    function closeModal(e) {
+      if (e.target.id === "resultModal" || e.target.className === "close-button") {
+        document.getElementById("resultModal").style.display = "none";
+      }
+    }
+  </script>
+</body>
+</html>
