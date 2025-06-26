@@ -64,9 +64,10 @@
       width: 100%; 
       height: 100%;
       object-fit: contain; /* Keep this for preview to avoid initial squeeze */
-      left: 0;
-      top: 0;
-      /* Initial transform will be applied via JS */
+      left: 50%; /* Ensures the image container is visually centered */
+      top: 50%; /* Ensures the image container is visually centered */
+      transform: translate(-50%, -50%); /* Centers the image itself within its container */
+      /* Initial transform will be applied via JS to stack on top of this initial centering */
     }
 
     .frame-image {
@@ -442,7 +443,7 @@
               scaleSlider.value = 100;
               xPosSlider.value = 0;
               yPosSlider.value = 0;
-              updateImagePosition(); // Apply default positions for preview
+              updateImagePosition(); // Apply default positions for preview (centered)
               checkDownloadAvailability();
             };
             userImagePreview.onerror = function() {
@@ -496,7 +497,9 @@
         const xPos = parseFloat(xPosSlider.value);
         const yPos = parseFloat(yPosSlider.value);
         
-        userImagePreview.style.transform = `translate(${xPos}px, ${yPos}px) scale(${scale})`;
+        // The user-image CSS already has transform: translate(-50%, -50%) for initial centering.
+        // We just need to add the slider's xPos/yPos and scale on top of that.
+        userImagePreview.style.transform = `translate(calc(-50% + ${xPos}px), calc(-50% + ${yPos}px)) scale(${scale})`;
       }
       
       // Event listeners for sliders
@@ -551,26 +554,6 @@
             const tempDivSize = 1920; // Target size for the high-res image
             const previewContainerSize = previewContainer.offsetWidth; // Get the actual rendered width of the preview container (e.g., 600px)
 
-            // Get the current transformed state of the user image in the preview
-            const userImageRect = userImagePreview.getBoundingClientRect();
-            
-            // Calculate the current displayed dimensions and position relative to its parent (image-container)
-            // Note: userImagePreview.style.width/height is 100%, so we need to calculate effective size based on object-fit and scale
-            const naturalWidth = hiResUserImage.naturalWidth;
-            const naturalHeight = hiResUserImage.naturalHeight;
-
-            let baseImageWidth = previewContainerSize;
-            let baseImageHeight = previewContainerSize;
-
-            if (naturalWidth && naturalHeight) {
-                const aspectRatio = naturalWidth / naturalHeight;
-                if (aspectRatio > 1) { // Landscape
-                    baseImageHeight = previewContainerSize / aspectRatio;
-                } else { // Portrait or Square
-                    baseImageWidth = previewContainerSize * aspectRatio;
-                }
-            }
-
             // Get current scale and translation values from sliders
             const currentScale = parseFloat(scaleSlider.value) / 100;
             const currentXPos = parseFloat(xPosSlider.value);
@@ -579,84 +562,44 @@
             // Scale factor from preview size to high-res size
             const renderScaleFactor = tempDivSize / previewContainerSize;
 
-            // Calculate the user image's effective size in the high-res context
-            const hiResUserImageEffectiveWidth = baseImageWidth * currentScale * renderScaleFactor;
-            const hiResUserImageEffectiveHeight = baseImageHeight * currentScale * renderScaleFactor;
+            // Calculate the base dimensions of the user image if it were "contained" in the preview
+            const naturalWidth = hiResUserImage.naturalWidth;
+            const naturalHeight = hiResUserImage.naturalHeight;
 
-            // Calculate initial offset (if image was centered by object-fit: contain in preview)
-            // This is the offset from the top-left of the preview container if the image were unscaled and centered
-            const initialOffsetX = (previewContainerSize - baseImageWidth) / 2;
-            const initialOffsetY = (previewContainerSize - baseImageHeight) / 2;
-
-            // Calculate the final translation needed for the hi-res image
-            // This needs to map the transformed position from the 600px preview to the 1920px canvas
-            // The `xPos` and `yPos` from sliders are relative to the center of the 600px container.
-            // We need to apply these as an offset from the initially calculated centered position in the 1920px container.
-            
-            // First, calculate the image's original position relative to preview container's top-left (before user drag/scale)
-            // If the image was originally fitted with object-fit: contain, it might not fill the 600x600 space.
-            // Its top-left would be at (initialOffsetX, initialOffsetY)
-            
-            // Then, apply the user's transformations (xPos, yPos from sliders)
-            // The slider values (-100 to 100) are relative to the 600px preview.
-            // So, translate values from sliders need to be scaled up.
-            const scaledXTranslation = currentXPos * renderScaleFactor; // e.g., 100px on 600px preview = 320px on 1920px render
-            const scaledYTranslation = currentYPos * renderScaleFactor;
-
-            // Calculate hi-res image's position (left, top) relative to the tempRenderDiv's top-left (0,0)
-            // The image's effective top-left after scaling and translating for high-res render.
-            // Start from the center of the high-res div, then shift by half of the effective image size (for center transform origin),
-            // then apply the scaled slider translations.
-            
-            // To properly map, think of it as scaling the *entire coordinate system* from 600x600 to 1920x1920.
-            // The preview's (0,0) becomes (0,0) in high-res.
-            // The preview's `left` and `top` properties (relative to parent) are scaled up.
-            // The `translate` values from sliders are also scaled up.
-
-            // The 'user-image' CSS has `left: 0; top: 0;` and `transform-origin: center;`
-            // and then `transform: translate(${xPos}px, ${yPos}px) scale(${scale})`
-            // Let's replicate this behavior in the high-res context.
-
-            // Calculate the full rendered width/height of the user image considering original aspect ratio and slider scale
-            let finalRenderWidth, finalRenderHeight;
+            let previewBaseWidth, previewBaseHeight;
             if (naturalWidth && naturalHeight) {
-                const effectivePreviewWidth = previewContainer.offsetWidth; // This is 600px or less on smaller screens
-                const effectivePreviewHeight = previewContainer.offsetHeight;
-
-                const baseImageRatio = naturalWidth / naturalHeight;
-
-                // Determine base dimensions for `object-fit: contain` within 600x600 before scaling
-                let previewBaseWidth, previewBaseHeight;
-                if (baseImageRatio > 1) { // Landscape
-                    previewBaseWidth = effectivePreviewWidth;
-                    previewBaseHeight = effectivePreviewWidth / baseImageRatio;
+                const aspectRatio = naturalWidth / naturalHeight;
+                if (aspectRatio > 1) { // Landscape
+                    previewBaseWidth = previewContainerSize;
+                    previewBaseHeight = previewContainerSize / aspectRatio;
                 } else { // Portrait or Square
-                    previewBaseHeight = effectivePreviewHeight;
-                    previewBaseWidth = effectivePreviewHeight * baseImageRatio;
+                    previewBaseHeight = previewContainerSize;
+                    previewBaseWidth = previewContainerSize * aspectRatio;
                 }
-                
-                // Apply the user's scale
-                finalRenderWidth = previewBaseWidth * currentScale * renderScaleFactor;
-                finalRenderHeight = previewBaseHeight * currentScale * renderScaleFactor;
-
             } else {
                 // Fallback if natural dimensions not available, assume it fills the preview container
-                finalRenderWidth = previewContainerSize * currentScale * renderScaleFactor;
-                finalRenderHeight = previewContainerSize * currentScale * renderScaleFactor;
+                previewBaseWidth = previewContainerSize;
+                previewBaseHeight = previewContainerSize;
             }
+            
+            // Calculate the final rendered width/height of the user image applying the slider's scale
+            const finalRenderWidth = previewBaseWidth * currentScale * renderScaleFactor;
+            const finalRenderHeight = previewBaseHeight * currentScale * renderScaleFactor;
+
+            // Calculate scaled translation values for the high-res render
+            const scaledXTranslation = currentXPos * renderScaleFactor;
+            const scaledYTranslation = currentYPos * renderScaleFactor;
 
             hiResUserImage.style.cssText = `
                 position: absolute;
                 width: ${finalRenderWidth}px;
                 height: ${finalRenderHeight}px;
-                /* No object-fit: contain here, as we are setting explicit width/height */
-                transform-origin: center; /* Important: match preview's transform-origin */
+                transform-origin: center;
                 left: 50%;
                 top: 50%;
-                transform: translate(
-                    calc(-50% + ${scaledXTranslation}px),
-                    calc(-50% + ${scaledYTranslation}px)
-                ) scale(1); /* Scale is already baked into width/height, set to 1 here */
+                /* Apply initial centering (-50%, -50%) and then add the scaled slider translations.
+                   The scale is already incorporated into width/height, so transform scale is 1. */
+                transform: translate(calc(-50% + ${scaledXTranslation}px), calc(-50% + ${scaledYTranslation}px)) scale(1);
                 display: block;
                 z-index: 5;
             `;
