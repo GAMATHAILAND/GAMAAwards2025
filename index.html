@@ -99,8 +99,9 @@
       font-size: 16px;
     }
 
-    #qr {
+    #qr img {
       margin-top: 20px;
+      width: 128px;
     }
 
     @media(max-width: 480px) {
@@ -142,7 +143,7 @@
         const row = lines[i].split(",");
         const entry = {};
         headers.forEach((h, idx) => {
-          entry[h.trim()] = row[idx].trim();
+          entry[h.trim()] = row[idx]?.trim() || "";
         });
         data.push(entry);
       }
@@ -172,8 +173,15 @@
         document.getElementById("org").innerText = "สังกัด: " + match["สังกัด"];
 
         document.getElementById("qr").innerHTML = "";
-        QRCode.toCanvas(document.getElementById("qr"), match["ID"], { width: 128 }, function (error) {
-          if (error) console.error(error);
+        QRCode.toDataURL(match["ID"], { width: 128 }, function (err, url) {
+          if (err) {
+            console.error(err);
+            return;
+          }
+          const img = document.createElement("img");
+          img.src = url;
+          img.alt = "QR Code";
+          document.getElementById("qr").appendChild(img);
         });
 
         card.style.display = "block";
