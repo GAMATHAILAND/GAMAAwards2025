@@ -63,7 +63,7 @@
       transform-origin: center;
       width: 100%; 
       height: 100%;
-      object-fit: contain; /* เปลี่ยนจาก cover เป็น contain เพื่อไม่ให้ภาพถูกบีบ */
+      object-fit: contain; /* Keep this for preview to avoid initial squeeze */
       left: 0;
       top: 0;
       /* Initial transform will be applied via JS */
@@ -242,7 +242,7 @@
         <div class="file-upload">
           <button id="uploadBtn" class="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 0 003 3h10a3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
             </svg>
             เลือกรูปภาพจากเครื่อง
           </button>
@@ -366,8 +366,8 @@
         style="max-width: 250px;">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
-        ดาวน์โหลด (สำหรับเดสก์ท็อป)
+          </svg>
+          ดาวน์โหลด (สำหรับเดสก์ท็อป)
       </button>
     </div>
   </div>
@@ -515,13 +515,16 @@
         
         // Use a temporary div to render the full-resolution image
         const tempRenderDiv = document.createElement('div');
-        tempRenderDiv.style.width = '1920px';
-        tempRenderDiv.style.height = '1920px';
-        tempRenderDiv.style.position = 'absolute'; 
-        tempRenderDiv.style.left = '-9999px';
-        tempRenderDiv.style.top = '-9999px';
-        tempRenderDiv.style.overflow = 'hidden'; 
-        tempRenderDiv.style.backgroundColor = 'transparent'; 
+        tempRenderDiv.style.cssText = `
+            width: 1920px;
+            height: 1920px;
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            overflow: hidden;
+            background-color: transparent; /* Changed from transparent to a solid color if issues persist with transparency in html2canvas */
+            display: block; /* Ensure it's treated as a block for layout */
+        `;
         document.body.appendChild(tempRenderDiv);
 
         // Create new image elements for the high-res render
@@ -531,39 +534,7 @@
         hiResUserImage.src = userImagePreview.src;
         hiResFrameImage.src = frameImagePreview.src;
 
-        const scaleFactor = 1920 / 600; 
-
-        const currentScale = parseFloat(scaleSlider.value) / 100;
-        const currentXPos = parseFloat(xPosSlider.value);
-        const currentYPos = parseFloat(yPosSlider.value);
-
-        hiResUserImage.style.transform = `translate(${currentXPos * scaleFactor}px, ${currentYPos * scaleFactor}px) scale(${currentScale})`;
-        hiResUserImage.style.transformOrigin = 'center center'; 
-        hiResUserImage.style.objectFit = 'contain'; /* เปลี่ยนจาก cover เป็น contain เพื่อไม่ให้ภาพถูกบีบ */
-        hiResUserImage.style.position = 'absolute';
-        hiResUserImage.style.width = '100%'; 
-        hiResUserImage.style.height = '100%';
-        hiResUserImage.style.left = '0';
-        hiResUserImage.style.top = '0';
-        hiResUserImage.style.display = 'block'; 
-
-        hiResFrameImage.style.width = '100%'; 
-        hiResFrameImage.style.height = '100%';
-        hiResFrameImage.style.left = '0';
-        hiResFrameImage.style.top = '0';
-        hiResFrameImage.style.position = 'absolute';
-        hiResFrameImage.style.zIndex = '10'; 
-        hiResFrameImage.style.display = 'block'; 
-        hiResFrameImage.style.objectFit = 'contain'; /* Ensure frame maintains aspect ratio in high-res */
-
-        tempRenderDiv.appendChild(hiResUserImage);
-        tempRenderDiv.appendChild(hiResFrameImage);
-
-        // When using local files, no need to set crossOrigin = 'anonymous'; 
-        // because the files are in the same domain. CORS issues will be gone.
-        // hiResFrameImage.crossOrigin = 'anonymous'; 
-
-        // Wait for images to load in the temporary div
+        // Wait for high-res images to load before proceeding
         Promise.all([
             new Promise(resolve => {
                 if (hiResUserImage.complete) {
@@ -572,7 +543,7 @@
                     hiResUserImage.onload = resolve;
                     hiResUserImage.onerror = () => {
                         console.error('High-res user image load error. This might cause issues.');
-                        resolve(); 
+                        resolve();
                     };
                 }
             }),
@@ -583,20 +554,86 @@
                     hiResFrameImage.onload = resolve;
                     hiResFrameImage.onerror = () => {
                         console.error('High-res frame image load error. Make sure local frame files exist.');
-                        resolve(); 
+                        resolve();
                     };
                 }
             })
         ]).then(() => {
+            const tempDivSize = 1920; // Target size for the high-res image
+            const originalPreviewWidth = 600; // Original preview container width
+
+            // Calculate dimensions to fit hiResUserImage perfectly inside tempDivSize while maintaining aspect ratio
+            const naturalWidth = hiResUserImage.naturalWidth;
+            const naturalHeight = hiResUserImage.naturalHeight;
+
+            let adjustedWidth = tempDivSize;
+            let adjustedHeight = tempDivSize;
+
+            if (naturalWidth && naturalHeight) { // Ensure natural dimensions are available
+                const aspectRatio = naturalWidth / naturalHeight;
+
+                if (aspectRatio > 1) { // Original image is wider than tall
+                    adjustedHeight = tempDivSize / aspectRatio;
+                    adjustedWidth = tempDivSize;
+                } else { // Original image is taller than wide or square
+                    adjustedWidth = tempDivSize * aspectRatio;
+                    adjustedHeight = tempDivSize;
+                }
+            }
+            
+            // Set calculated dimensions for hiResUserImage
+            hiResUserImage.style.width = `${adjustedWidth}px`;
+            hiResUserImage.style.height = `${adjustedHeight}px`;
+            
+            // Calculate initial centered position before applying user's adjustments
+            const initialLeft = (tempDivSize - adjustedWidth) / 2;
+            const initialTop = (tempDivSize - adjustedHeight) / 2;
+
+            // Apply user's scale and translate transforms
+            const currentScale = parseFloat(scaleSlider.value) / 100;
+            const currentXPos = parseFloat(xPosSlider.value); // These values are from 600px preview
+            const currentYPos = parseFloat(yPosSlider.value);
+
+            // Scale the translate values from the 600px preview to the 1920px rendering context
+            const translateScaleFactor = tempDivSize / originalPreviewWidth;
+
+            hiResUserImage.style.transform = `
+                translate(
+                    ${initialLeft + (currentXPos * translateScaleFactor)}px,
+                    ${initialTop + (currentYPos * translateScaleFactor)}px
+                )
+                scale(${currentScale})`;
+            hiResUserImage.style.transformOrigin = '0 0'; // Set origin to top-left for absolute positioning + translate
+
+            // Ensure images are absolutely positioned within the tempRenderDiv
+            hiResUserImage.style.position = 'absolute';
+            hiResUserImage.style.display = 'block'; // Make sure it's visible
+
+            // Frame image always covers the full 1920x1920
+            hiResFrameImage.style.cssText = `
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                pointer-events: none;
+                z-index: 10;
+                top: 0;
+                left: 0;
+                display: block;
+            `;
+
+            tempRenderDiv.appendChild(hiResUserImage);
+            tempRenderDiv.appendChild(hiResFrameImage);
+
             html2canvas(tempRenderDiv, {
-                width: 1920,
-                height: 1920,
-                scale: 1, 
-                backgroundColor: null,
-                useCORS: false, // No need for CORS with local files
-                allowTaint: false, // No need to allow Taint without CORS issue
+                width: tempDivSize,
+                height: tempDivSize,
+                scale: 1, // Already rendering at target size
+                backgroundColor: null, // Let background be transparent if frame has transparent areas
+                useCORS: false,
+                allowTaint: false,
                 logging: true,
-                imageTimeout: 15000 
+                imageTimeout: 15000
             }).then(canvas => {
                 document.body.removeChild(tempRenderDiv);
                 
