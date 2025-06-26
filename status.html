@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     body {
       font-family: 'Prompt', sans-serif;
@@ -11,26 +12,37 @@
       color: #fff;
       margin: 0;
       padding: 0;
-      text-align: center;
     }
     .container {
       max-width: 600px;
-      margin: 80px auto;
+      margin: 60px auto;
       background: #fff;
-      padding: 30px;
-      border-radius: 20px;
       color: #444;
+      border-radius: 30px;
+      padding: 40px 30px;
+      text-align: center;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
     }
-    .container h1 {
+    .container img {
+      width: 80px;
+      margin-bottom: 10px;
+    }
+    h1 {
       color: #8000c9;
+      font-size: 26px;
+      margin: 10px 0 5px;
+    }
+    p {
+      margin-top: 0;
+      color: #666;
     }
     input {
-      width: 80%;
-      padding: 12px;
+      width: 90%;
+      padding: 12px 15px;
+      margin: 20px 0 10px;
       font-size: 16px;
       border-radius: 10px;
-      border: none;
-      margin-top: 20px;
+      border: 1px solid #ccc;
     }
     button {
       background-color: #8000c9;
@@ -39,35 +51,82 @@
       font-size: 16px;
       border: none;
       border-radius: 10px;
-      margin-top: 15px;
       cursor: pointer;
+      margin-top: 10px;
     }
     .error {
       color: red;
-      margin-top: 10px;
+      margin-top: 15px;
     }
-    .resultBox {
-      margin-top: 30px;
-      text-align: left;
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
     }
-    .resultBox img {
+    .modal.show {
+      display: flex;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      position: relative;
+      color: #333;
+      text-align: center;
+    }
+    .modal-content h2 {
+      margin-top: 0;
+      color: #8000c9;
+    }
+    .modal-content p {
+      margin: 5px 0;
+    }
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 15px;
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #aaa;
+    }
+    .close-btn:hover {
+      color: #000;
+    }
+    .qr-code {
       margin-top: 20px;
     }
   </style>
 </head>
 <body>
-
   <div class="container">
-    <img src="logo-gama-awards.png" alt="GAMA Awards" width="100">
+    <img src="logo-gama-awards.png" alt="GAMA Awards">
     <h1>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
     <p>กรุณากรอกข้อมูลเพื่อค้นหา</p>
 
     <input type="text" id="searchInput" placeholder="กรอกชื่อ-นามสกุล หรือ รหัสใบอนุญาต" />
-    <br>
+    <br />
     <button onclick="search()">ค้นหา</button>
     <div id="errorMsg" class="error"></div>
+  </div>
 
-    <div id="resultBox" class="resultBox"></div>
+  <!-- Modal -->
+  <div id="resultModal" class="modal" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <button class="close-btn" onclick="closeModal(event)">×</button>
+      <div id="resultContent"></div>
+    </div>
   </div>
 
   <script>
@@ -76,9 +135,11 @@
     async function search() {
       const q = document.getElementById("searchInput").value.trim();
       const errBox = document.getElementById("errorMsg");
-      const resultBox = document.getElementById("resultBox");
+      const resultModal = document.getElementById("resultModal");
+      const resultContent = document.getElementById("resultContent");
+
       errBox.textContent = "";
-      resultBox.innerHTML = "";
+      resultContent.innerHTML = "";
 
       if (q.length < 2) {
         errBox.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
@@ -94,20 +155,26 @@
           return;
         }
 
-        resultBox.innerHTML = `
+        resultContent.innerHTML = `
           <h2>ข้อมูลผู้รับรางวัล</h2>
           <p><strong>ID:</strong> ${data.id}</p>
           <p><strong>ชื่อ–นามสกุล:</strong> ${data.name}</p>
           <p><strong>สังกัด:</strong> ${data.organization}</p>
           <p><strong>ประเภท:</strong> ${data.awardType}</p>
           <p><strong>ระดับ:</strong> ${data.level}</p>
-          <img src="https://api.qrserver.com/v1/create-qr-code/?data=${data.licenseCode}&size=150x150" alt="QR Code" />
+          <div class="qr-code">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?data=${data.licenseCode}&size=150x150" alt="QR Code">
+          </div>
         `;
+        resultModal.classList.add("show");
       } catch (e) {
         errBox.textContent = "เกิดข้อผิดพลาดในการค้นหา กรุณาลองใหม่";
       }
     }
-  </script>
 
+    function closeModal(event) {
+      document.getElementById("resultModal").classList.remove("show");
+    }
+  </script>
 </body>
 </html>
