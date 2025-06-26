@@ -159,13 +159,14 @@
             font-size: 1rem;
         }
 
+        /* MODIFIED: Removed border, padding, and background from .qrcode */
         .modal-content .qrcode {
             margin-top: 1.5rem;
             text-align: center;
-            padding: 10px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            background-color: #f9f9f9;
+            /* Removed: border: 1px solid #eee; */
+            /* Removed: border-radius: 8px; */
+            /* Removed: background-color: #f9f9f9; */
+            /* Removed: padding: 10px; */ 
         }
         .modal-content .qrcode canvas {
             display: block;
@@ -305,7 +306,8 @@
                     if (licenseCode) {
                         modalContent += `<div class="qrcode"><canvas id="qrcode"></canvas></div>`;
                     } else {
-                        modalContent += `<p style="text-align: center; margin-top: 1rem; color: #777;"><em>ไม่พบรหัสใบอนุญาตสำหรับ QR Code</em></p>`;
+                        // MODIFIED: Removed "ไม่พบรหัสใบอนุญาตสำหรับ QR Code" if no licenseCode
+                        // modalContent += `<p style="text-align: center; margin-top: 1rem; color: #777;"><em>ไม่พบรหัสใบอนุญาตสำหรับ QR Code</em></p>`;
                     }
 
                     showModal(modalContent);
@@ -321,10 +323,11 @@
                                         console.error("Error generating QR code:", err);
                                         // ซ่อน canvas และแสดงข้อความหากเกิดข้อผิดพลาด
                                         qrCanvas.style.display = 'none';
-                                        const qrContainer = qrCanvas.parentElement;
-                                        if (qrContainer) {
-                                            qrContainer.innerHTML = '<p style="color: red; text-align: center;">ไม่สามารถสร้าง QR Code ได้</p>';
-                                        }
+                                        // MODIFIED: Removed the "ไม่สามารถสร้าง QR Code ได้" message if creation fails
+                                        // const qrContainer = qrCanvas.parentElement;
+                                        // if (qrContainer) {
+                                        //     qrContainer.innerHTML = '<p style="color: red; text-align: center;">ไม่สามารถสร้าง QR Code ได้</p>';
+                                        // }
                                     });
                             }
                         }, 100); // ดีเลย์เล็กน้อยเพื่อให้แน่ใจว่า canvas ถูก Render แล้ว
