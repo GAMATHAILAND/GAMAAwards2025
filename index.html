@@ -1,265 +1,543 @@
-<!DOCTYPE html>
-<html lang="en">
+สมบูรณ์ในคอม  <!DOCTYPE html>
+<html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Preview Centered Zoom (Mobile First)</title>
-    <style>
-        /* CSS สำหรับคอนเทนเนอร์และรูปภาพพรีวิว */
-        .preview-container {
-            width: 100%; /* ทำให้คอนเทนเนอร์ปรับตามความกว้างหน้าจอ */
-            max-width: 600px; /* จำกัดความกว้างสูงสุดของคอนเทนเนอร์ */
-            height: 400px; /* กำหนดความสูงคงที่ของคอนเทนเนอร์ */
-            border: 2px dashed #ccc;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden; /* สำคัญ: ซ่อนส่วนเกินของรูปภาพ */
-            position: relative; /* สำหรับการจัดตำแหน่งรูปภาพภายใน */
-            margin: 20px auto; /* จัดกึ่งกลางคอนเทนเนอร์ในหน้าจอ */
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAMA Awards Frame</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script> 
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
 
-        .user-image-preview {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* ทำให้รูปภาพพอดีกับคอนเทนเนอร์โดยรักษาสัดส่วน */
-            display: block; /* ลบช่องว่างใต้รูปภาพ */
-            position: absolute; /* เพื่อให้สามารถจัดตำแหน่งด้วย JavaScript */
-            top: 0;
-            left: 0;
-            /* เพิ่ม transition เพื่อให้การซูม/ลากดูราบรื่นขึ้น */
-            transition: transform 0.05s ease-out;
-            transform-origin: center center; /* จุดหมุน/ย่อขยายที่กึ่งกลางเสมอ */
-            cursor: grab; /* เปลี่ยน cursor เมื่อพร้อมลาก */
-        }
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: white;
+      min-height: 100vh;
+      color: #333;
+    }
 
-        .user-image-preview.dragging {
-            cursor: grabbing; /* เปลี่ยน cursor เมื่อกำลังลาก */
-        }
+    .frame-option {
+      transition: all 0.3s ease;
+      cursor: pointer;
+      background-color: white;
+      border: 1px solid #e5e7eb;
+    }
 
-        /* สไตล์สำหรับปุ่ม */
-        button {
-            display: block;
-            margin: 10px auto;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
+    .frame-option:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
 
-        /* สำหรับ input file */
-        input[type="file"] {
-            display: block;
-            margin: 20px auto;
-        }
+    .frame-option.selected {
+      border: 3px solid #4500b2;
+      transform: translateY(-5px);
+    }
 
-    </style>
+    .image-container {
+      position: relative;
+      width: 600px; /* Base size for preview */
+      height: 600px;
+      overflow: hidden;
+      margin: 0 auto;
+      background-color: #f9fafb;
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 640px) {
+      .image-container {
+        width: 100%;
+        height: 300px;
+      }
+    }
+
+    /* user-image and frame-image styles for preview */
+    .user-image {
+      position: absolute;
+      transform-origin: center;
+      width: 100%; 
+      height: 100%;
+      object-fit: cover; /* This makes the image cover the area, cropping as needed */
+      left: 0;
+      top: 0;
+      /* Initial transform will be applied via JS */
+    }
+
+    .frame-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none; /* Allows clicks to pass through */
+      z-index: 10; /* Ensures frame is on top of user image */
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      height: 8px;
+      border-radius: 4px;
+      background: #e5e7eb;
+      outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #4500b2;
+      cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #4500b2;
+      cursor: pointer;
+    }
+
+    .btn {
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      color: white;
+      font-size: 24px;
+    }
+
+    .spinner {
+      border: 5px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 5px solid white;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .file-upload {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-upload input[type=file] {
+      position: absolute;
+      top: 0;
+      right: 0;
+      min-width: 100%;
+      min-height: 100%;
+      font-size: 100px;
+      text-align: right;
+      filter: alpha(opacity=0);
+      opacity: 0;
+      outline: none;
+      cursor: pointer;
+      display: block;
+    }
+
+    .header-gradient {
+      background: linear-gradient(to right, #4500b2, #d83361);
+      height: 8px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
-<body>
-
-    <h1>ปรับแต่งรูปภาพของคุณ</h1>
-
-    <div class="preview-container">
-        <img id="userImagePreview" class="user-image-preview" src="" alt="Image Preview" style="display: none;">
+<body class="min-h-screen">
+  <div class="header-gradient"></div>
+  <div class="container mx-auto px-4 py-8">
+    <div class="flex justify-center mb-6">
+      <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="h-24">
     </div>
-    <input type="file" id="imageUpload" accept="image/*">
-    <button id="resetImage">รีเซ็ตตำแหน่งและซูม</button>
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">GAMA Awards Frame</h1>
+    <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">เปลี่ยนรูปโปรไฟล์ของคุณให้โดดเด่นด้วยกรอบรูปภาพพิเศษจาก GAMA Awards อัพโหลดรูปภาพของคุณ เลือกกรอบที่ชอบ และดาวน์โหลดเพื่อใช้เป็นรูปโปรไฟล์ใหม่ของคุณ</p>
+    
+    <div class="mb-8 max-w-xl mx-auto">
+      <div class="card p-6">
+        <label class="block text-lg font-medium mb-3 text-gray-700">อัพโหลดรูปโปรไฟล์ของคุณ:</label>
+        <div class="file-upload">
+          <button id="uploadBtn" class="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 0 003 3h10a3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+            </svg>
+            เลือกรูปภาพจากเครื่อง
+          </button>
+          <input type="file" id="imageUpload" accept="image/*">
+        </div>
+        <p id="selectedFileName" class="mt-2 text-center text-sm text-gray-500"></p>
+      </div>
+    </div>
+    
+    <div class="mb-8">
+      <h2 class="text-xl font-medium mb-4 text-center text-gray-700">เลือกกรอบรูปภาพ</h2>
+      <div class="flex flex-wrap justify-center gap-3">
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="MAA">
+          <img src="./MASTER MULTILINE Award.png" alt="MAA" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1 text-gray-800">MAA</p>
+        </div>
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="MFA">
+          <img src="./MASTER FIRM Award.png" alt="MFA" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1  text-gray-800">MFA</p>
+        </div>
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="MMA">
+          <img src="./MASTER AGENCY Award.png" alt="MMA" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1 text-gray-800">MMA</p>
+        </div>
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="IMA">
+          <img src="./International Management Award.png" alt="IMA" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1 text-gray-800">IMA</p>
+        </div>
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="FLA">
+          <img src="./Frontline Leader Awards.png" alt="FLA" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1 text-gray-800">FLA</p>
+        </div>
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="ERA">
+          <img src="./Excellence Recruitment Award.png" alt="ERA" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1 text-gray-800">ERA</p>
+        </div>
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="COE">
+          <img src="./Circle of Excellence Award.png" alt="COE" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1 text-gray-800">COE</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div class="lg:col-span-2">
+        <div class="card p-4">
+          <div id="preview" class="image-container flex items-center justify-center">
+            <div id="placeholderText" class="text-center p-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p class="text-gray-500">โปรดอัพโหลดรูปภาพและเลือกกรอบ</p>
+            </div>
+            <img id="userImage" class="user-image hidden" src="" alt="User uploaded image">
+            <img id="frameImage" class="frame-image hidden" src="" alt="Selected frame">
+          </div>
+        </div>
+      </div>
+      
+      <div class="card p-6">
+        <h3 class="text-lg font-medium mb-4 text-gray-700">ปรับแต่งรูปภาพ</h3>
+        
+        <div class="mb-4">
+          <label for="scaleSlider" class="block text-sm font-medium mb-1 text-gray-600">ขนาด:</label>
+          <input type="range" id="scaleSlider" class="slider w-full" min="50" max="200" value="100">
+          <div class="flex justify-between text-xs text-gray-500">
+            <span>เล็ก</span>
+            <span>ใหญ่</span>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label for="xPosSlider" class="block text-sm font-medium mb-1 text-gray-600">ตำแหน่งแนวนอน:</label>
+          <input type="range" id="xPosSlider" class="slider w-full" min="-100" max="100" value="0">
+          <div class="flex justify-between text-xs text-gray-500">
+            <span>ซ้าย</span>
+            <span>ขวา</span>
+          </div>
+        </div>
+        
+        <div class="mb-6">
+          <label for="yPosSlider" class="block text-sm font-medium mb-1 text-gray-600">ตำแหน่งแนวตั้ง:</label>
+          <input type="range" id="yPosSlider" class="slider w-full" min="-100" max="100" value="0">
+          <div class="flex justify-between text-xs text-gray-500">
+            <span>บน</span>
+            <span>ล่าง</span>
+          </div>
+        </div>
+        
+        <button id="downloadBtn" class="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn disabled:opacity-50 disabled:cursor-not-allowed mb-3" disabled>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 0 003 3h10a3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+          </svg>
+          ดาวน์โหลดรูปโปรไฟล์
+        </button>
+        
+        <p class="mt-4 text-sm text-gray-500 text-center">ดาวน์โหลดและใช้เป็นรูปโปรไฟล์ของคุณบนโซเชียลมีเดีย</p>
+      </div>
+    </div>
+    
+    <div class="text-center text-sm text-gray-500 mb-8">
+      © GAMA Awards 2025 - ระบบใส่กรอบรูปภาพ
+    </div>
+  </div>
+  
+  <div id="loadingOverlay" class="loading hidden">
+    <div class="spinner"></div>
+    <span>กำลังประมวลผล...</span>
+  </div>
 
-    <script>
-        const imageUpload = document.getElementById('imageUpload');
-        const userImagePreview = document.getElementById('userImagePreview');
-        const resetImageButton = document.getElementById('resetImage');
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elements
+      const imageUpload = document.getElementById('imageUpload');
+      const uploadBtn = document.getElementById('uploadBtn');
+      const selectedFileName = document.getElementById('selectedFileName');
+      const frameOptions = document.querySelectorAll('.frame-option');
+      const userImagePreview = document.getElementById('userImage'); 
+      const frameImagePreview = document.getElementById('frameImage'); 
+      const placeholderText = document.getElementById('placeholderText');
+      const scaleSlider = document.getElementById('scaleSlider');
+      const xPosSlider = document.getElementById('xPosSlider');
+      const yPosSlider = document.getElementById('yPosSlider');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      const previewContainer = document.getElementById('preview');
 
-        let scale = 1;
-        let translateX = 0;
-        let translateY = 0;
-        let isDragging = false;
-        let startX, startY; // สำหรับเมาส์
-        let touchStartX, touchStartY; // สำหรับ touch drag
-        let initialPinchDistance = 0; // สำหรับ touch zoom
+      // Frame URLs (UPDATED TO LOCAL FILE PATHS - ตรวจสอบให้แน่ใจว่าชื่อไฟล์ตรงกับที่คุณอัปโหลดบน GitHub)
+      const frameUrls = {
+        'MAA': './MASTER MULTILINE Award.png',
+        'MFA': './MASTER FIRM Award.png',
+        'MMA': './MASTER AGENCY Award.png',
+        'IMA': './International Management Award.png',
+        'FLA': './Frontline Leader Awards.png',
+        'ERA': './Excellence Recruitment Award.png',
+        'COE': './Circle of Excellence Award.png'
+      };
+      
+      // State
+      let selectedFrame = null;
+      let userImageLoaded = false; 
+      let frameImageLoaded = false; 
+      
+      // Function to check if both images are loaded for download enablement
+      function checkDownloadAvailability() {
+        downloadBtn.disabled = !(userImageLoaded && selectedFrame && frameImageLoaded);
+      }
 
-        // ตัวแปรสำหรับขนาดที่เรนเดอร์จริงของรูปภาพ
-        // จะถูกคำนวณใหม่ใน updateImagePosition และ resetImagePosition
-        let renderedWidth = 0;
-        let renderedHeight = 0;
+      // Trigger file input when the upload button is clicked
+      uploadBtn.addEventListener('click', function() {
+        imageUpload.click();
+      });
+      
+      // Handle file upload
+      imageUpload.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          const file = this.files[0];
+          selectedFileName.textContent = file.name;
+          
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            userImagePreview.onload = function() {
+              placeholderText.classList.add('hidden');
+              userImagePreview.classList.remove('hidden');
+              userImageLoaded = true;
+              // Reset sliders to default when a new image is loaded
+              scaleSlider.value = 100;
+              xPosSlider.value = 0;
+              yPosSlider.value = 0;
+              updateImagePosition(); // Apply default positions for preview
+              checkDownloadAvailability();
+            };
+            userImagePreview.onerror = function() {
+              alert('เกิดข้อผิดพลาดในการโหลดรูปภาพของคุณ กรุณาลองใหม่');
+              userImageLoaded = false;
+              checkDownloadAvailability();
+            };
+            userImagePreview.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        } else {
+          selectedFileName.textContent = ''; 
+          userImagePreview.classList.add('hidden');
+          placeholderText.classList.remove('hidden');
+          userImageLoaded = false;
+          checkDownloadAvailability();
+        }
+      });
+      
+      // Select frame
+      frameOptions.forEach(option => {
+        option.addEventListener('click', function() {
+          const frameId = this.dataset.frame;
+          
+          frameOptions.forEach(opt => opt.classList.remove('selected'));
+          this.classList.add('selected');
+          
+          selectedFrame = frameId;
+          
+          // Load frame image for preview and set frameImageLoaded flag
+          frameImagePreview.onload = function() {
+            frameImagePreview.classList.remove('hidden');
+            frameImageLoaded = true;
+            checkDownloadAvailability();
+          };
+          frameImagePreview.onerror = function() {
+            console.error('Failed to load frame image:', frameUrls[frameId]);
+            alert('เกิดข้อผิดพลาดในการโหลดกรอบรูป กรุณาตรวจสอบว่าไฟล์รูปภาพกรอบอยู่ในโฟลเดอร์เดียวกันกับไฟล์ HTML นี้แล้ว และชื่อไฟล์ตรงกัน');
+            frameImageLoaded = false;
+            checkDownloadAvailability();
+          };
+          frameImagePreview.src = frameUrls[frameId];
+        });
+      });
+      
+      // Update image position and scale for the PREVIEW
+      function updateImagePosition() {
+        if (!userImageLoaded) return; 
+        
+        const scale = scaleSlider.value / 100;
+        const xPos = parseFloat(xPosSlider.value);
+        const yPos = parseFloat(yPosSlider.value);
+        
+        userImagePreview.style.transform = `translate(${xPos}px, ${yPos}px) scale(${scale})`;
+      }
+      
+      // Event listeners for sliders
+      scaleSlider.addEventListener('input', updateImagePosition);
+      xPosSlider.addEventListener('input', updateImagePosition);
+      yPosSlider.addEventListener('input', updateImagePosition);
+      
+      // Download functionality using html2canvas
+      downloadBtn.addEventListener('click', function() {
+        if (!userImageLoaded || !selectedFrame || !frameImageLoaded) {
+          alert('โปรดอัปโหลดรูปภาพและเลือกกรอบก่อนดาวน์โหลด');
+          return;
+        }
 
-        // เมื่อมีการเลือกไฟล์ภาพ
-        imageUpload.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    userImagePreview.src = e.target.result;
-                    userImagePreview.style.display = 'block';
-                    // ต้องรอให้รูปภาพโหลดเสร็จก่อนจึงจะคำนวณ naturalWidth/Height ได้
-                    userImagePreview.onload = () => {
-                        resetImagePosition(); // รีเซ็ตตำแหน่งและซูมเมื่อโหลดรูปใหม่
+        loadingOverlay.classList.remove('hidden');
+        
+        // Use a temporary div to render the full-resolution image
+        const tempRenderDiv = document.createElement('div');
+        tempRenderDiv.style.width = '1920px';
+        tempRenderDiv.style.height = '1920px';
+        tempRenderDiv.style.position = 'absolute'; 
+        tempRenderDiv.style.left = '-9999px';
+        tempRenderDiv.style.top = '-9999px';
+        tempRenderDiv.style.overflow = 'hidden'; 
+        tempRenderDiv.style.backgroundColor = 'transparent'; 
+        document.body.appendChild(tempRenderDiv);
+
+        // Create new image elements for the high-res render
+        const hiResUserImage = new Image();
+        const hiResFrameImage = new Image();
+
+        hiResUserImage.src = userImagePreview.src;
+        hiResFrameImage.src = frameImagePreview.src;
+
+        const scaleFactor = 1920 / 600; 
+
+        const currentScale = parseFloat(scaleSlider.value) / 100;
+        const currentXPos = parseFloat(xPosSlider.value);
+        const currentYPos = parseFloat(yPosSlider.value);
+
+        hiResUserImage.style.transform = `translate(${currentXPos * scaleFactor}px, ${currentYPos * scaleFactor}px) scale(${currentScale})`;
+        hiResUserImage.style.transformOrigin = 'center center'; 
+        hiResUserImage.style.objectFit = 'cover'; 
+
+        hiResUserImage.style.width = '100%'; 
+        hiResUserImage.style.height = '100%';
+        hiResUserImage.style.left = '0';
+        hiResUserImage.style.top = '0';
+        hiResUserImage.style.position = 'absolute';
+        hiResUserImage.style.display = 'block'; 
+
+        hiResFrameImage.style.width = '100%'; 
+        hiResFrameImage.style.height = '100%';
+        hiResFrameImage.style.left = '0';
+        hiResFrameImage.style.top = '0';
+        hiResFrameImage.style.position = 'absolute';
+        hiResFrameImage.style.zIndex = '10'; 
+        hiResFrameImage.style.display = 'block'; 
+
+        tempRenderDiv.appendChild(hiResUserImage);
+        tempRenderDiv.appendChild(hiResFrameImage);
+
+        // เมื่อใช้ไฟล์ในเครื่อง ไม่จำเป็นต้องตั้งค่า crossOrigin = 'anonymous'; 
+        // เนื่องจากไฟล์อยู่ในโดเมนเดียวกันแล้ว ปัญหา CORS จะหมดไป
+        // hiResFrameImage.crossOrigin = 'anonymous'; 
+
+        // Wait for images to load in the temporary div
+        Promise.all([
+            new Promise(resolve => {
+                if (hiResUserImage.complete) {
+                    resolve();
+                } else {
+                    hiResUserImage.onload = resolve;
+                    hiResUserImage.onerror = () => {
+                        console.error('High-res user image load error. This might cause issues.');
+                        resolve(); 
                     };
-                };
-                reader.readAsDataURL(file);
-            } else {
-                userImagePreview.style.display = 'none';
-                userImagePreview.src = '';
-            }
-        });
-
-        // ฟังก์ชันสำคัญ: อัปเดตตำแหน่งและการซูมของรูปภาพ
-        function updateImagePosition() {
-            // คำนวณขนาดที่แท้จริงของรูปภาพหลังจาก object-fit: contain ได้ทำงาน
-            const containerWidth = userImagePreview.parentElement.offsetWidth;
-            const containerHeight = userImagePreview.parentElement.offsetHeight;
-            const imgNaturalWidth = userImagePreview.naturalWidth;
-            const imgNaturalHeight = userImagePreview.naturalHeight;
-
-            const containerRatio = containerWidth / containerHeight;
-            const imageRatio = imgNaturalWidth / imgNaturalHeight;
-
-            if (imageRatio > containerRatio) {
-                // รูปภาพกว้างกว่า (จะเติมความกว้าง)
-                renderedWidth = containerWidth;
-                renderedHeight = containerWidth / imageRatio;
-            } else {
-                // รูปภาพสูงกว่า (จะเติมความสูง)
-                renderedHeight = containerHeight;
-                renderedWidth = containerHeight * imageRatio;
-            }
-
-            // คำนวณขอบเขตการลากที่ถูกต้องตามขนาดที่เรนเดอร์จริงและสเกลปัจจุบัน
-            const currentDisplayWidth = renderedWidth * scale;
-            const currentDisplayHeight = renderedHeight * scale;
-
-            const maxTranslateX = (currentDisplayWidth - containerWidth) / 2;
-            const maxTranslateY = (currentDisplayHeight - containerHeight) / 2;
-
-            // ตรวจสอบและจำกัดการลากไม่ให้เกินขอบเขต
-            // ตรวจสอบเฉพาะเมื่อรูปภาพมีขนาดใหญ่กว่าคอนเทนเนอร์ในแกนนั้นๆ
-            if (currentDisplayWidth > containerWidth) {
-                translateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, translateX));
-            } else {
-                translateX = 0; // ถ้าภาพเล็กกว่า ไม่มีการลากในแกน X
-            }
-
-            if (currentDisplayHeight > containerHeight) {
-                translateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, translateY));
-            } else {
-                translateY = 0; // ถ้าภาพเล็กกว่า ไม่มีการลากในแกน Y
-            }
-
-            userImagePreview.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-        }
-
-        // ฟังก์ชันสำหรับรีเซ็ตตำแหน่งและการซูม
-        function resetImagePosition() {
-            scale = 1;
-            translateX = 0;
-            translateY = 0;
-            updateImagePosition(); // อัปเดตตำแหน่งเริ่มต้น
-        }
-
-        resetImageButton.addEventListener('click', resetImagePosition);
-
-        /* --- Event listeners สำหรับ Desktop (เมาส์) --- */
-        userImagePreview.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            userImagePreview.classList.add('dragging');
-            startX = e.clientX - translateX;
-            startY = e.clientY - translateY;
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            // ปรับค่า translateX/Y ตามการเคลื่อนที่ของเมาส์
-            translateX = e.clientX - startX;
-            translateY = e.clientY - startY;
-            updateImagePosition(); // อัปเดตตำแหน่ง
-        });
-
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-            userImagePreview.classList.remove('dragging');
-        });
-
-        // Wheel event สำหรับซูมบน Desktop
-        userImagePreview.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const scaleAmount = 0.1;
-            const oldScale = scale;
-
-            // ตรวจสอบทิศทางของ scroll wheel
-            if (e.deltaY < 0) { // ซูมเข้า
-                scale += scaleAmount;
-            } else { // ซูมออก
-                scale -= scaleAmount;
-            }
-
-            // จำกัดค่า scale ระหว่าง 1 (ขนาดปกติ) ถึง 3 (ซูม 3 เท่า)
-            scale = Math.max(1, Math.min(3, scale));
-
-            // การปรับตำแหน่งเมื่อซูม (เพื่อให้ยึดแกนกลาง)
-            // เราไม่จำเป็นต้องปรับ translateX/Y แบบซับซ้อนเมื่อ transform-origin เป็น center center
-            // เพราะมันจะซูมจากจุดศูนย์กลางโดยอัตโนมัติ
-            updateImagePosition();
-        });
-
-        /* --- Event listeners สำหรับ Mobile/Tablet (Touch) --- */
-        userImagePreview.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) { // Single touch for dragging
-                isDragging = true;
-                userImagePreview.classList.add('dragging');
-                touchStartX = e.touches[0].clientX - translateX;
-                touchStartY = e.touches[0].clientY - translateY;
-            } else if (e.touches.length === 2) { // Two touches for pinching (zoom)
-                isDragging = false; // ไม่ลากถ้ามีสองนิ้ว
-                initialPinchDistance = getPinchDistance(e.touches);
-            }
-        });
-
-        userImagePreview.addEventListener('touchmove', (e) => {
-            e.preventDefault(); // ป้องกันการเลื่อนหน้าจอหลัก
-
-            if (e.touches.length === 1 && isDragging) { // Dragging with one finger
-                translateX = e.touches[0].clientX - touchStartX;
-                translateY = e.touches[0].clientY - touchStartY;
-                updateImagePosition();
-            } else if (e.touches.length === 2) { // Pinching (zoom) with two fingers
-                const currentPinchDistance = getPinchDistance(e.touches);
-                if (initialPinchDistance === 0) { // ป้องกันการหารด้วยศูนย์ถ้าไม่ได้กำหนดค่าเริ่มต้น
-                    initialPinchDistance = currentPinchDistance;
-                    return;
                 }
-
-                const scaleFactor = currentPinchDistance / initialPinchDistance;
-                const oldScale = scale;
-                scale = Math.max(1, Math.min(3, scale * scaleFactor)); // จำกัดการซูม
-
-                // อัปเดตระยะห่างเริ่มต้นสำหรับการซูมครั้งต่อไป
-                initialPinchDistance = currentPinchDistance;
-
-                // ไม่ต้องปรับ translateX/Y ซับซ้อนเพราะ transform-origin เป็น center
-                updateImagePosition();
-            }
+            }),
+            new Promise(resolve => {
+                if (hiResFrameImage.complete) {
+                    resolve();
+                } else {
+                    hiResFrameImage.onload = resolve;
+                    hiResFrameImage.onerror = () => {
+                        console.error('High-res frame image load error. Make sure local frame files exist.');
+                        resolve(); 
+                    };
+                }
+            })
+        ]).then(() => {
+            html2canvas(tempRenderDiv, {
+                width: 1920,
+                height: 1920,
+                scale: 1, 
+                backgroundColor: null,
+                useCORS: false, // ไม่ต้องใช้ CORS แล้วเมื่อเป็น local files
+                allowTaint: false, // ไม่ต้อง allow Taint แล้วเมื่อไม่มี CORS issue
+                logging: true,
+                imageTimeout: 15000 
+            }).then(canvas => {
+                document.body.removeChild(tempRenderDiv);
+                
+                try {
+                    const link = document.createElement('a');
+                    link.download = `profile-${selectedFrame}-gama-awards.png`;
+                    link.href = canvas.toDataURL('image/png'); 
+                    link.click();
+                } catch (e) {
+                    console.error('Error creating data URL or download link:', e);
+                    alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหาภายในหรือรูปภาพต้นฉบับเสียหาย)');
+                }
+                
+                loadingOverlay.classList.add('hidden');
+            }).catch(err => {
+                console.error('Error generating image with html2canvas:', err);
+                alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ กรุณาลองใหม่อีกครั้ง');
+                document.body.removeChild(tempRenderDiv); 
+                loadingOverlay.classList.add('hidden');
+            });
+        }).catch(err => {
+            console.error('Error waiting for high-res images to load:', err);
+            alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อดาวน์โหลด กรุณาลองใหม่อีกครั้ง');
+            document.body.removeChild(tempRenderDiv);
+            loadingOverlay.classList.add('hidden');
         });
-
-        userImagePreview.addEventListener('touchend', () => {
-            isDragging = false;
-            userImagePreview.classList.remove('dragging');
-            initialPinchDistance = 0; // รีเซ็ตค่าเมื่อยกนิ้ว
-        });
-
-        // Helper function for calculating distance between two touches
-        function getPinchDistance(touches) {
-            const dx = touches[0].clientX - touches[1].clientX;
-            const dy = touches[0].clientY - touches[1].clientY;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-
-        // หากมีการปรับขนาดหน้าต่าง ให้เรียก updateImagePosition ใหม่
-        window.addEventListener('resize', () => {
-            if (userImagePreview.style.display !== 'none') {
-                updateImagePosition();
-            }
-        });
-
-    </script>
-
+      });
+    });
+  </script>
 </body>
 </html>
