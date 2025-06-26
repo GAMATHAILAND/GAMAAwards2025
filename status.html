@@ -8,245 +8,137 @@
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <style>
-    /* Global Reset and Variables */
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
-
-    :root {
-      /* Colors */
-      --primary-gradient-start: #6a11cb;
-      --primary-gradient-end: #c94bdb;
-      --button-gradient-start: #9b00e8;
-      --button-gradient-end: #6a11cb;
-      --text-dark: #333;
-      --text-light: #f0f0f0; /* Slightly lighter for readability on gradient */
-      --card-bg: #fff;
-      --input-bg: #f5f5f5;
-      --error-color: #c4004e;
-      --close-button-color: #aaa;
-
-      /* Spacing */
-      --spacing-xs: 0.5rem;
-      --spacing-sm: 0.75rem;
-      --spacing-md: 1rem;
-      --spacing-lg: 1.5rem;
-      --spacing-xl: 2rem;
-      --spacing-xxl: 2.5rem;
-
-      /* Border Radius */
-      --border-radius-sm: 8px;
-      --border-radius-md: 12px;
-      --border-radius-lg: 16px;
-
-      /* Shadows */
-      --shadow-light: 0 4px 10px rgba(0, 0, 0, 0.08);
-      --shadow-medium: 0 8px 20px rgba(0, 0, 0, 0.15);
-      --shadow-strong: 0 12px 30px rgba(0, 0, 0, 0.2);
-    }
-
     body {
       margin: 0;
       font-family: 'Prompt', sans-serif;
-      background: linear-gradient(to bottom, var(--primary-gradient-start), var(--primary-gradient-end));
+      background: linear-gradient(to top, #6a11cb, #c94bdb);
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: var(--spacing-xl);
-      color: var(--text-light);
-      text-align: center;
-      line-height: 1.6;
+      flex-direction: column;
+      padding: 20px;
+      color: #fff;
     }
 
-    /* Header Section */
+    .card {
+      background: #fff;
+      color: #333;
+      padding: 2rem;
+      border-radius: 1rem;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
     .logo {
-      width: 150px; /* Slightly larger logo */
-      margin-bottom: var(--spacing-lg);
-      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2)); /* Subtle shadow for logo */
+      width: 120px;
+      margin-bottom: 1rem;
     }
 
     .title {
-      font-size: 2.2rem;
-      font-weight: 700;
-      margin-bottom: var(--spacing-sm);
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin-bottom: 0.25rem;
     }
 
     .subtitle {
-      font-size: 1.1rem;
-      color: var(--text-light); /* Ensure good contrast */
-      margin-bottom: var(--spacing-xxl); /* More spacing before card */
-      max-width: 400px;
-    }
-
-    /* Card for Input */
-    .card {
-      background: var(--card-bg);
-      color: var(--text-dark);
-      padding: var(--spacing-xl);
-      border-radius: var(--border-radius-md);
-      max-width: 500px;
-      width: 100%;
-      box-shadow: var(--shadow-medium);
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-md); /* Spacing between input and button */
+      font-size: 0.9rem;
+      color: #eee;
+      margin-bottom: 2rem;
     }
 
     input[type="text"] {
       width: 100%;
-      padding: var(--spacing-sm) var(--spacing-md);
+      padding: 12px;
       font-size: 1rem;
-      border: 1px solid #ddd;
-      border-radius: var(--border-radius-sm);
-      background: var(--input-bg);
-      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    input[type="text"]:focus {
-      outline: none;
-      border-color: var(--button-gradient-end);
-      box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Focus ring */
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      background: #f3f3f3;
     }
 
     button {
-      background: linear-gradient(to right, var(--button-gradient-start), var(--button-gradient-end));
+      background: linear-gradient(to right, #9b00e8, #6a11cb);
       color: white;
-      padding: var(--spacing-md);
+      padding: 12px;
       width: 100%;
       border: none;
-      border-radius: var(--border-radius-sm);
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: var(--shadow-light);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-medium);
-    }
-
-    button:active {
-      transform: translateY(0);
-      box-shadow: var(--shadow-light);
-    }
-
-    .error {
-      color: var(--error-color);
-      font-weight: 600;
+      border-radius: 8px;
       font-size: 1rem;
-      margin-top: var(--spacing-sm);
+      cursor: pointer;
     }
 
-    /* Modal Styles */
     .modal {
+      display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7); /* Slightly darker overlay */
-      display: flex;
+      background: rgba(0, 0, 0, 0.6);
       justify-content: center;
       align-items: center;
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none; /* Allows clicks through when hidden */
-      transition: opacity 0.3s ease;
-    }
-
-    .modal.active {
-      opacity: 1;
-      pointer-events: auto;
+      z-index: 10;
     }
 
     .modal-content {
-      background: var(--card-bg);
-      color: var(--text-dark);
-      padding: var(--spacing-xxl);
-      border-radius: var(--border-radius-lg);
+      background: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
       text-align: center;
       max-width: 500px;
       width: 90%;
       position: relative;
-      box-shadow: var(--shadow-strong);
-      transform: translateY(-20px); /* Initial transform for animation */
-      opacity: 0;
-      transition: transform 0.3s ease, opacity 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-sm); /* Spacing for modal content */
-    }
-
-    .modal.active .modal-content {
-      transform: translateY(0);
-      opacity: 1;
     }
 
     .modal-content h2 {
-      margin-bottom: var(--spacing-sm);
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--button-gradient-end); /* Highlight name */
+      margin-bottom: 0.5rem;
+      font-size: 1.5rem;
     }
 
     .modal-content p {
       margin: 0.25rem 0;
-      font-size: 1rem;
-    }
-
-    .modal-content p strong {
-      color: var(--button-gradient-start); /* Highlight labels */
-      font-weight: 600;
     }
 
     .modal-content .qrcode {
-      margin-top: var(--spacing-lg); /* More space above QR */
-      align-self: center; /* Center QR code */
+      margin-top: 1rem;
     }
 
     .close-button {
       position: absolute;
-      top: var(--spacing-md);
-      right: var(--spacing-lg);
+      top: 12px;
+      right: 20px;
       cursor: pointer;
-      font-size: 30px; /* Larger close button */
-      color: var(--close-button-color);
-      line-height: 1; /* Adjust line height for better centering */
-      transition: color 0.2s ease;
+      font-size: 24px;
+      color: #999;
     }
 
-    .close-button:hover {
-      color: var(--text-dark);
-    }
-
-    /* Small logo within modal for confirmation */
-    .modal-content .modal-logo {
-        height: 40px;
-        margin-bottom: var(--spacing-md);
-        align-self: center;
+    .error {
+      color: #c4004e;
+      font-weight: bold;
+      font-size: 1rem;
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
   <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards" class="logo" />
   <h1 class="title">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
-  <p class="subtitle">กรุณากรอกข้อมูลเพื่อตรวจสอบรายชื่อผู้เข้ารับรางวัลของท่าน</p>
+  <p class="subtitle">กรุณากรอกข้อมูลเพื่อตรวจสอบรายชื่อ</p>
 
   <div class="card">
-    <input type="text" id="searchInput" placeholder="เช่น สมชาย ใจดี หรือ MMA-001" />
+    <input type="text" id="searchInput" placeholder="เช่น สมชาย ใจดี หรือ EYKYH87K9" />
     <button onclick="search()">ค้นหา</button>
     <div id="errorMsg" class="error"></div>
   </div>
 
   <div id="resultModal" class="modal" onclick="closeModal(event)">
     <div class="modal-content" id="resultContent">
-      </div>
+      <!-- ผลลัพธ์จะแสดงที่นี่ -->
+    </div>
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwoWiAkddtLavKFd-qxpuHcOYVqwRaMAqO125y3PbPPAXveLmKqf3erAiCxQIKcs6rI/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec";
 
     async function search() {
       const q = document.getElementById('searchInput').value.trim();
@@ -254,7 +146,7 @@
       errBox.textContent = "";
 
       if (q.length < 2) {
-        errBox.textContent = "กรุณากรอกข้อมูลให้ครบถ้วนอย่างน้อย 2 ตัวอักษร";
+        errBox.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
         return;
       }
 
@@ -265,16 +157,14 @@
         if (!data || !data.name) {
           showModal(`
             <span class="close-button" onclick="closeModal(event)">&times;</span>
-            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="modal-logo">
-            <h2>ขออภัย ไม่พบข้อมูล</h2>
-            <p>ไม่พบข้อมูลของท่านในระบบ</p>
-            <p>กรุณาตรวจสอบชื่อ หรือรหัสอีกครั้ง</p>
-            <p style="font-size:0.9rem; color:#666;">หากมีข้อสงสัย โปรดติดต่อผู้จัดงาน</p>
+            <h2>ขออภัย</h2>
+            <p>ไม่พบข้อมูลของท่าน</p>
+            <p>กรุณาตรวจสอบอีกครั้ง</p>
           `);
         } else {
           showModal(`
             <span class="close-button" onclick="closeModal(event)">&times;</span>
-            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="modal-logo">
+            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" style="height: 40px; margin-bottom: 1rem;">
             <h2>${data.name}</h2>
             <p><strong>สังกัด:</strong> ${data.organization}</p>
             <p><strong>ประเภท:</strong> ${data.awardType}</p>
@@ -284,29 +174,24 @@
             <canvas id="qrcode" class="qrcode"></canvas>
           `);
 
-          // Generate QR code after the modal is shown and content is rendered
           setTimeout(() => {
-            const qrCanvas = document.getElementById("qrcode");
-            if (qrCanvas) {
-                QRCode.toCanvas(qrCanvas, data.licenseCode, { width: 150, margin: 2, color: { dark: '#333', light: '#ffffff' } });
-            }
-          }, 100); // Small delay to ensure canvas is ready
+            QRCode.toCanvas(document.getElementById("qrcode"), data.licenseCode, { width: 120 });
+          }, 100);
         }
       } catch (e) {
-        errBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง หรือติดต่อผู้ดูแลระบบ";
+        errBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง";
         console.error(e);
       }
     }
 
     function showModal(content) {
       document.getElementById("resultContent").innerHTML = content;
-      document.getElementById("resultModal").classList.add("active"); // Use class for active state
+      document.getElementById("resultModal").style.display = "flex";
     }
 
     function closeModal(e) {
-      // Only close if clicking on the overlay or the close button
       if (e.target.id === "resultModal" || e.target.className === "close-button") {
-        document.getElementById("resultModal").classList.remove("active");
+        document.getElementById("resultModal").style.display = "none";
       }
     }
   </script>
