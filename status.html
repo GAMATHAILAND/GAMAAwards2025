@@ -242,7 +242,8 @@
     <script>
         // *** สำคัญมาก: ตรวจสอบให้แน่ใจว่า API_URL นี้ตรงกับ URL ที่คุณ Deploy ใน Google Apps Script! ***
         // ให้ใช้ URL ที่ได้จากขั้นตอนการ Deploy ของ Apps Script ของคุณ
-        const API_URL = "https://script.google.com/macros/s/AKfycbwoWiAkddtLavKFd-qxpuHcOYVqwRaMAqO125y3PbPPAXveLmKqf3erAiCxQIKcs6rI/exec"; 
+        // จากข้อมูลที่คุณให้มาล่าสุดคือ https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec
+        const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec"; 
 
         async function search() {
             const q = document.getElementById("searchInput").value.trim();
@@ -302,13 +303,11 @@
                          modalContent += `<div class="info-row"><strong>รหัสใบอนุญาต:</strong><span>ไม่ระบุ</span></div>`;
                     }
 
-                    // เพิ่มส่วน QR code หาก licenseCode มีค่า
+                    // เพิ่มส่วน QR code หาก licenseCode มีค่า (ไม่มีข้อความ "คิวอาร์โค้ด" แล้ว)
                     if (licenseCode) {
                         modalContent += `<div class="qrcode"><canvas id="qrcode"></canvas></div>`;
-                    } else {
-                        // MODIFIED: Removed "ไม่พบรหัสใบอนุญาตสำหรับ QR Code" if no licenseCode
-                        // modalContent += `<p style="text-align: center; margin-top: 1rem; color: #777;"><em>ไม่พบรหัสใบอนุญาตสำหรับ QR Code</em></p>`;
                     }
+                    // else { ไม่ต้องมีข้อความ "ไม่พบรหัสใบอนุญาตสำหรับ QR Code" แล้ว }
 
                     showModal(modalContent);
 
@@ -321,13 +320,8 @@
                                 QRCode.toCanvas(qrCanvas, licenseCode, { width: 120, margin: 1 }) 
                                     .catch(err => {
                                         console.error("Error generating QR code:", err);
-                                        // ซ่อน canvas และแสดงข้อความหากเกิดข้อผิดพลาด
+                                        // ซ่อน canvas หากเกิดข้อผิดพลาด (ไม่มีข้อความแสดงผลแล้ว)
                                         qrCanvas.style.display = 'none';
-                                        // MODIFIED: Removed the "ไม่สามารถสร้าง QR Code ได้" message if creation fails
-                                        // const qrContainer = qrCanvas.parentElement;
-                                        // if (qrContainer) {
-                                        //     qrContainer.innerHTML = '<p style="color: red; text-align: center;">ไม่สามารถสร้าง QR Code ได้</p>';
-                                        // }
                                     });
                             }
                         }, 100); // ดีเลย์เล็กน้อยเพื่อให้แน่ใจว่า canvas ถูก Render แล้ว
