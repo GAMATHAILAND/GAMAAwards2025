@@ -63,7 +63,7 @@
       transform-origin: center;
       width: 100%; 
       height: 100%;
-      object-fit: cover; /* This makes the image cover the area, cropping as needed */
+      object-fit: contain; /* เปลี่ยนจาก cover เป็น contain เพื่อไม่ให้ภาพถูกบีบ */
       left: 0;
       top: 0;
       /* Initial transform will be applied via JS */
@@ -539,7 +539,7 @@
 
         hiResUserImage.style.transform = `translate(${currentXPos * scaleFactor}px, ${currentYPos * scaleFactor}px) scale(${currentScale})`;
         hiResUserImage.style.transformOrigin = 'center center'; 
-        hiResUserImage.style.objectFit = 'cover'; 
+        hiResUserImage.style.objectFit = 'contain'; /* เปลี่ยนจาก cover เป็น contain เพื่อไม่ให้ภาพถูกบีบ */
         hiResUserImage.style.position = 'absolute';
         hiResUserImage.style.width = '100%'; 
         hiResUserImage.style.height = '100%';
