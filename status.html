@@ -1,289 +1,108 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-    <style>
-        body {
-            font-family: 'Prompt', sans-serif;
-            margin: 0;
-            background: linear-gradient(to top, #511d8e, #7a2ecb);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            padding: 20px;
-            color: #fff;
-        }
-        .card {
-            background: #fff;
-            color: #333;
-            padding: 2rem;
-            border-radius: 1rem;
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-        }
-        .logo {
-            width: 100px;
-            margin-bottom: 1.5rem;
-        }
-        .title {
-            font-size: 1.8rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-        .subtitle {
-            font-size: 1rem;
-            margin-bottom: 1rem;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            font-size: 1rem;
-            border: none;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            background: #f3f3f3;
-        }
-        button {
-            background: #4a148c;
-            color: white;
-            padding: 12px;
-            width: 100%;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.3s ease; /* Added transition for hover effect */
-        }
-        button:hover { /* Added hover effect */
-            background: #5b21a5;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-        }
-        .modal-content {
-            background: #fff;
-            padding: 2rem;
-            border-radius: 1rem;
-            text-align: left;
-            max-width: 500px;
-            width: 90%;
-            position: relative;
-            color: #111;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); /* Added stronger shadow */
-        }
-        .modal-content .modal-header-logo { /* New class for modal logo */
-            height: 40px;
-            display: block;
-            margin: 0 auto 1rem;
-        }
-        .modal-content h2 {
-            color: #6a11cb;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-        .modal-content p {
-            margin: 0.25rem 0;
-            font-size: 1rem;
-            line-height: 1.4; /* Improved readability */
-        }
-        .modal-content p strong {
-            font-weight: 600;
-            color: #333;
-            display: inline-block; /* Changed to inline-block for better label-value spacing */
-            width: 120px; /* Fixed width for labels */
-            font-size: 0.95rem; /* Slightly larger for labels */
-            margin-top: 0.5rem; /* Reduced margin-top for tighter spacing */
-        }
-        .modal-content .info-row { /* New class for cleaner info display */
-            display: flex;
-            align-items: baseline;
-            margin-bottom: 0.2rem;
-        }
-        .modal-content .info-row strong {
-            flex-shrink: 0; /* Prevent label from shrinking */
-            margin-top: 0; /* Reset margin from general p strong rule */
-        }
-        .modal-content .info-row span {
-            flex-grow: 1;
-            padding-left: 10px; /* Space between label and value */
-        }
-
-        .qrcode {
-            margin-top: 2rem;
-            display: flex;
-            justify-content: center;
-            padding: 10px; /* Added padding */
-            border: 1px solid #eee; /* Added border */
-            border-radius: 8px; /* Rounded corners */
-        }
-        .close-button {
-            position: absolute;
-            top: 12px;
-            right: 20px;
-            cursor: pointer;
-            font-size: 28px; /* Slightly larger for easier clicking */
-            color: #999;
-            transition: color 0.2s ease;
-        }
-        .close-button:hover {
-            color: #333;
-        }
-        .error {
-            color: #c4004e;
-            font-weight: bold;
-            font-size: 1rem;
-            margin-top: 1rem;
-        }
-
-        /* Styles for "not found" modal */
-        .modal-not-found h2 {
-            color: #dc3545 !important; /* More striking color for error */
-        }
-        .modal-not-found p {
-            text-align: center;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAMA Awards Lookup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Prompt', sans-serif;
+      background: linear-gradient(to bottom, #7B2CBF, #5A189A);
+      min-height: 100vh;
+      color: #fff;
+    }
+    .modal {
+      background-color: white;
+      color: #333;
+      border-radius: 1rem;
+      padding: 2rem;
+      max-width: 480px;
+      margin: 2rem auto;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+    .qr-canvas {
+      margin: 1rem auto 0;
+    }
+  </style>
 </head>
-<body>
-    <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="logo" />
-    <h1 class="title">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
-    <p class="subtitle">กรุณากรอกชื่อ–นามสกุล หรือรหัสผู้ได้รับรางวัล</p>
+<body class="flex flex-col items-center justify-center px-4 py-8">
 
-    <div class="card">
-        <input type="text" id="searchInput" placeholder="เช่น วรวัฒน์ ใจดี หรือ MAA001" />
-        <button onclick="search()">ค้นหา</button>
-        <div id="errorMsg" class="error"></div>
+  <img src="https://hugmediacreation.com/wp-content/uploads/2025/04/cropped-logo-hug-B.png" alt="Logo" class="w-24 mb-4">
+
+  <h1 class="text-2xl font-bold mb-2">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
+  <p class="mb-6 text-center">กรุณากรอกชื่อ–นามสกุล หรือรหัสผู้ได้รับรางวัล</p>
+
+  <div class="bg-white rounded-xl p-6 text-black w-full max-w-md shadow-lg">
+    <input type="text" id="query" class="w-full p-3 border rounded-md mb-4" placeholder="เช่น ศรินยา นิยมสำรวจ / MAA001 / EYKYH87K8">
+    <button onclick="searchData()" class="w-full bg-purple-800 hover:bg-purple-700 text-white py-3 rounded-lg font-bold">ค้นหา</button>
+    <p id="error" class="text-red-600 text-center mt-4 hidden">เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง</p>
+  </div>
+
+  <!-- Modal -->
+  <div id="resultModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+    <div class="modal relative text-center">
+      <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-500 hover:text-black text-xl">&times;</button>
+      <img src="https://hugmediacreation.com/wp-content/uploads/2025/04/cropped-logo-hug-B.png" alt="Logo" class="w-16 mx-auto mb-4">
+      <h2 class="text-purple-800 font-bold text-xl mb-2" id="nameDisplay"></h2>
+      <div id="infoContainer" class="text-left text-sm space-y-2">
+        <p><span class="font-semibold">ID:</span> <span id="idDisplay"></span></p>
+        <p><span class="font-semibold">สังกัด:</span> <span id="orgDisplay"></span></p>
+        <p><span class="font-semibold">ประเภทรางวัล:</span> <span id="awardDisplay"></span></p>
+        <p><span class="font-semibold">ระดับ:</span> <span id="levelDisplay"></span></p>
+        <p><span class="font-semibold">รหัสใบอนุญาต:</span> <span id="licenseDisplay"></span></p>
+      </div>
+      <canvas id="qrCanvas" class="qr-canvas mt-6"></canvas>
     </div>
+  </div>
 
-    <div id="resultModal" class="modal" onclick="closeModal(event)">
-        <div class="modal-content" id="resultContent"></div>
-    </div>
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzdgnfQL3xsKDpcQXqmdzR88OMFa7iWFdpoeUxmJ3QQd5pGy5tfmhlGBDVZNj2D8UiCRA/exec"; // เปลี่ยน URL ตามของคุณ
 
-    <script>
-        // Ensure this API_URL is correct and accessible.
-        const API_URL = "https://script.google.com/macros/s/AKfycbwoWiAkddtLavKFd-qxpuHcOYVqwRaMAqO125y3PbPPAXveLmKqf3erAiCxQIKcs6rI/exec";
+    function searchData() {
+      const q = document.getElementById("query").value.trim();
+      const errorEl = document.getElementById("error");
+      errorEl.classList.add("hidden");
 
-        async function search() {
-            const q = document.getElementById('searchInput').value.trim();
-            const errBox = document.getElementById('errorMsg');
-            errBox.textContent = ""; // Clear previous error messages
+      if (!q) return;
 
-            if (q.length < 2) {
-                errBox.textContent = "กรุณากรอกข้อมูลอย่างน้อย 2 ตัวอักษร";
-                return;
-            }
+      fetch(`${API_URL}?q=${encodeURIComponent(q)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            alert("ไม่พบข้อมูลของผู้เข้ารับรางวัลที่ท่านค้นหา\nกรุณาตรวจสอบชื่อหรือรหัสอีกครั้ง");
+            return;
+          }
 
-            try {
-                // You can add a loading indicator here if the API call is slow
-                // Example: document.querySelector('button').textContent = 'กำลังค้นหา...';
-                // document.querySelector('button').disabled = true;
+          document.getElementById("nameDisplay").textContent = data.name;
+          document.getElementById("idDisplay").textContent = data.id;
+          document.getElementById("orgDisplay").textContent = data.organization;
+          document.getElementById("awardDisplay").textContent = data.awardType;
+          document.getElementById("levelDisplay").textContent = data.level;
+          document.getElementById("licenseDisplay").textContent = data.licenseCode;
 
-                const res = await axios.get(API_URL + `?q=${encodeURIComponent(q)}`);
-                const data = res.data;
+          const qr = new QRious({
+            element: document.getElementById("qrCanvas"),
+            value: data.id,
+            size: 120,
+            background: 'white',
+            foreground: 'black'
+          });
 
-                console.log("API Response Data:", data); // For debugging: check the data received
-
-                // Check if data is valid and has a name property
-                if (!data || Object.keys(data).length === 0 || !data.name) {
-                    showModal(`
-                        <span class="close-button" onclick="closeModal(event)">&times;</span>
-                        <div class="modal-not-found">
-                            <h2>ไม่พบข้อมูล</h2>
-                            <p>ขออภัย, ไม่พบข้อมูลของผู้เข้ารับรางวัลที่ท่านค้นหา<br>กรุณาตรวจสอบชื่อหรือรหัสอีกครั้ง</p>
-                        </div>
-                    `);
-                } else {
-                    // Provide default values if data properties are missing to prevent "undefined"
-                    const id = data.id ?? 'ไม่ระบุ';
-                    const name = data.name ?? 'ไม่ระบุ';
-                    const organization = data.organization ?? 'ไม่ระบุ';
-                    const awardType = data.awardType ?? 'ไม่ระบุ';
-                    const level = data.level ?? 'ไม่ระบุ';
-                    const licenseCode = data.licenseCode ?? ''; // Use licenseCode for QR, if available
-
-                    let modalContent = `
-                        <span class="close-button" onclick="closeModal(event)">&times;</span>
-                        <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="modal-header-logo" />
-                        <h2>ข้อมูลผู้รับรางวัล</h2>
-                        <div class="info-row"><strong>ID:</strong><span>${id}</span></div>
-                        <div class="info-row"><strong>ชื่อ–นามสกุล:</strong><span>${name}</span></div>
-                        <div class="info-row"><strong>สังกัด:</strong><span>${organization}</span></div>
-                        <div class="info-row"><strong>ประเภทรางวัล:</strong><span>${awardType}</span></div>
-                        <div class="info-row"><strong>ระดับ:</strong><span>${level}</span></div>
-                    `;
-
-                    // Only generate QR code if licenseCode is available
-                    if (licenseCode) {
-                        modalContent += `<div class="qrcode"><canvas id="qrcode"></canvas></div>`;
-                    } else {
-                        modalContent += `<p style="text-align: center; margin-top: 1rem;"><em>ไม่พบรหัสใบอนุญาตสำหรับ QR Code</em></p>`;
-                    }
-
-                    showModal(modalContent);
-
-                    // Generate QR code after modal content is rendered and if licenseCode exists
-                    if (licenseCode) {
-                        setTimeout(() => {
-                            const qrCanvas = document.getElementById("qrcode");
-                            if (qrCanvas) {
-                                QRCode.toCanvas(qrCanvas, licenseCode, { width: 120, margin: 1 })
-                                    .catch(err => {
-                                        console.error("Error generating QR code:", err);
-                                        // Optionally, show a message in the modal if QR fails
-                                    });
-                            }
-                        }, 100);
-                    }
-                }
-            } catch (e) {
-                console.error("Error during API call:", e); // Log the full error
-                errBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง";
-                showModal(`
-                    <span class="close-button" onclick="closeModal(event)">&times;</span>
-                    <div class="modal-not-found">
-                        <h2>เกิดข้อผิดพลาด</h2>
-                        <p>ไม่สามารถเชื่อมต่อกับระบบได้<br>กรุณาลองใหม่อีกครั้งในภายหลัง</p>
-                    </div>
-                `);
-            } finally {
-                // Reset loading indicator if used
-                // document.querySelector('button').textContent = 'ค้นหา';
-                // document.querySelector('button').disabled = false;
-            }
-        }
-
-        function showModal(content) {
-            document.getElementById("resultContent").innerHTML = content;
-            document.getElementById("resultModal").style.display = "flex";
-        }
-
-        function closeModal(e) {
-            if (e.target.id === "resultModal" || e.target.className.includes("close-button")) {
-                document.getElementById("resultModal").style.display = "none";
-            }
-        }
-
-        // Optional: Close modal on Escape key press
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && document.getElementById('resultModal').style.display === 'flex') {
-                document.getElementById('resultModal').style.display = 'none';
-            }
+          document.getElementById("resultModal").classList.remove("hidden");
+        })
+        .catch(err => {
+          console.error(err);
+          errorEl.classList.remove("hidden");
         });
-    </script>
+    }
+
+    function closeModal() {
+      document.getElementById("resultModal").classList.add("hidden");
+    }
+  </script>
+
 </body>
 </html>
