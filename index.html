@@ -5,6 +5,9 @@
   <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" />
+
   <!-- Google Fonts + jQuery + QR -->
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -17,13 +20,12 @@
       padding: 0;
       background: linear-gradient(to top, #4b0082, #e75480);
       color: #fff;
-      text-align: center;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: 40px 20px;
+      padding-top: 40px;
     }
 
     .logo {
@@ -35,35 +37,39 @@
       font-weight: 500;
       margin-bottom: 20px;
       font-size: 22px;
+      text-align: center;
     }
 
     .search-box {
       background: #fff;
       color: #333;
-      padding: 30px;
-      border-radius: 16px;
+      padding: 30px 20px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
       width: 100%;
-      max-width: 400px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      max-width: 360px;
+      text-align: center;
     }
 
     input {
       width: 100%;
       padding: 12px;
       font-size: 16px;
-      border-radius: 8px;
+      border-radius: 10px;
       border: 1px solid #ccc;
+      margin-bottom: 15px;
+      text-align: center;
     }
 
     button {
-      margin-top: 15px;
-      padding: 12px 24px;
-      background: #a044ff;
-      color: white;
-      border: none;
-      border-radius: 8px;
+      padding: 10px 24px;
       font-size: 16px;
+      background: #a044ff;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
       cursor: pointer;
+      font-weight: 500;
     }
 
     .not-found {
@@ -71,41 +77,57 @@
       margin-top: 15px;
     }
 
-    .card {
+    /* Popup Card */
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       background: #fff;
       color: #333;
-      padding: 30px;
       border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      padding: 30px;
+      width: 90%;
       max-width: 360px;
-      width: 100%;
-      margin-top: 40px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      z-index: 1000;
       display: none;
+      text-align: center;
     }
 
-    .card .logo {
+    .popup img.logo {
       width: 90px;
       margin-bottom: 10px;
     }
 
-    .card h2 {
+    .popup h2 {
       color: #4b0082;
-      margin-bottom: 20px;
       font-size: 20px;
+      margin-bottom: 15px;
     }
 
-    .card p {
+    .popup p {
       margin: 6px 0;
       font-size: 16px;
     }
 
     #qr img {
-      margin-top: 20px;
+      margin-top: 15px;
       width: 128px;
     }
 
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      z-index: 999;
+    }
+
     @media(max-width: 480px) {
-      .card, .search-box {
+      .search-box, .popup {
         padding: 20px;
       }
     }
@@ -122,8 +144,11 @@
     <div class="not-found" id="notFound"></div>
   </div>
 
-  <div class="card" id="card">
-    <img class="logo" src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards">
+  <!-- Popup + Overlay -->
+  <div class="overlay" id="overlay" onclick="closePopup()"></div>
+
+  <div class="popup" id="popup">
+    <img class="logo" src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="Logo">
     <h2>ข้อมูลผู้รับรางวัล</h2>
     <p id="name"></p>
     <p id="type"></p>
@@ -156,9 +181,11 @@
     function search() {
       const query = normalize(document.getElementById("searchInput").value);
       const notFound = document.getElementById("notFound");
-      const card = document.getElementById("card");
+      const popup = document.getElementById("popup");
+      const overlay = document.getElementById("overlay");
       notFound.innerText = "";
-      card.style.display = "none";
+      popup.style.display = "none";
+      overlay.style.display = "none";
 
       const match = data.find(entry =>
         normalize(entry["ID"]).includes(query) ||
@@ -184,10 +211,16 @@
           document.getElementById("qr").appendChild(img);
         });
 
-        card.style.display = "block";
+        popup.style.display = "block";
+        overlay.style.display = "block";
       } else {
         notFound.innerText = "ขออภัยในความผิดพลาด ระบบไม่พบข้อมูลของท่าน กรุณาติดต่อเจ้าหน้าที่ฯ";
       }
+    }
+
+    function closePopup() {
+      document.getElementById("popup").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
     }
   </script>
 
