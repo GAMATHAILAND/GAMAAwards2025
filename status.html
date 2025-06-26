@@ -1,199 +1,271 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Prompt', sans-serif;
-      background: linear-gradient(to top, #6a11cb, #c94bdb);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      padding: 20px;
-      color: #fff;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(to top, #6a11cb, #c94bdb);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+            color: #fff;
+        }
 
-    .card {
-      background: #fff;
-      color: #333;
-      padding: 2rem;
-      border-radius: 1rem;
-      max-width: 500px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    }
+        .card {
+            background: #fff;
+            color: #333;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
 
-    .logo {
-      width: 120px;
-      margin-bottom: 1rem;
-    }
+        .logo {
+            width: 120px;
+            margin-bottom: 1rem;
+        }
 
-    .title {
-      font-size: 1.6rem;
-      font-weight: bold;
-      margin-bottom: 0.25rem;
-    }
+        .title {
+            font-size: 1.6rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
 
-    .subtitle {
-      font-size: 0.9rem;
-      color: #eee;
-      margin-bottom: 2rem;
-    }
+        .subtitle {
+            font-size: 0.9rem;
+            color: #eee;
+            margin-bottom: 2rem;
+        }
 
-    input[type="text"] {
-      width: 100%;
-      padding: 12px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      background: #f3f3f3;
-    }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            background: #f3f3f3;
+        }
 
-    button {
-      background: linear-gradient(to right, #9b00e8, #6a11cb);
-      color: white;
-      padding: 12px;
-      width: 100%;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      cursor: pointer;
-    }
+        button {
+            background: linear-gradient(to right, #9b00e8, #6a11cb);
+            color: white;
+            padding: 12px;
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
 
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-    }
+        button:hover {
+            background: linear-gradient(to right, #8a00d0, #5b0da0);
+        }
 
-    .modal-content {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 1rem;
-      text-align: center;
-      max-width: 500px;
-      width: 90%;
-      position: relative;
-    }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
 
-    .modal-content h2 {
-      margin-bottom: 0.5rem;
-      font-size: 1.5rem;
-    }
+        .modal-content {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
 
-    .modal-content p {
-      margin: 0.25rem 0;
-    }
+        .modal-content h2 {
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+            color: #6a11cb;
+        }
 
-    .modal-content .qrcode {
-      margin-top: 1rem;
-    }
+        .modal-content p {
+            margin: 0.25rem 0;
+            color: #555;
+            line-height: 1.5;
+        }
 
-    .close-button {
-      position: absolute;
-      top: 12px;
-      right: 20px;
-      cursor: pointer;
-      font-size: 24px;
-      color: #999;
-    }
+        .modal-content strong {
+            color: #333;
+        }
 
-    .error {
-      color: #c4004e;
-      font-weight: bold;
-      font-size: 1rem;
-      margin-top: 1rem;
-    }
-  </style>
+        .modal-content .qrcode {
+            margin-top: 1.5rem;
+            border: 1px solid #eee;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 12px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 28px;
+            color: #999;
+            transition: color 0.2s ease;
+        }
+
+        .close-button:hover {
+            color: #333;
+        }
+
+        .error {
+            color: #c4004e;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 <body>
-  <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards" class="logo" />
-  <h1 class="title">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
-  <p class="subtitle">กรุณากรอกข้อมูลเพื่อตรวจสอบรายชื่อ</p>
+    <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards" class="logo" />
+    <h1 class="title">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
+    <p class="subtitle">กรุณากรอกข้อมูลเพื่อตรวจสอบรายชื่อ</p>
 
-  <div class="card">
-    <input type="text" id="searchInput" placeholder="เช่น สมชาย ใจดี หรือ EYKYH87K9" />
-    <button onclick="search()">ค้นหา</button>
-    <div id="errorMsg" class="error"></div>
-  </div>
-
-  <div id="resultModal" class="modal" onclick="closeModal(event)">
-    <div class="modal-content" id="resultContent">
-      <!-- ผลลัพธ์จะแสดงที่นี่ -->
+    <div class="card">
+        <input type="text" id="searchInput" placeholder="เช่น สมชาย ใจดี หรือ EYKYH87K9" />
+        <button onclick="search()">ค้นหา</button>
+        <div id="errorMsg" class="error"></div>
     </div>
-  </div>
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec";
+    <div id="resultModal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content" id="resultContent">
+            </div>
+    </div>
 
-    async function search() {
-      const q = document.getElementById('searchInput').value.trim();
-      const errBox = document.getElementById('errorMsg');
-      errBox.textContent = "";
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec";
 
-      if (q.length < 2) {
-        errBox.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
-        return;
-      }
+        async function search() {
+            const q = document.getElementById('searchInput').value.trim();
+            const errBox = document.getElementById('errorMsg');
+            errBox.textContent = ""; // Clear previous errors
 
-      try {
-        const res = await axios.get(API_URL + `?q=${encodeURIComponent(q)}`);
-        const data = res.data;
+            if (q.length < 2) {
+                errBox.textContent = "กรุณากรอกข้อมูลอย่างน้อย 2 ตัวอักษร";
+                return;
+            }
 
-        if (!data || !data.name) {
-          showModal(`
-            <span class="close-button" onclick="closeModal(event)">&times;</span>
-            <h2>ขออภัย</h2>
-            <p>ไม่พบข้อมูลของท่าน</p>
-            <p>กรุณาตรวจสอบอีกครั้ง</p>
-          `);
-        } else {
-          showModal(`
-            <span class="close-button" onclick="closeModal(event)">&times;</span>
-            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" style="height: 40px; margin-bottom: 1rem;">
-            <h2>${data.name}</h2>
-            <p><strong>สังกัด:</strong> ${data.organization}</p>
-            <p><strong>ประเภท:</strong> ${data.awardType}</p>
-            <p><strong>ระดับ:</strong> ${data.level}</p>
-            <p><strong>รหัส:</strong> ${data.id}</p>
-            <p><strong>รหัสใบอนุญาต:</strong> ${data.licenseCode}</p>
-            <canvas id="qrcode" class="qrcode"></canvas>
-          `);
+            try {
+                // Show a loading indicator if desired
+                // document.getElementById('searchInput').disabled = true;
+                // document.querySelector('button').disabled = true;
+                // document.querySelector('button').textContent = 'กำลังค้นหา...';
 
-          setTimeout(() => {
-            QRCode.toCanvas(document.getElementById("qrcode"), data.licenseCode, { width: 120 });
-          }, 100);
+                const res = await axios.get(API_URL + `?q=${encodeURIComponent(q)}`);
+                const data = res.data;
+
+                // Log the data to console for debugging
+                console.log("API Response Data:", data);
+
+                if (!data || Object.keys(data).length === 0 || !data.name) {
+                    showModal(`
+                        <span class="close-button" onclick="closeModal(event)">&times;</span>
+                        <h2>ไม่พบข้อมูล</h2>
+                        <p>ขออภัย, ไม่พบข้อมูลของผู้เข้ารับรางวัลที่ท่านค้นหา</p>
+                        <p>กรุณาตรวจสอบชื่อหรือรหัสอีกครั้ง</p>
+                    `);
+                } else {
+                    // Ensure all expected properties exist, default to empty string if not
+                    const name = data.name || 'ไม่ระบุ';
+                    const organization = data.organization || 'ไม่ระบุ';
+                    const awardType = data.awardType || 'ไม่ระบุ';
+                    const level = data.level || 'ไม่ระบุ';
+                    const id = data.id || 'ไม่ระบุ';
+                    const licenseCode = data.licenseCode || ''; // licenseCode is used for QR, so handle specifically
+
+                    let modalContent = `
+                        <span class="close-button" onclick="closeModal(event)">&times;</span>
+                        <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" style="height: 40px; margin-bottom: 1rem;" alt="GAMA Awards Logo">
+                        <h2>${name}</h2>
+                        <p><strong>สังกัด:</strong> ${organization}</p>
+                        <p><strong>ประเภท:</strong> ${awardType}</p>
+                        <p><strong>ระดับ:</strong> ${level}</p>
+                        <p><strong>รหัส:</strong> ${id}</p>
+                    `;
+
+                    if (licenseCode) {
+                        modalContent += `<p><strong>รหัสใบอนุญาต:</strong> ${licenseCode}</p>`;
+                        modalContent += `<canvas id="qrcode" class="qrcode"></canvas>`;
+                    } else {
+                         modalContent += `<p><em>ไม่พบรหัสใบอนุญาต</em></p>`;
+                    }
+                    
+                    showModal(modalContent);
+
+                    if (licenseCode) {
+                        setTimeout(() => {
+                            const qrCanvas = document.getElementById("qrcode");
+                            if (qrCanvas) {
+                                QRCode.toCanvas(qrCanvas, licenseCode, { width: 120 })
+                                    .catch(err => {
+                                        console.error("Error generating QR code:", err);
+                                        // Optionally display an error in the modal if QR fails
+                                    });
+                            }
+                        }, 100);
+                    }
+                }
+            } catch (e) {
+                console.error("Error during API call:", e);
+                errBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ หรือข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง";
+                showModal(`
+                    <span class="close-button" onclick="closeModal(event)">&times;</span>
+                    <h2>เกิดข้อผิดพลาด</h2>
+                    <p>ไม่สามารถเชื่อมต่อกับระบบได้</p>
+                    <p>กรุณาลองใหม่อีกครั้งในภายหลัง</p>
+                `);
+            } finally {
+                // Re-enable input and button regardless of success or failure
+                // document.getElementById('searchInput').disabled = false;
+                // document.querySelector('button').disabled = false;
+                // document.querySelector('button').textContent = 'ค้นหา';
+            }
         }
-      } catch (e) {
-        errBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง";
-        console.error(e);
-      }
-    }
 
-    function showModal(content) {
-      document.getElementById("resultContent").innerHTML = content;
-      document.getElementById("resultModal").style.display = "flex";
-    }
+        function showModal(content) {
+            document.getElementById("resultContent").innerHTML = content;
+            document.getElementById("resultModal").style.display = "flex";
+        }
 
-    function closeModal(e) {
-      if (e.target.id === "resultModal" || e.target.className === "close-button") {
-        document.getElementById("resultModal").style.display = "none";
-      }
-    }
-  </script>
+        function closeModal(e) {
+            // Close only if clicking on the modal background or the close button
+            if (e.target.id === "resultModal" || e.target.className === "close-button") {
+                document.getElementById("resultModal").style.display = "none";
+            }
+        }
+
+        // Optional: Close modal on Escape key press
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('resultModal').style.display === 'flex') {
+                document.getElementById('resultModal').style.display = 'none';
+            }
+        });
+
+    </script>
 </body>
 </html>
