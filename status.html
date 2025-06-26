@@ -241,7 +241,7 @@
     <script>
         // *** สำคัญมาก: ตรวจสอบให้แน่ใจว่า API_URL นี้ตรงกับ URL ที่คุณ Deploy ใน Google Apps Script! ***
         // ให้ใช้ URL ที่ได้จากขั้นตอนการ Deploy ของ Apps Script ของคุณ
-        const API_URL = "https://script.google.com/macros/s/AKfycbwoWiAkddtLavKFd-qxpuHcOYVqwRaMAqO125y3PbPPAXveLmKqf3erAiCxQIKcs6rI/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbwoWiAkddtLavKFd-qxpuHcOYVqwRaMAqO125y3PbPPAXveLmKqf3erAiCxQIKcs6rI/exec"; // Replace with your actual Apps Script URL
 
         async function search() {
             const q = document.getElementById("searchInput").value.trim();
@@ -281,7 +281,7 @@
                     const organization = data.organization ?? 'ไม่ระบุ';
                     const awardType = data.awardType ?? 'ไม่ระบุ';
                     const level = data.level ?? 'ไม่ระบุ';
-                    const licenseCode = data.licenseCode ?? ''; // ใช้ licenseCode สำหรับ QR Code
+                    const licenseCode = data.licenseCode ?? ''; 
 
                     let modalContent = `
                         <span class="close-button" onclick="closeModal(event)">&times;</span>
@@ -296,27 +296,27 @@
                     
                     // เพิ่มรหัสใบอนุญาต (licenseCode) ด้วย
                     if (licenseCode) {
-                         modalContent += `<div class="info-row"><strong>รหัสใบอนุญาต:</strong><span>${licenseCode}</span></div>`;
+                        modalContent += `<div class="info-row"><strong>รหัสใบอนุญาต:</strong><span>${licenseCode}</span></div>`;
                     } else {
-                         modalContent += `<div class="info-row"><strong>รหัสใบอนุญาต:</strong><span>ไม่ระบุ</span></div>`;
+                        modalContent += `<div class="info-row"><strong>รหัสใบอนุญาต:</strong><span>ไม่ระบุ</span></div>`;
                     }
 
-                    // เพิ่มส่วน QR code หาก licenseCode มีค่า
-                    if (licenseCode) {
+                    // เพิ่มส่วน QR code หาก ID มีค่า (เปลี่ยนจาก licenseCode เป็น id)
+                    if (id !== 'ไม่ระบุ') { // Check if ID is available to generate QR code
                         modalContent += `<div class="qrcode"><canvas id="qrcode"></canvas></div>`;
                     } else {
-                        modalContent += `<p style="text-align: center; margin-top: 1rem; color: #777;"><em>ไม่พบรหัสใบอนุญาตสำหรับ QR Code</em></p>`;
+                        modalContent += `<p style="text-align: center; margin-top: 1rem; color: #777;"><em>ไม่พบ ID สำหรับ QR Code</em></p>`;
                     }
 
                     showModal(modalContent);
 
-                    // สร้าง QR code หลังจาก Modal แสดงผลแล้ว และมี licenseCode
-                    if (licenseCode) {
+                    // สร้าง QR code หลังจาก Modal แสดงผลแล้ว และมี ID (เปลี่ยนจาก licenseCode เป็น id)
+                    if (id !== 'ไม่ระบุ') {
                         setTimeout(() => {
                             const qrCanvas = document.getElementById("qrcode");
                             if (qrCanvas) {
-                                // ใช้ data.licenseCode ในการสร้าง QR code
-                                QRCode.toCanvas(qrCanvas, licenseCode, { width: 120, margin: 1 }) 
+                                // ใช้ data.id ในการสร้าง QR code (เปลี่ยนจาก licenseCode เป็น id)
+                                QRCode.toCanvas(qrCanvas, id, { width: 120, margin: 1 }) 
                                     .catch(err => {
                                         console.error("Error generating QR code:", err);
                                         // ซ่อน canvas และแสดงข้อความหากเกิดข้อผิดพลาด
