@@ -159,14 +159,13 @@
             font-size: 1rem;
         }
 
-        /* MODIFIED: Removed border, padding, and background from .qrcode */
         .modal-content .qrcode {
             margin-top: 1.5rem;
             text-align: center;
-            /* Removed: border: 1px solid #eee; */
-            /* Removed: border-radius: 8px; */
-            /* Removed: background-color: #f9f9f9; */
-            /* Removed: padding: 10px; */ 
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #f9f9f9;
         }
         .modal-content .qrcode canvas {
             display: block;
@@ -242,8 +241,7 @@
     <script>
         // *** สำคัญมาก: ตรวจสอบให้แน่ใจว่า API_URL นี้ตรงกับ URL ที่คุณ Deploy ใน Google Apps Script! ***
         // ให้ใช้ URL ที่ได้จากขั้นตอนการ Deploy ของ Apps Script ของคุณ
-        // จากข้อมูลที่คุณให้มาล่าสุดคือ https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec
-        const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbwoWiAkddtLavKFd-qxpuHcOYVqwRaMAqO125y3PbPPAXveLmKqf3erAiCxQIKcs6rI/exec"; 
 
         async function search() {
             const q = document.getElementById("searchInput").value.trim();
@@ -303,11 +301,12 @@
                          modalContent += `<div class="info-row"><strong>รหัสใบอนุญาต:</strong><span>ไม่ระบุ</span></div>`;
                     }
 
-                    // เพิ่มส่วน QR code หาก licenseCode มีค่า (ไม่มีข้อความ "คิวอาร์โค้ด" แล้ว)
+                    // เพิ่มส่วน QR code หาก licenseCode มีค่า
                     if (licenseCode) {
                         modalContent += `<div class="qrcode"><canvas id="qrcode"></canvas></div>`;
+                    } else {
+                        modalContent += `<p style="text-align: center; margin-top: 1rem; color: #777;"><em>ไม่พบรหัสใบอนุญาตสำหรับ QR Code</em></p>`;
                     }
-                    // else { ไม่ต้องมีข้อความ "ไม่พบรหัสใบอนุญาตสำหรับ QR Code" แล้ว }
 
                     showModal(modalContent);
 
@@ -320,8 +319,12 @@
                                 QRCode.toCanvas(qrCanvas, licenseCode, { width: 120, margin: 1 }) 
                                     .catch(err => {
                                         console.error("Error generating QR code:", err);
-                                        // ซ่อน canvas หากเกิดข้อผิดพลาด (ไม่มีข้อความแสดงผลแล้ว)
+                                        // ซ่อน canvas และแสดงข้อความหากเกิดข้อผิดพลาด
                                         qrCanvas.style.display = 'none';
+                                        const qrContainer = qrCanvas.parentElement;
+                                        if (qrContainer) {
+                                            qrContainer.innerHTML = '<p style="color: red; text-align: center;">ไม่สามารถสร้าง QR Code ได้</p>';
+                                        }
                                     });
                             }
                         }, 100); // ดีเลย์เล็กน้อยเพื่อให้แน่ใจว่า canvas ถูก Render แล้ว
