@@ -88,6 +88,7 @@
       max-width: 500px;
       width: 90%;
       position: relative;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
     }
 
     .modal-content h2 {
@@ -151,21 +152,21 @@
       }
 
       try {
-        const res = await axios.get(`${API_URL}?q=${encodeURIComponent(q)}`);
+        const res = await axios.get(API_URL + `?q=${encodeURIComponent(q)}`);
         const data = res.data;
 
-        if (!data || !data.name) {
+        if (data.error || !data.name) {
           showModal(`
             <span class="close-button" onclick="closeModal(event)">&times;</span>
-            <h2>ขออภัย</h2>
-            <p>ไม่พบข้อมูลของท่าน</p>
-            <p>กรุณาตรวจสอบอีกครั้ง</p>
+            <h2 style="color: #8000c4;">ไม่พบข้อมูล</h2>
+            <p>ขออภัย, ไม่พบข้อมูลของผู้เข้ารับรางวัลที่ท่านค้นหา</p>
+            <p>กรุณาตรวจสอบชื่อหรือรหัสอีกครั้ง</p>
           `);
         } else {
           showModal(`
             <span class="close-button" onclick="closeModal(event)">&times;</span>
             <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" style="height: 40px; margin-bottom: 1rem;">
-            <h2>${data.name}</h2>
+            <h2 style="color:#8000c4;">${data.name}</h2>
             <p><strong>สังกัด:</strong> ${data.organization}</p>
             <p><strong>ประเภท:</strong> ${data.awardType}</p>
             <p><strong>ระดับ:</strong> ${data.level}</p>
