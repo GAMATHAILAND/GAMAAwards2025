@@ -11,8 +11,7 @@
         body {
             font-family: 'Prompt', sans-serif;
             margin: 0;
-            /* Reverted to previous working background based on your input */
-            background: linear-gradient(to top, #511d8e, #7a2ecb); 
+            background: linear-gradient(to top, #511d8e, #7a2ecb);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -20,7 +19,6 @@
             flex-direction: column;
             padding: 20px;
             color: #fff;
-            box-sizing: border-box; /* Added for consistency */
         }
         .card {
             background: #fff;
@@ -35,20 +33,15 @@
         .logo {
             width: 100px;
             margin-bottom: 1.5rem;
-            display: block; /* Ensure it behaves as a block for margin auto to work (though flex parent often handles this) */
-            margin-left: auto;
-            margin-right: auto;
         }
         .title {
             font-size: 1.8rem;
             font-weight: bold;
             margin-bottom: 0.5rem;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.2); /* Added subtle shadow back for better contrast */
         }
         .subtitle {
             font-size: 1rem;
             margin-bottom: 1rem;
-            color: rgba(255,255,255, 0.9);
         }
         input[type="text"] {
             width: 100%;
@@ -58,12 +51,6 @@
             border-radius: 8px;
             margin-bottom: 1rem;
             background: #f3f3f3;
-            box-sizing: border-box;
-            outline: none; /* Removes default outline */
-            transition: box-shadow 0.2s ease;
-        }
-        input[type="text"]:focus {
-            box-shadow: 0 0 0 3px rgba(122, 46, 203, 0.5); /* Highlight on focus */
         }
         button {
             background: #4a148c;
@@ -74,32 +61,19 @@
             border-radius: 8px;
             font-size: 1rem;
             cursor: pointer;
-            transition: background 0.3s ease, transform 0.1s ease;
-            font-weight: 500;
+            transition: background 0.3s ease; /* Added transition for hover effect */
         }
-        button:hover {
+        button:hover { /* Added hover effect */
             background: #5b21a5;
-            transform: translateY(-2px);
-        }
-        button:active {
-            transform: translateY(0);
-        }
-        button:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
         }
         .modal {
             display: none;
             position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.6);
-            display: flex; /* Ensure flex for centering */
             justify-content: center;
             align-items: center;
-            z-index: 1000; /* Higher z-index */
-            overflow-y: auto; /* Allow scrolling if content is too tall */
-            padding: 20px;
-            box-sizing: border-box;
+            z-index: 10;
         }
         .modal-content {
             background: #fff;
@@ -107,66 +81,62 @@
             border-radius: 1rem;
             text-align: left;
             max-width: 500px;
-            width: 100%; /* Changed from 90% for better consistency with max-width */
+            width: 90%;
             position: relative;
             color: #111;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            animation: fadeIn 0.3s ease-out; /* Added fade-in animation */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); /* Added stronger shadow */
         }
-        .modal-content .modal-header-logo { /* Specific class for logo inside the modal */
-            height: 40px; /* Keep height fixed */
-            max-width: 100%; /* Prevent overflow if image is too wide */
-            height: auto; /* Maintain aspect ratio */
-            display: block; /* Ensure it's a block element */
-            margin: 0 auto 1rem; /* Centers the logo and adds bottom margin */
+        .modal-content .modal-header-logo { /* New class for modal logo */
+            height: 40px;
+            display: block;
+            margin: 0 auto 1rem;
         }
         .modal-content h2 {
             color: #6a11cb;
             margin-bottom: 1rem;
             text-align: center;
-            font-size: 1.6rem;
-            font-weight: 700;
         }
         .modal-content p {
             margin: 0.25rem 0;
             font-size: 1rem;
-            line-height: 1.4;
+            line-height: 1.4; /* Improved readability */
         }
-        .info-row { /* Removed .modal-content prefix for cleaner CSS */
+        .modal-content p strong {
+            font-weight: 600;
+            color: #333;
+            display: inline-block; /* Changed to inline-block for better label-value spacing */
+            width: 120px; /* Fixed width for labels */
+            font-size: 0.95rem; /* Slightly larger for labels */
+            margin-top: 0.5rem; /* Reduced margin-top for tighter spacing */
+        }
+        .modal-content .info-row { /* New class for cleaner info display */
             display: flex;
             align-items: baseline;
             margin-bottom: 0.2rem;
-            flex-wrap: wrap; /* Allows wrapping on smaller screens */
         }
-        .info-row strong { /* Removed .modal-content prefix */
-            font-weight: 600;
-            color: #333;
-            flex-shrink: 0;
-            width: 130px; /* Increased fixed width slightly for labels for better alignment */
-            font-size: 0.95rem;
-            padding-right: 10px;
-            box-sizing: border-box; /* Ensures padding is included in width */
+        .modal-content .info-row strong {
+            flex-shrink: 0; /* Prevent label from shrinking */
+            margin-top: 0; /* Reset margin from general p strong rule */
         }
-        .info-row span { /* Removed .modal-content prefix */
+        .modal-content .info-row span {
             flex-grow: 1;
-            word-break: break-word; /* Prevents long words from overflowing */
+            padding-left: 10px; /* Space between label and value */
         }
 
         .qrcode {
             margin-top: 2rem;
             display: flex;
             justify-content: center;
-            padding: 10px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            background-color: #f9f9f9;
+            padding: 10px; /* Added padding */
+            border: 1px solid #eee; /* Added border */
+            border-radius: 8px; /* Rounded corners */
         }
         .close-button {
             position: absolute;
             top: 12px;
             right: 20px;
             cursor: pointer;
-            font-size: 28px;
+            font-size: 28px; /* Slightly larger for easier clicking */
             color: #999;
             transition: color 0.2s ease;
         }
@@ -176,40 +146,16 @@
         .error {
             color: #c4004e;
             font-weight: bold;
-            font-size: 0.95rem;
+            font-size: 1rem;
             margin-top: 1rem;
         }
 
-        /* Styles for "Not Found" / Error Modal */
+        /* Styles for "not found" modal */
         .modal-not-found h2 {
-            color: #dc3545 !important;
+            color: #dc3545 !important; /* More striking color for error */
         }
         .modal-not-found p {
             text-align: center;
-            color: #555;
-        }
-
-        /* Animation for Modal */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        /* Responsive Adjustments */
-        @media (max-width: 600px) {
-            .card, .modal-content {
-                padding: 1.5rem;
-                margin: 10px;
-            }
-            .title {
-                font-size: 1.5rem;
-            }
-            .subtitle {
-                font-size: 0.9rem;
-            }
-            .info-row strong {
-                width: 100px;
-            }
         }
     </style>
 </head>
@@ -220,13 +166,12 @@
 
     <div class="card">
         <input type="text" id="searchInput" placeholder="เช่น วรวัฒน์ ใจดี หรือ MAA001" />
-        <button id="searchButton" onclick="search()">ค้นหา</button>
+        <button onclick="search()">ค้นหา</button>
         <div id="errorMsg" class="error"></div>
     </div>
 
     <div id="resultModal" class="modal" onclick="closeModal(event)">
-        <div class="modal-content" id="resultContent">
-            </div>
+        <div class="modal-content" id="resultContent"></div>
     </div>
 
     <script>
@@ -236,28 +181,24 @@
         async function search() {
             const q = document.getElementById('searchInput').value.trim();
             const errBox = document.getElementById('errorMsg');
-            const searchButton = document.getElementById('searchButton');
+            errBox.textContent = ""; // Clear previous error messages
 
-            errBox.textContent = ""; // Clear any previous error messages
-
-            // Input validation
             if (q.length < 2) {
                 errBox.textContent = "กรุณากรอกข้อมูลอย่างน้อย 2 ตัวอักษร";
-                return; // Stop execution if input is too short
+                return;
             }
 
-            // Show loading state
-            searchButton.textContent = 'กำลังค้นหา...';
-            searchButton.disabled = true;
-            document.getElementById('searchInput').disabled = true;
-
             try {
+                // You can add a loading indicator here if the API call is slow
+                // Example: document.querySelector('button').textContent = 'กำลังค้นหา...';
+                // document.querySelector('button').disabled = true;
+
                 const res = await axios.get(API_URL + `?q=${encodeURIComponent(q)}`);
                 const data = res.data;
 
-                console.log("API Response Data:", data); // Log the API response for debugging
+                console.log("API Response Data:", data); // For debugging: check the data received
 
-                // Check if data is valid and has a 'name' property
+                // Check if data is valid and has a name property
                 if (!data || Object.keys(data).length === 0 || !data.name) {
                     showModal(`
                         <span class="close-button" onclick="closeModal(event)">&times;</span>
@@ -267,14 +208,13 @@
                         </div>
                     `);
                 } else {
-                    // Use nullish coalescing operator (??) to provide default 'ไม่ระบุ' if data property is null/undefined
+                    // Provide default values if data properties are missing to prevent "undefined"
                     const id = data.id ?? 'ไม่ระบุ';
                     const name = data.name ?? 'ไม่ระบุ';
                     const organization = data.organization ?? 'ไม่ระบุ';
                     const awardType = data.awardType ?? 'ไม่ระบุ';
                     const level = data.level ?? 'ไม่ระบุ';
-                    // Use licenseCode for QR, default to empty string if not available
-                    const licenseCode = data.licenseCode ?? ''; 
+                    const licenseCode = data.licenseCode ?? ''; // Use licenseCode for QR, if available
 
                     let modalContent = `
                         <span class="close-button" onclick="closeModal(event)">&times;</span>
@@ -287,35 +227,31 @@
                         <div class="info-row"><strong>ระดับ:</strong><span>${level}</span></div>
                     `;
 
-                    // Only generate QR code section if licenseCode is available and not empty
+                    // Only generate QR code if licenseCode is available
                     if (licenseCode) {
                         modalContent += `<div class="qrcode"><canvas id="qrcode"></canvas></div>`;
                     } else {
-                        modalContent += `<p style="text-align: center; margin-top: 1rem; color: #777;"><em>ไม่พบรหัสใบอนุญาตสำหรับ QR Code</em></p>`;
+                        modalContent += `<p style="text-align: center; margin-top: 1rem;"><em>ไม่พบรหัสใบอนุญาตสำหรับ QR Code</em></p>`;
                     }
 
                     showModal(modalContent);
 
-                    // Generate QR code after modal content is rendered to ensure canvas element exists
+                    // Generate QR code after modal content is rendered and if licenseCode exists
                     if (licenseCode) {
                         setTimeout(() => {
                             const qrCanvas = document.getElementById("qrcode");
-                            if (qrCanvas) { // Double check if canvas element is still in DOM
+                            if (qrCanvas) {
                                 QRCode.toCanvas(qrCanvas, licenseCode, { width: 120, margin: 1 })
                                     .catch(err => {
                                         console.error("Error generating QR code:", err);
-                                        qrCanvas.style.display = 'none'; // Hide canvas
-                                        const qrContainer = qrCanvas.parentElement;
-                                        if (qrContainer) {
-                                            qrContainer.innerHTML = '<p style="color: red; text-align: center;">ไม่สามารถสร้าง QR Code ได้</p>';
-                                        }
+                                        // Optionally, show a message in the modal if QR fails
                                     });
                             }
-                        }, 100); // Small delay to ensure DOM update
+                        }, 100);
                     }
                 }
             } catch (e) {
-                console.error("Error during API call:", e); // Log the full error for debugging
+                console.error("Error during API call:", e); // Log the full error
                 errBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง";
                 showModal(`
                     <span class="close-button" onclick="closeModal(event)">&times;</span>
@@ -325,28 +261,24 @@
                     </div>
                 `);
             } finally {
-                // Reset loading state regardless of success or failure
-                searchButton.textContent = 'ค้นหา';
-                searchButton.disabled = false;
-                document.getElementById('searchInput').disabled = false;
+                // Reset loading indicator if used
+                // document.querySelector('button').textContent = 'ค้นหา';
+                // document.querySelector('button').disabled = false;
             }
         }
 
-        // Function to display the modal
         function showModal(content) {
             document.getElementById("resultContent").innerHTML = content;
-            document.getElementById("resultModal").style.display = "flex"; // Make it visible
+            document.getElementById("resultModal").style.display = "flex";
         }
 
-        // Function to close the modal
         function closeModal(e) {
-            // Close only if clicking on the modal background or the close button itself
             if (e.target.id === "resultModal" || e.target.className.includes("close-button")) {
                 document.getElementById("resultModal").style.display = "none";
             }
         }
 
-        // Optional: Close modal when Escape key is pressed
+        // Optional: Close modal on Escape key press
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && document.getElementById('resultModal').style.display === 'flex') {
                 document.getElementById('resultModal').style.display = 'none';
