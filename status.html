@@ -36,9 +36,9 @@
         .logo {
             width: 120px;
             margin-bottom: 1rem;
-            display: block; /* Ensures margin auto works */
-            margin-left: auto; /* Centers the logo horizontally */
-            margin-right: auto; /* Centers the logo horizontally */
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .title {
@@ -120,13 +120,12 @@
             animation: fadeIn 0.3s ease-out;
         }
 
-        /* NEW/MODIFIED CSS FOR MODAL LOGO AND INFO ROWS */
         .modal-content .modal-header-logo {
-            height: 40px; /* Fixed height for consistency */
-            max-width: 100px; /* Max width to ensure it doesn't get too large */
-            height: auto; /* Maintain aspect ratio */
-            display: block; /* Makes it a block element to use margin auto */
-            margin: 0 auto 1.5rem; /* Centers the logo and adds bottom margin */
+            height: 40px;
+            max-width: 100px;
+            height: auto;
+            display: block;
+            margin: 0 auto 1.5rem;
         }
 
         .modal-content h2 {
@@ -137,28 +136,27 @@
             color: #6a11cb;
         }
         
-        /* NEW/MODIFIED CSS FOR INFO ROWS (key-value pairs) */
         .info-row {
-            display: flex; /* Use flexbox for horizontal alignment */
-            align-items: baseline; /* Align text baselines */
-            margin-bottom: 0.25rem; /* Space between rows */
-            flex-wrap: wrap; /* Allow wrapping on smaller screens if content is long */
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 0.25rem;
+            flex-wrap: wrap;
         }
 
         .info-row strong {
             font-weight: 600;
             color: #333;
-            flex-shrink: 0; /* Prevent "strong" from shrinking */
-            width: 120px; /* Fixed width for the label */
-            padding-right: 10px; /* Space between label and value */
-            box-sizing: border-box; /* Include padding in width */
-            font-size: 1rem; /* Adjust font size for labels if needed */
+            flex-shrink: 0;
+            width: 120px;
+            padding-right: 10px;
+            box-sizing: border-box;
+            font-size: 1rem;
         }
 
         .info-row span {
-            flex-grow: 1; /* Allow "span" to take up remaining space */
-            word-break: break-word; /* Prevent long words from overflowing */
-            font-size: 1rem; /* Adjust font size for values if needed */
+            flex-grow: 1;
+            word-break: break-word;
+            font-size: 1rem;
         }
 
         .modal-content .qrcode {
@@ -219,7 +217,7 @@
                 font-size: 0.85rem;
             }
             .info-row strong {
-                width: 90px; /* Adjust label width for smaller screens */
+                width: 90px;
             }
         }
     </style>
@@ -242,7 +240,8 @@
 
     <script>
         // *** สำคัญมาก: ตรวจสอบให้แน่ใจว่า API_URL นี้ตรงกับ URL ที่คุณ Deploy ใน Google Apps Script! ***
-        const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec"; 
+        // ให้ใช้ URL ที่ได้จากขั้นตอนการ Deploy ของ Apps Script ของคุณ
+        const API_URL = "https://script.google.com/macros/s/AKfycbwoWiAkddtLavKFd-qxpuHcOYVqwRaMAqO125y3PbPPAXveLmKqf3erAiCxQIKcs6rI/exec"; 
 
         async function search() {
             const q = document.getElementById("searchInput").value.trim();
@@ -266,6 +265,7 @@
 
                 console.log("API Response Data:", data); // ตรวจสอบข้อมูลที่ได้รับจาก API
 
+                // ตรวจสอบว่ามี error จาก Apps Script หรือไม่ หรือไม่พบข้อมูล
                 if (!data || data.error) {
                     showModal(`
                         <span class="close-button" onclick="closeModal(event)">&times;</span>
@@ -275,9 +275,8 @@
                         </div>
                     `);
                 } else {
-                    // *** แก้ไข: เพิ่มโลโก้ใน Modal และใช้ .info-row สำหรับการจัดรูปแบบข้อมูล ***
-                    // *** แก้ไข: ใช้ data.licenseCode สำหรับ QR Code ***
-                    const id = data.id ?? 'ไม่ระบุ'; // ใช้ ?? เพื่อให้ค่าเริ่มต้นหากเป็น null/undefined
+                    // ใช้ nullish coalescing operator (??) เพื่อให้ค่าเริ่มต้น 'ไม่ระบุ' หากข้อมูลเป็น null/undefined
+                    const id = data.id ?? 'ไม่ระบุ';
                     const name = data.name ?? 'ไม่ระบุ';
                     const organization = data.organization ?? 'ไม่ระบุ';
                     const awardType = data.awardType ?? 'ไม่ระบุ';
@@ -316,22 +315,23 @@
                         setTimeout(() => {
                             const qrCanvas = document.getElementById("qrcode");
                             if (qrCanvas) {
-                                // *** แก้ไข: ใช้ data.licenseCode ในการสร้าง QR code ***
-                                QRCode.toCanvas(qrCanvas, licenseCode, { width: 120, margin: 1 })
+                                // ใช้ data.licenseCode ในการสร้าง QR code
+                                QRCode.toCanvas(qrCanvas, licenseCode, { width: 120, margin: 1 }) 
                                     .catch(err => {
                                         console.error("Error generating QR code:", err);
-                                        qrCanvas.style.display = 'none'; // ซ่อน canvas หากเกิดข้อผิดพลาด
+                                        // ซ่อน canvas และแสดงข้อความหากเกิดข้อผิดพลาด
+                                        qrCanvas.style.display = 'none';
                                         const qrContainer = qrCanvas.parentElement;
                                         if (qrContainer) {
                                             qrContainer.innerHTML = '<p style="color: red; text-align: center;">ไม่สามารถสร้าง QR Code ได้</p>';
                                         }
                                     });
                             }
-                        }, 100);
+                        }, 100); // ดีเลย์เล็กน้อยเพื่อให้แน่ใจว่า canvas ถูก Render แล้ว
                     }
                 }
             } catch (e) {
-                console.error("Error during API call:", e);
+                console.error("Error during API call:", e); // Log ข้อผิดพลาดเต็มรูปแบบ
                 errBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง";
                 showModal(`
                     <span class="close-button" onclick="closeModal(event)">&times;</span>
@@ -341,23 +341,28 @@
                     </div>
                 `);
             } finally {
+                // รีเซ็ตสถานะปุ่มและช่องค้นหา
                 searchButton.textContent = 'ค้นหา';
                 searchButton.disabled = false;
                 document.getElementById('searchInput').disabled = false;
             }
         }
 
+        // ฟังก์ชันสำหรับแสดง Modal
         function showModal(content) {
             document.getElementById("resultContent").innerHTML = content;
             document.getElementById("resultModal").style.display = "flex";
         }
 
+        // ฟังก์ชันสำหรับปิด Modal
         function closeModal(e) {
+            // ปิดเมื่อคลิกที่พื้นหลัง Modal หรือปุ่มปิดเท่านั้น
             if (e.target.id === "resultModal" || e.target.className.includes("close-button")) {
                 document.getElementById("resultModal").style.display = "none";
             }
         }
 
+        // ปิด Modal เมื่อกดปุ่ม Escape
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && document.getElementById('resultModal').style.display === 'flex') {
                 document.getElementById('resultModal').style.display = 'none';
