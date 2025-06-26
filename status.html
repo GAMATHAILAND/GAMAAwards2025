@@ -301,7 +301,7 @@
                          modalContent += `<div class="info-row"><strong>รหัสใบอนุญาต:</strong><span>ไม่ระบุ</span></div>`;
                     }
 
-                    // เพิ่มส่วน QR code หาก id มีค่า
+                    // เพิ่มส่วน QR code หาก licenseCode มีค่า
                     if (licenseCode) {
                         modalContent += `<div class="qrcode"><canvas id="qrcode"></canvas></div>`;
                     } else {
@@ -315,7 +315,7 @@
                         setTimeout(() => {
                             const qrCanvas = document.getElementById("qrcode");
                             if (qrCanvas) {
-                                // ใช้ data.id ในการสร้าง QR code
+                                // ใช้ data.licenseCode ในการสร้าง QR code
                                 QRCode.toCanvas(qrCanvas, licenseCode, { width: 120, margin: 1 }) 
                                     .catch(err => {
                                         console.error("Error generating QR code:", err);
