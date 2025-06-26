@@ -1,199 +1,355 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Prompt', sans-serif;
-      background: linear-gradient(to top, #6a11cb, #c94bdb);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      padding: 20px;
-      color: #fff;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(to top, #6a11cb, #c94bdb); /* Your desired gradient */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+            color: #fff;
+            box-sizing: border-box;
+        }
 
-    .card {
-      background: #fff;
-      color: #333;
-      padding: 2rem;
-      border-radius: 1rem;
-      max-width: 500px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    }
+        .card {
+            background: #fff;
+            color: #333;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
 
-    .logo {
-      width: 120px;
-      margin-bottom: 1rem;
-    }
+        .logo {
+            width: 120px;
+            margin-bottom: 1rem;
+            display: block; /* Ensures margin auto works */
+            margin-left: auto; /* Centers the logo horizontally */
+            margin-right: auto; /* Centers the logo horizontally */
+        }
 
-    .title {
-      font-size: 1.6rem;
-      font-weight: bold;
-      margin-bottom: 0.25rem;
-    }
+        .title {
+            font-size: 1.6rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2); /* Added subtle shadow for contrast */
+        }
 
-    .subtitle {
-      font-size: 0.9rem;
-      color: #eee;
-      margin-bottom: 2rem;
-    }
+        .subtitle {
+            font-size: 0.9rem;
+            color: #eee;
+            margin-bottom: 2rem;
+        }
 
-    input[type="text"] {
-      width: 100%;
-      padding: 12px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      background: #f3f3f3;
-    }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            background: #f3f3f3;
+            box-sizing: border-box; /* Include padding in element's total width */
+            outline: none; /* Remove default focus outline */
+            transition: box-shadow 0.2s ease;
+        }
+        input[type="text"]:focus {
+            box-shadow: 0 0 0 3px rgba(122, 46, 203, 0.5); /* Highlight on focus */
+        }
 
-    button {
-      background: linear-gradient(to right, #9b00e8, #6a11cb);
-      color: white;
-      padding: 12px;
-      width: 100%;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      cursor: pointer;
-    }
+        button {
+            background: linear-gradient(to right, #9b00e8, #6a11cb);
+            color: white;
+            padding: 12px;
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.1s ease;
+            font-weight: 500;
+        }
+        button:hover {
+            background: linear-gradient(to right, #ac2fe8, #7a2ecb); /* Slightly lighter on hover */
+            transform: translateY(-2px); /* Slight lift */
+        }
+        button:active {
+            transform: translateY(0); /* Resets on click */
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
 
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-    }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Increased z-index */
+            overflow-y: auto; /* Allow scrolling for long content */
+            padding: 20px; /* Padding for mobile views */
+            box-sizing: border-box;
+        }
 
-    .modal-content {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 1rem;
-      text-align: left;
-      max-width: 480px;
-      width: 90%;
-      position: relative;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-      font-size: 1rem;
-    }
+        .modal-content {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: left;
+            max-width: 480px;
+            width: 100%; /* Changed from 90% for better fill */
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            color: #333; /* Ensure text color is readable */
+            animation: fadeIn 0.3s ease-out; /* Added fade-in animation */
+        }
 
-    .modal-content h2 {
-      margin-top: 0;
-      font-size: 1.4rem;
-      margin-bottom: 0.5rem;
-    }
+        .modal-content .modal-logo-header { /* New class for the logo inside the modal */
+            height: 40px;
+            max-width: 100%; /* Ensure it doesn't overflow */
+            height: auto; /* Maintain aspect ratio */
+            display: block;
+            margin: 0 auto 1.5rem; /* Center and add margin below */
+        }
 
-    .modal-content p {
-      margin: 0.25rem 0;
-    }
+        .modal-content h2 {
+            margin-top: 0;
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+            text-align: center; /* Center the modal title */
+            color: #6a11cb; /* Consistent title color */
+        }
 
-    .modal-content .qrcode {
-      margin-top: 1rem;
-    }
+        .modal-content p {
+            margin: 0.25rem 0;
+            font-size: 1rem;
+            line-height: 1.4;
+        }
 
-    .close-button {
-      position: absolute;
-      top: 12px;
-      right: 20px;
-      cursor: pointer;
-      font-size: 24px;
-      color: #999;
-    }
+        .modal-content p strong {
+            font-weight: 600;
+            color: #333;
+            display: inline-block;
+            width: 120px; /* Fixed width for labels */
+            padding-right: 10px; /* Space after label */
+            box-sizing: border-box;
+        }
+        .modal-content p span { /* Style for the actual value */
+            display: inline-block;
+            word-break: break-word; /* Prevent long words from breaking layout */
+        }
 
-    .error {
-      color: #c4004e;
-      font-weight: bold;
-      font-size: 1rem;
-      margin-top: 1rem;
-    }
-  </style>
+
+        .modal-content .qrcode {
+            margin-top: 1.5rem; /* Adjusted margin */
+            text-align: center; /* Center content within qrcode div */
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .modal-content .qrcode canvas { /* Ensure QR canvas is centered */
+            display: block;
+            margin: 0 auto;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 12px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 24px;
+            color: #999;
+            transition: color 0.2s ease;
+        }
+        .close-button:hover {
+            color: #333;
+        }
+
+        .error {
+            color: #c4004e;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Styles for "not found" / error modal */
+        .modal-not-found h2 {
+            color: #dc3545 !important;
+        }
+        .modal-not-found p {
+            text-align: center;
+            color: #555;
+        }
+
+        /* Animation for modal */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .card, .modal-content {
+                padding: 1.2rem;
+                margin: 10px;
+            }
+            .title {
+                font-size: 1.4rem;
+            }
+            .subtitle {
+                font-size: 0.85rem;
+            }
+            .modal-content p strong {
+                width: 100px; /* Adjust label width for smaller screens */
+            }
+        }
+    </style>
 </head>
 <body>
-  <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards" class="logo" />
-  <h1 class="title">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
-  <p class="subtitle">กรุณากรอกชื่อ-นามสกุล หรือรหัส เช่น “MMA001”</p>
+    <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards" class="logo" />
+    <h1 class="title">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
+    <p class="subtitle">กรุณากรอกชื่อ-นามสกุล หรือรหัส เช่น “MMA001”</p>
 
-  <div class="card">
-    <input type="text" id="searchInput" placeholder="พิมพ์ชื่อ หรือรหัสเพื่อค้นหา" />
-    <button onclick="search()">ค้นหา</button>
-    <div id="errorMsg" class="error"></div>
-  </div>
-
-  <div id="resultModal" class="modal" onclick="closeModal(event)">
-    <div class="modal-content" id="resultContent">
-      <!-- ผลลัพธ์แสดงที่นี่ -->
+    <div class="card">
+        <input type="text" id="searchInput" placeholder="พิมพ์ชื่อ หรือรหัสเพื่อค้นหา" />
+        <button id="searchButton" onclick="search()">ค้นหา</button>
+        <div id="errorMsg" class="error"></div>
     </div>
-  </div>
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec";
+    <div id="resultModal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content" id="resultContent">
+            </div>
+    </div>
 
-    async function search() {
-      const q = document.getElementById("searchInput").value.trim();
-      const errBox = document.getElementById("errorMsg");
-      errBox.textContent = "";
+    <script>
+        // THIS IS THE MOST IMPORTANT CHANGE:
+        // ENSURE THIS API_URL EXACTLY MATCHES YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL!
+        const API_URL = "https://script.google.com/macros/s/AKfycbwoWiAkddtLavKFd-qxpuHcOYVqwRaMAqO125y3PbPPAXveLmKqf3erAiCxQIKcs6rI/exec"; 
 
-      if (q.length < 2) {
-        errBox.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
-        return;
-      }
+        async function search() {
+            const q = document.getElementById("searchInput").value.trim();
+            const errBox = document.getElementById("errorMsg");
+            const searchButton = document.getElementById("searchButton"); // Get button element
 
-      try {
-        const res = await axios.get(`${API_URL}?q=${encodeURIComponent(q)}`);
-        const data = res.data;
+            errBox.textContent = ""; // Clear any previous error messages
 
-        if (!data || data.error) {
-          showModal(`
-            <span class="close-button" onclick="closeModal(event)">&times;</span>
-            <h2>ไม่พบข้อมูล</h2>
-            <p>กรุณาตรวจสอบชื่อ หรือรหัสอีกครั้ง</p>
-          `);
-        } else {
-          showModal(`
-            <span class="close-button" onclick="closeModal(event)">&times;</span>
-            <h2>${data.name}</h2>
-            <p><strong>รหัส:</strong> ${data.id}</p>
-            <p><strong>สังกัด:</strong> ${data.organization}</p>
-            <p><strong>ประเภท:</strong> ${data.awardType}</p>
-            <p><strong>ระดับ:</strong> ${data.level}</p>
-            <p><strong>รหัสใบอนุญาต:</strong> ${data.licenseCode}</p>
-            <canvas id="qrcode" class="qrcode"></canvas>
-          `);
-          setTimeout(() => {
-            QRCode.toCanvas(document.getElementById("qrcode"), data.id, { width: 120 });
-          }, 100);
+            if (q.length < 2) {
+                errBox.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
+                return;
+            }
+
+            // Show loading state and disable elements
+            searchButton.textContent = 'กำลังค้นหา...';
+            searchButton.disabled = true;
+            document.getElementById('searchInput').disabled = true;
+
+            try {
+                const res = await axios.get(`${API_URL}?q=${encodeURIComponent(q)}`);
+                const data = res.data;
+
+                console.log("API Response Data:", data); // Debugging: check the data received
+
+                if (!data || data.error) {
+                    showModal(`
+                        <span class="close-button" onclick="closeModal(event)">&times;</span>
+                        <div class="modal-not-found">
+                            <h2>ไม่พบข้อมูล</h2>
+                            <p>กรุณาตรวจสอบชื่อ หรือรหัสอีกครั้ง</p>
+                        </div>
+                    `);
+                } else {
+                    // Include the logo in the modal content
+                    let modalContent = `
+                        <span class="close-button" onclick="closeModal(event)">&times;</span>
+                        <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="modal-logo-header" />
+                        <h2>${data.name ?? 'ไม่ระบุ'}</h2>
+                        <p><strong>รหัส:</strong> <span>${data.id ?? 'ไม่ระบุ'}</span></p>
+                        <p><strong>สังกัด:</strong> <span>${data.organization ?? 'ไม่ระบุ'}</span></p>
+                        <p><strong>ประเภท:</strong> <span>${data.awardType ?? 'ไม่ระบุ'}</span></p>
+                        <p><strong>ระดับ:</strong> <span>${data.level ?? 'ไม่ระบุ'}</span></p>
+                        <p><strong>รหัสใบอนุญาต:</strong> <span>${data.licenseCode ?? 'ไม่ระบุ'}</span></p>
+                    `;
+                    
+                    // Only add QR code section if licenseCode exists
+                    if (data.licenseCode) {
+                        modalContent += `<div class="qrcode"><canvas id="qrcode"></canvas></div>`;
+                    } else {
+                        modalContent += `<p style="text-align: center; margin-top: 1rem; color: #777;"><em>ไม่พบรหัสใบอนุญาตสำหรับ QR Code</em></p>`;
+                    }
+
+                    showModal(modalContent);
+
+                    // Generate QR code after modal is shown and if licenseCode exists
+                    if (data.licenseCode) {
+                        setTimeout(() => {
+                            const qrCanvas = document.getElementById("qrcode");
+                            if (qrCanvas) {
+                                // Use data.licenseCode for QR code as it's typically the unique identifier
+                                QRCode.toCanvas(qrCanvas, data.licenseCode, { width: 120, margin: 1 }) 
+                                    .catch(err => {
+                                        console.error("Error generating QR code:", err);
+                                        // Optional: Display an error message if QR fails
+                                        qrCanvas.style.display = 'none';
+                                        const qrContainer = qrCanvas.parentElement;
+                                        if (qrContainer) {
+                                            qrContainer.innerHTML = '<p style="color: red; text-align: center;">ไม่สามารถสร้าง QR Code ได้</p>';
+                                        }
+                                    });
+                            }
+                        }, 100); // Small delay to ensure canvas is rendered
+                    }
+                }
+            } catch (e) {
+                console.error("Error during API call:", e); // Log the full error
+                errBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง";
+                showModal(`
+                    <span class="close-button" onclick="closeModal(event)">&times;</span>
+                    <div class="modal-not-found">
+                        <h2>เกิดข้อผิดพลาด</h2>
+                        <p>ไม่สามารถเชื่อมต่อกับระบบได้<br>กรุณาลองใหม่อีกครั้งในภายหลัง</p>
+                    </div>
+                `);
+            } finally {
+                // Reset loading state
+                searchButton.textContent = 'ค้นหา';
+                searchButton.disabled = false;
+                document.getElementById('searchInput').disabled = false;
+            }
         }
-      } catch (e) {
-        errBox.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง";
-        console.error(e);
-      }
-    }
 
-    function showModal(content) {
-      document.getElementById("resultContent").innerHTML = content;
-      document.getElementById("resultModal").style.display = "flex";
-    }
+        function showModal(content) {
+            document.getElementById("resultContent").innerHTML = content;
+            document.getElementById("resultModal").style.display = "flex";
+        }
 
-    function closeModal(e) {
-      if (e.target.id === "resultModal" || e.target.className === "close-button") {
-        document.getElementById("resultModal").style.display = "none";
-      }
-    }
-  </script>
+        function closeModal(e) {
+            if (e.target.id === "resultModal" || e.target.className === "close-button") {
+                document.getElementById("resultModal").style.display = "none";
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('resultModal').style.display === 'flex') {
+                document.getElementById('resultModal').style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
