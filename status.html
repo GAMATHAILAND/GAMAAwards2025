@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" />
 
-  <!-- Fonts + jQuery + QR -->
+  <!-- Google Fonts + QR + jQuery -->
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
@@ -47,13 +47,18 @@
     }
 
     input {
-      width: 100%;
+      width: 90%;
+      max-width: 300px;
       padding: 12px;
       font-size: 16px;
       border-radius: 10px;
       border: 1px solid #ccc;
       margin-bottom: 15px;
       text-align: center;
+      box-sizing: border-box;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     button {
@@ -120,12 +125,9 @@
       font-size: 16px;
     }
 
-    .popup #qr {
-      margin-top: 15px;
-    }
-
     .popup img.qr {
       width: 128px;
+      margin-top: 15px;
     }
   </style>
 </head>
@@ -135,7 +137,7 @@
   <h1>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
 
   <div class="search-box">
-    <input type="text" id="searchInput" placeholder="ชื่อ-สกุล หรือรหัสใบอนุญาตตัวแทน">
+    <input type="text" id="searchInput" placeholder="พิมพ์ ชื่อ-นามสกุล หรือรหัสใบอนุญาตตัวแทนฯ">
     <button onclick="search()">ค้นหา</button>
     <div class="not-found" id="notFound"></div>
   </div>
@@ -207,7 +209,6 @@
           `;
           popupContainer.appendChild(div);
 
-          // generate QR
           QRCode.toDataURL(entry["ID"], { width: 128 }, function (err, url) {
             const qrContainer = document.getElementById(`qr-${entry["ID"]}`);
             if (!err) {
