@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Preview Example</title>
+    <title>Image Preview Centered Zoom (Mobile First)</title>
     <style>
-        /* CSS ที่ปรับปรุงสำหรับ user-image และคอนเทนเนอร์ */
+        /* CSS สำหรับคอนเทนเนอร์และรูปภาพพรีวิว */
         .preview-container {
-            width: 100%; /* หรือขนาดที่คุณต้องการสำหรับคอนเทนเนอร์ */
-            max-width: 600px; /* สมมติว่าต้องการสูงสุด 600px */
-            height: 400px; /* หรือขนาดที่คุณต้องการสำหรับคอนเทนเนอร์ */
+            width: 100%; /* ทำให้คอนเทนเนอร์ปรับตามความกว้างหน้าจอ */
+            max-width: 600px; /* จำกัดความกว้างสูงสุดของคอนเทนเนอร์ */
+            height: 400px; /* กำหนดความสูงคงที่ของคอนเทนเนอร์ */
             border: 2px dashed #ccc;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden; /* สำคัญเพื่อให้รูปภาพไม่เกินขอบ */
-            position: relative;
+            overflow: hidden; /* สำคัญ: ซ่อนส่วนเกินของรูปภาพ */
+            position: relative; /* สำหรับการจัดตำแหน่งรูปภาพภายใน */
+            margin: 20px auto; /* จัดกึ่งกลางคอนเทนเนอร์ในหน้าจอ */
         }
 
         .user-image-preview {
@@ -23,26 +24,45 @@
             height: 100%;
             object-fit: contain; /* ทำให้รูปภาพพอดีกับคอนเทนเนอร์โดยรักษาสัดส่วน */
             display: block; /* ลบช่องว่างใต้รูปภาพ */
-            position: absolute; /* เพื่อให้สามารถจัดตำแหน่งด้วย JavaScript ได้ */
+            position: absolute; /* เพื่อให้สามารถจัดตำแหน่งด้วย JavaScript */
             top: 0;
             left: 0;
-            transform-origin: center center; /* ตั้งจุดหมุน/ย่อขยายที่กึ่งกลาง */
+            /* เพิ่ม transition เพื่อให้การซูม/ลากดูราบรื่นขึ้น */
+            transition: transform 0.05s ease-out;
+            transform-origin: center center; /* จุดหมุน/ย่อขยายที่กึ่งกลางเสมอ */
+            cursor: grab; /* เปลี่ยน cursor เมื่อพร้อมลาก */
         }
 
-        /* CSS อื่นๆ ที่คุณมีอยู่แล้ว */
-        /* ... */
+        .user-image-preview.dragging {
+            cursor: grabbing; /* เปลี่ยน cursor เมื่อกำลังลาก */
+        }
+
+        /* สไตล์สำหรับปุ่ม */
+        button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* สำหรับ input file */
+        input[type="file"] {
+            display: block;
+            margin: 20px auto;
+        }
+
     </style>
 </head>
 <body>
 
-    <h1>Your Image Uploader</h1>
+    <h1>ปรับแต่งรูปภาพของคุณ</h1>
 
     <div class="preview-container">
         <img id="userImagePreview" class="user-image-preview" src="" alt="Image Preview" style="display: none;">
-        <input type="file" id="imageUpload" accept="image/*">
     </div>
-
-    <button id="resetImage">Reset Position</button>
+    <input type="file" id="imageUpload" accept="image/*">
+    <button id="resetImage">รีเซ็ตตำแหน่งและซูม</button>
 
     <script>
         const imageUpload = document.getElementById('imageUpload');
@@ -53,8 +73,16 @@
         let translateX = 0;
         let translateY = 0;
         let isDragging = false;
-        let startX, startY;
+        let startX, startY; // สำหรับเมาส์
+        let touchStartX, touchStartY; // สำหรับ touch drag
+        let initialPinchDistance = 0; // สำหรับ touch zoom
 
+        // ตัวแปรสำหรับขนาดที่เรนเดอร์จริงของรูปภาพ
+        // จะถูกคำนวณใหม่ใน updateImagePosition และ resetImagePosition
+        let renderedWidth = 0;
+        let renderedHeight = 0;
+
+        // เมื่อมีการเลือกไฟล์ภาพ
         imageUpload.addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
@@ -62,7 +90,10 @@
                 reader.onload = function(e) {
                     userImagePreview.src = e.target.result;
                     userImagePreview.style.display = 'block';
-                    resetImagePosition(); // รีเซ็ตตำแหน่งทุกครั้งที่เปลี่ยนรูป
+                    // ต้องรอให้รูปภาพโหลดเสร็จก่อนจึงจะคำนวณ naturalWidth/Height ได้
+                    userImagePreview.onload = () => {
+                        resetImagePosition(); // รีเซ็ตตำแหน่งและซูมเมื่อโหลดรูปใหม่
+                    };
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -71,152 +102,162 @@
             }
         });
 
-        // --- เริ่มต้นส่วนแก้ไข JavaScript ที่สำคัญ ---
+        // ฟังก์ชันสำคัญ: อัปเดตตำแหน่งและการซูมของรูปภาพ
         function updateImagePosition() {
-            // คำนวณขนาดที่แท้จริงของรูปภาพหลังจาก object-fit: contain
-            const imgNaturalWidth = userImagePreview.naturalWidth;
-            const imgNaturalHeight = userImagePreview.naturalHeight;
+            // คำนวณขนาดที่แท้จริงของรูปภาพหลังจาก object-fit: contain ได้ทำงาน
             const containerWidth = userImagePreview.parentElement.offsetWidth;
             const containerHeight = userImagePreview.parentElement.offsetHeight;
+            const imgNaturalWidth = userImagePreview.naturalWidth;
+            const imgNaturalHeight = userImagePreview.naturalHeight;
 
-            let renderedWidth, renderedHeight;
             const containerRatio = containerWidth / containerHeight;
             const imageRatio = imgNaturalWidth / imgNaturalHeight;
 
             if (imageRatio > containerRatio) {
-                // รูปภาพกว้างกว่าเมื่อเทียบกับคอนเทนเนอร์ (จะเติมความกว้าง)
+                // รูปภาพกว้างกว่า (จะเติมความกว้าง)
                 renderedWidth = containerWidth;
                 renderedHeight = containerWidth / imageRatio;
             } else {
-                // รูปภาพสูงกว่าเมื่อเทียบกับคอนเทนเนอร์ (จะเติมความสูง)
+                // รูปภาพสูงกว่า (จะเติมความสูง)
                 renderedHeight = containerHeight;
                 renderedWidth = containerHeight * imageRatio;
             }
 
-            // คำนวณขอบเขตการลากที่ถูกต้องตามขนาดที่เรนเดอร์จริง
-            const maxTranslateX = (renderedWidth * scale - containerWidth) / 2;
-            const maxTranslateY = (renderedHeight * scale - containerHeight) / 2;
+            // คำนวณขอบเขตการลากที่ถูกต้องตามขนาดที่เรนเดอร์จริงและสเกลปัจจุบัน
+            const currentDisplayWidth = renderedWidth * scale;
+            const currentDisplayHeight = renderedHeight * scale;
+
+            const maxTranslateX = (currentDisplayWidth - containerWidth) / 2;
+            const maxTranslateY = (currentDisplayHeight - containerHeight) / 2;
 
             // ตรวจสอบและจำกัดการลากไม่ให้เกินขอบเขต
-            translateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, translateX));
-            translateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, translateY));
+            // ตรวจสอบเฉพาะเมื่อรูปภาพมีขนาดใหญ่กว่าคอนเทนเนอร์ในแกนนั้นๆ
+            if (currentDisplayWidth > containerWidth) {
+                translateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, translateX));
+            } else {
+                translateX = 0; // ถ้าภาพเล็กกว่า ไม่มีการลากในแกน X
+            }
+
+            if (currentDisplayHeight > containerHeight) {
+                translateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, translateY));
+            } else {
+                translateY = 0; // ถ้าภาพเล็กกว่า ไม่มีการลากในแกน Y
+            }
 
             userImagePreview.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
         }
-        // --- สิ้นสุดส่วนแก้ไข JavaScript ที่สำคัญ ---
 
-
+        // ฟังก์ชันสำหรับรีเซ็ตตำแหน่งและการซูม
         function resetImagePosition() {
             scale = 1;
             translateX = 0;
             translateY = 0;
-            updateImagePosition(); // ใช้ฟังก์ชันที่แก้ไขแล้ว
+            updateImagePosition(); // อัปเดตตำแหน่งเริ่มต้น
         }
 
         resetImageButton.addEventListener('click', resetImagePosition);
 
-        // Event listeners สำหรับการลากและซูม (ยังคงเหมือนเดิม)
+        /* --- Event listeners สำหรับ Desktop (เมาส์) --- */
         userImagePreview.addEventListener('mousedown', (e) => {
             isDragging = true;
+            userImagePreview.classList.add('dragging');
             startX = e.clientX - translateX;
             startY = e.clientY - translateY;
-            userImagePreview.style.cursor = 'grabbing';
         });
 
-        userImagePreview.addEventListener('mousemove', (e) => {
+        document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
+            // ปรับค่า translateX/Y ตามการเคลื่อนที่ของเมาส์
             translateX = e.clientX - startX;
             translateY = e.clientY - startY;
-            updateImagePosition();
+            updateImagePosition(); // อัปเดตตำแหน่ง
         });
 
-        userImagePreview.addEventListener('mouseup', () => {
+        document.addEventListener('mouseup', () => {
             isDragging = false;
-            userImagePreview.style.cursor = 'grab';
+            userImagePreview.classList.remove('dragging');
         });
 
-        userImagePreview.addEventListener('mouseleave', () => {
-            isDragging = false;
-            userImagePreview.style.cursor = 'grab';
-        });
-
+        // Wheel event สำหรับซูมบน Desktop
         userImagePreview.addEventListener('wheel', (e) => {
             e.preventDefault();
             const scaleAmount = 0.1;
             const oldScale = scale;
-            if (e.deltaY < 0) {
-                scale += scaleAmount; // Zoom in
-            } else {
-                scale -= scaleAmount; // Zoom out
+
+            // ตรวจสอบทิศทางของ scroll wheel
+            if (e.deltaY < 0) { // ซูมเข้า
+                scale += scaleAmount;
+            } else { // ซูมออก
+                scale -= scaleAmount;
             }
-            scale = Math.max(1, Math.min(3, scale)); // จำกัดการซูมระหว่าง 1x ถึง 3x
 
-            // ปรับตำแหน่งเพื่อให้ซูมเข้า/ออกจากจุดที่เมาส์อยู่
-            const rect = userImagePreview.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            // จำกัดค่า scale ระหว่าง 1 (ขนาดปกติ) ถึง 3 (ซูม 3 เท่า)
+            scale = Math.max(1, Math.min(3, scale));
 
-            translateX -= (mouseX - renderedWidth / 2) * (scale - oldScale);
-            translateY -= (mouseY - renderedHeight / 2) * (scale - oldScale);
-
+            // การปรับตำแหน่งเมื่อซูม (เพื่อให้ยึดแกนกลาง)
+            // เราไม่จำเป็นต้องปรับ translateX/Y แบบซับซ้อนเมื่อ transform-origin เป็น center center
+            // เพราะมันจะซูมจากจุดศูนย์กลางโดยอัตโนมัติ
             updateImagePosition();
         });
 
-        // สำหรับมือถือ (touch events)
-        let touchStartX, touchStartY;
-        let initialPinchDistance = 0;
-
+        /* --- Event listeners สำหรับ Mobile/Tablet (Touch) --- */
         userImagePreview.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
+            if (e.touches.length === 1) { // Single touch for dragging
                 isDragging = true;
+                userImagePreview.classList.add('dragging');
                 touchStartX = e.touches[0].clientX - translateX;
                 touchStartY = e.touches[0].clientY - translateY;
-            } else if (e.touches.length === 2) {
+            } else if (e.touches.length === 2) { // Two touches for pinching (zoom)
+                isDragging = false; // ไม่ลากถ้ามีสองนิ้ว
                 initialPinchDistance = getPinchDistance(e.touches);
             }
         });
 
         userImagePreview.addEventListener('touchmove', (e) => {
-            e.preventDefault(); // ป้องกันการเลื่อนหน้าจอ
-            if (e.touches.length === 1 && isDragging) {
+            e.preventDefault(); // ป้องกันการเลื่อนหน้าจอหลัก
+
+            if (e.touches.length === 1 && isDragging) { // Dragging with one finger
                 translateX = e.touches[0].clientX - touchStartX;
                 translateY = e.touches[0].clientY - touchStartY;
                 updateImagePosition();
-            } else if (e.touches.length === 2) {
+            } else if (e.touches.length === 2) { // Pinching (zoom) with two fingers
                 const currentPinchDistance = getPinchDistance(e.touches);
+                if (initialPinchDistance === 0) { // ป้องกันการหารด้วยศูนย์ถ้าไม่ได้กำหนดค่าเริ่มต้น
+                    initialPinchDistance = currentPinchDistance;
+                    return;
+                }
+
                 const scaleFactor = currentPinchDistance / initialPinchDistance;
                 const oldScale = scale;
                 scale = Math.max(1, Math.min(3, scale * scaleFactor)); // จำกัดการซูม
 
-                // ปรับตำแหน่งเมื่อซูมด้วย pinch
-                const rect = userImagePreview.getBoundingClientRect();
-                const touch1X = e.touches[0].clientX - rect.left;
-                const touch1Y = e.touches[0].clientY - rect.top;
+                // อัปเดตระยะห่างเริ่มต้นสำหรับการซูมครั้งต่อไป
+                initialPinchDistance = currentPinchDistance;
 
-                translateX -= (touch1X - renderedWidth / 2) * (scale - oldScale);
-                translateY -= (touch1Y - renderedHeight / 2) * (scale - oldScale);
-
-                initialPinchDistance = currentPinchDistance; // อัปเดตระยะห่างเริ่มต้น
+                // ไม่ต้องปรับ translateX/Y ซับซ้อนเพราะ transform-origin เป็น center
                 updateImagePosition();
             }
         });
 
         userImagePreview.addEventListener('touchend', () => {
             isDragging = false;
-            initialPinchDistance = 0;
+            userImagePreview.classList.remove('dragging');
+            initialPinchDistance = 0; // รีเซ็ตค่าเมื่อยกนิ้ว
         });
 
+        // Helper function for calculating distance between two touches
         function getPinchDistance(touches) {
             const dx = touches[0].clientX - touches[1].clientX;
             const dy = touches[0].clientY - touches[1].clientY;
             return Math.sqrt(dx * dx + dy * dy);
         }
 
-        // ตัวแปร global สำหรับ renderedWidth และ renderedHeight (ถ้าคุณมีในโค้ดเดิม)
-        // หรือให้แน่ใจว่ามันถูกกำหนดค่าใน updateImagePosition() เท่านั้น
-        let renderedWidth = 0;
-        let renderedHeight = 0;
-
+        // หากมีการปรับขนาดหน้าต่าง ให้เรียก updateImagePosition ใหม่
+        window.addEventListener('resize', () => {
+            if (userImagePreview.style.display !== 'none') {
+                updateImagePosition();
+            }
+        });
 
     </script>
 
