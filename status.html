@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <style>
     body {
-      margin: 0;
       font-family: 'Prompt', sans-serif;
-      background: linear-gradient(to top, #6a11cb, #c94bdb);
+      margin: 0;
+      background: linear-gradient(to top, #511d8e, #7a2ecb);
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -20,7 +20,6 @@
       padding: 20px;
       color: #fff;
     }
-
     .card {
       background: #fff;
       color: #333;
@@ -31,24 +30,19 @@
       text-align: center;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     }
-
     .logo {
-      width: 120px;
+      width: 100px;
+      margin-bottom: 1.5rem;
+    }
+    .title {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      font-size: 1rem;
       margin-bottom: 1rem;
     }
-
-    .title {
-      font-size: 1.6rem;
-      font-weight: bold;
-      margin-bottom: 0.25rem;
-    }
-
-    .subtitle {
-      font-size: 0.9rem;
-      color: #eee;
-      margin-bottom: 2rem;
-    }
-
     input[type="text"] {
       width: 100%;
       padding: 12px;
@@ -58,9 +52,8 @@
       margin-bottom: 1rem;
       background: #f3f3f3;
     }
-
     button {
-      background: linear-gradient(to right, #9b00e8, #6a11cb);
+      background: #4a148c;
       color: white;
       padding: 12px;
       width: 100%;
@@ -69,7 +62,6 @@
       font-size: 1rem;
       cursor: pointer;
     }
-
     .modal {
       display: none;
       position: fixed;
@@ -79,31 +71,37 @@
       align-items: center;
       z-index: 10;
     }
-
     .modal-content {
       background: #fff;
       padding: 2rem;
       border-radius: 1rem;
-      text-align: center;
+      text-align: left;
       max-width: 500px;
       width: 90%;
       position: relative;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      color: #111;
     }
-
     .modal-content h2 {
-      margin-bottom: 0.5rem;
-      font-size: 1.5rem;
+      color: #6a11cb;
+      margin-bottom: 1rem;
+      text-align: center;
     }
-
     .modal-content p {
       margin: 0.25rem 0;
+      font-size: 1rem;
     }
-
-    .modal-content .qrcode {
+    .modal-content p strong {
+      font-weight: 600;
+      color: #333;
+      display: block;
+      font-size: 0.9rem;
       margin-top: 1rem;
     }
-
+    .qrcode {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: center;
+    }
     .close-button {
       position: absolute;
       top: 12px;
@@ -112,7 +110,6 @@
       font-size: 24px;
       color: #999;
     }
-
     .error {
       color: #c4004e;
       font-weight: bold;
@@ -124,22 +121,20 @@
 <body>
   <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards" class="logo" />
   <h1 class="title">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
-  <p class="subtitle">กรุณากรอกข้อมูลเพื่อตรวจสอบรายชื่อ</p>
+  <p class="subtitle">กรุณากรอกชื่อ–นามสกุล หรือรหัสผู้ได้รับรางวัล</p>
 
   <div class="card">
-    <input type="text" id="searchInput" placeholder="เช่น สมชาย ใจดี หรือ MMA-001" />
+    <input type="text" id="searchInput" placeholder="เช่น วรวัฒน์ ใจดี หรือ MAA001" />
     <button onclick="search()">ค้นหา</button>
     <div id="errorMsg" class="error"></div>
   </div>
 
   <div id="resultModal" class="modal" onclick="closeModal(event)">
-    <div class="modal-content" id="resultContent">
-      <!-- ผลลัพธ์จะแสดงที่นี่ -->
-    </div>
+    <div class="modal-content" id="resultContent"></div>
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwoWiAkddtLavKFd-qxpuHcOYVqwRaMAqO125y3PbPPAXveLmKqf3erAiCxQIKcs6rI/exec";
 
     async function search() {
       const q = document.getElementById('searchInput').value.trim();
@@ -155,28 +150,27 @@
         const res = await axios.get(API_URL + `?q=${encodeURIComponent(q)}`);
         const data = res.data;
 
-        if (data.error || !data.name) {
+        if (!data || !data.name) {
           showModal(`
             <span class="close-button" onclick="closeModal(event)">&times;</span>
-            <h2 style="color: #8000c4;">ไม่พบข้อมูล</h2>
-            <p>ขออภัย, ไม่พบข้อมูลของผู้เข้ารับรางวัลที่ท่านค้นหา</p>
-            <p>กรุณาตรวจสอบชื่อหรือรหัสอีกครั้ง</p>
+            <h2 style="color: #9b00e8; text-align: center;">ไม่พบข้อมูล</h2>
+            <p style="text-align: center;">ขออภัย, ไม่พบข้อมูลของผู้เข้ารับรางวัลที่ท่านค้นหา<br>กรุณาตรวจสอบชื่อหรือรหัสอีกครั้ง</p>
           `);
         } else {
           showModal(`
             <span class="close-button" onclick="closeModal(event)">&times;</span>
-            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" style="height: 40px; margin-bottom: 1rem;">
-            <h2 style="color:#8000c4;">${data.name}</h2>
-            <p><strong>สังกัด:</strong> ${data.organization}</p>
-            <p><strong>ประเภท:</strong> ${data.awardType}</p>
-            <p><strong>ระดับ:</strong> ${data.level}</p>
-            <p><strong>รหัส:</strong> ${data.id}</p>
-            <p><strong>รหัสใบอนุญาต:</strong> ${data.licenseCode}</p>
-            <canvas id="qrcode" class="qrcode"></canvas>
+            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" style="height: 40px; display: block; margin: 0 auto 1rem;" />
+            <h2>ข้อมูลผู้รับรางวัล</h2>
+            <p><strong>ID</strong>${data.id}</p>
+            <p><strong>ชื่อ–นามสกุล</strong>${data.name}</p>
+            <p><strong>สังกัด</strong>${data.organization}</p>
+            <p><strong>ประเภทรางวัล</strong>${data.awardType}</p>
+            <p><strong>ระดับ</strong>${data.level}</p>
+            <div class="qrcode"><canvas id="qrcode"></canvas></div>
           `);
 
           setTimeout(() => {
-            QRCode.toCanvas(document.getElementById("qrcode"), data.licenseCode, { width: 120 });
+            QRCode.toCanvas(document.getElementById("qrcode"), data.id, { width: 120 });
           }, 100);
         }
       } catch (e) {
