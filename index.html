@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GAMA Awards Frame</title>
+  <link rel="icon" href="logo-gama-awards.png" type="image/png" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script> 
   <style>
@@ -42,12 +45,15 @@
       background-color: #f9fafb;
       border: 2px dashed #d1d5db;
       border-radius: 8px;
+      /* Ensure square aspect ratio for preview container */
+      aspect-ratio: 1 / 1; 
     }
 
     @media (max-width: 640px) {
       .image-container {
         width: 100%;
-        height: 300px;
+        /* Adjusted height for responsiveness while maintaining aspect ratio */
+        height: auto; 
       }
     }
 
@@ -69,6 +75,7 @@
       left: 0;
       width: 100%;
       height: 100%;
+      object-fit: contain; /* Ensures the frame image fits without stretching, maintaining its aspect ratio */
       pointer-events: none; /* Allows clicks to pass through */
       z-index: 10; /* Ensures frame is on top of user image */
     }
@@ -166,6 +173,54 @@
       height: 8px;
     }
 
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 100%;
+      position: relative;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 2rem;
+      color: #999;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .modal-close-btn:hover {
+      color: #333;
+    }
+
+    #modalImage {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #eee;
+      border-radius: 8px;
+    }
+
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -186,6 +241,7 @@
         <label class="block text-lg font-medium mb-3 text-gray-700">อัพโหลดรูปโปรไฟล์ของคุณ:</label>
         <div class="file-upload">
           <button id="uploadBtn" class="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 0 003 3h10a3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
             </svg>
             เลือกรูปภาพจากเครื่อง
@@ -277,7 +333,8 @@
         </div>
         
         <button id="downloadBtn" class="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn disabled:opacity-50 disabled:cursor-not-allowed mb-3" disabled>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 0 003 3h10a3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
           ดาวน์โหลดรูปโปรไฟล์
         </button>
@@ -296,6 +353,25 @@
     <span>กำลังประมวลผล...</span>
   </div>
 
+  <div id="imageModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <button class="modal-close-btn" id="closeModalBtn">&times;</button>
+      <h3 class="text-xl font-bold mb-4 text-gray-800">บันทึกรูปภาพโปรไฟล์ของคุณ</h3>
+      <p class="text-gray-700 mb-4">
+        **สำหรับมือถือ/แท็บเล็ต:** โปรดกดค้างที่รูปภาพด้านล่าง (Long press) แล้วเลือก **"บันทึกรูปภาพ"** หรือ **"ดาวน์โหลดรูปภาพ"**
+      </p>
+      <img id="modalImage" src="" alt="Generated Profile Image">
+      <button id="downloadModalBtn"
+        class="mt-6 bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn mx-auto"
+        style="max-width: 250px;">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+        ดาวน์โหลด (สำหรับเดสก์ท็อป)
+      </button>
+    </div>
+  </div>
+
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       // Elements
@@ -312,6 +388,12 @@
       const downloadBtn = document.getElementById('downloadBtn');
       const loadingOverlay = document.getElementById('loadingOverlay');
       const previewContainer = document.getElementById('preview');
+
+      // Modal elements
+      const imageModal = document.getElementById('imageModal');
+      const closeModalBtn = document.getElementById('closeModalBtn');
+      const modalImage = document.getElementById('modalImage');
+      const downloadModalBtn = document.getElementById('downloadModalBtn');
 
       // Frame URLs (UPDATED TO LOCAL FILE PATHS - ตรวจสอบให้แน่ใจว่าชื่อไฟล์ตรงกับที่คุณอัปโหลดบน GitHub)
       const frameUrls = {
@@ -332,6 +414,11 @@
       // Function to check if both images are loaded for download enablement
       function checkDownloadAvailability() {
         downloadBtn.disabled = !(userImageLoaded && selectedFrame && frameImageLoaded);
+      }
+
+      // Detect mobile/tablet device
+      function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       }
 
       // Trigger file input when the upload button is clicked
@@ -453,12 +540,11 @@
         hiResUserImage.style.transform = `translate(${currentXPos * scaleFactor}px, ${currentYPos * scaleFactor}px) scale(${currentScale})`;
         hiResUserImage.style.transformOrigin = 'center center'; 
         hiResUserImage.style.objectFit = 'cover'; 
-
+        hiResUserImage.style.position = 'absolute';
         hiResUserImage.style.width = '100%'; 
         hiResUserImage.style.height = '100%';
         hiResUserImage.style.left = '0';
         hiResUserImage.style.top = '0';
-        hiResUserImage.style.position = 'absolute';
         hiResUserImage.style.display = 'block'; 
 
         hiResFrameImage.style.width = '100%'; 
@@ -468,12 +554,13 @@
         hiResFrameImage.style.position = 'absolute';
         hiResFrameImage.style.zIndex = '10'; 
         hiResFrameImage.style.display = 'block'; 
+        hiResFrameImage.style.objectFit = 'contain'; /* Ensure frame maintains aspect ratio in high-res */
 
         tempRenderDiv.appendChild(hiResUserImage);
         tempRenderDiv.appendChild(hiResFrameImage);
 
-        // เมื่อใช้ไฟล์ในเครื่อง ไม่จำเป็นต้องตั้งค่า crossOrigin = 'anonymous'; 
-        // เนื่องจากไฟล์อยู่ในโดเมนเดียวกันแล้ว ปัญหา CORS จะหมดไป
+        // When using local files, no need to set crossOrigin = 'anonymous'; 
+        // because the files are in the same domain. CORS issues will be gone.
         // hiResFrameImage.crossOrigin = 'anonymous'; 
 
         // Wait for images to load in the temporary div
@@ -506,21 +593,31 @@
                 height: 1920,
                 scale: 1, 
                 backgroundColor: null,
-                useCORS: false, // ไม่ต้องใช้ CORS แล้วเมื่อเป็น local files
-                allowTaint: false, // ไม่ต้อง allow Taint แล้วเมื่อไม่มี CORS issue
+                useCORS: false, // No need for CORS with local files
+                allowTaint: false, // No need to allow Taint without CORS issue
                 logging: true,
                 imageTimeout: 15000 
             }).then(canvas => {
                 document.body.removeChild(tempRenderDiv);
                 
-                try {
-                    const link = document.createElement('a');
-                    link.download = `profile-${selectedFrame}-gama-awards.png`;
-                    link.href = canvas.toDataURL('image/png'); 
-                    link.click();
-                } catch (e) {
-                    console.error('Error creating data URL or download link:', e);
-                    alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหาภายในหรือรูปภาพต้นฉบับเสียหาย)');
+                const imageDataURL = canvas.toDataURL('image/png');
+
+                if (isMobileDevice()) {
+                  // For mobile/tablet, show in modal
+                  modalImage.src = imageDataURL;
+                  downloadModalBtn.classList.add('hidden'); // Hide desktop download button in modal for mobile
+                  imageModal.classList.remove('hidden');
+                } else {
+                  // For desktop, directly download
+                  try {
+                      const link = document.createElement('a');
+                      link.download = `profile-${selectedFrame}-gama-awards.png`;
+                      link.href = imageDataURL; 
+                      link.click();
+                  } catch (e) {
+                      console.error('Error creating data URL or download link:', e);
+                      alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหาภายในหรือรูปภาพต้นฉบับเสียหาย)');
+                  }
                 }
                 
                 loadingOverlay.classList.add('hidden');
@@ -537,6 +634,27 @@
             loadingOverlay.classList.add('hidden');
         });
       });
+
+      // Close modal button listener
+      closeModalBtn.addEventListener('click', function() {
+        imageModal.classList.add('hidden');
+      });
+
+      // Desktop download button inside modal (only visible on desktop)
+      downloadModalBtn.addEventListener('click', function() {
+        const link = document.createElement('a');
+        link.download = `profile-${selectedFrame}-gama-awards.png`;
+        link.href = modalImage.src; 
+        link.click();
+        imageModal.classList.add('hidden');
+      });
+
+      // Show/hide downloadModalBtn based on device type when modal is opened (or page load)
+      if (isMobileDevice()) {
+        downloadModalBtn.classList.add('hidden');
+      } else {
+        downloadModalBtn.classList.remove('hidden');
+      }
     });
   </script>
 </body>
