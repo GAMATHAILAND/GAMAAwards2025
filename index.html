@@ -1,1 +1,55 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ค้นหารายชื่อ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- jQuery + DataTables -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f6f6f6;
+    }
+    table {
+      background: white;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>ค้นหารายชื่อ</h2>
+  <table id="excelTable" class="display" width="100%"></table>
+
+  <script>
+    $(document).ready(function() {
+      $.get("data.csv", function(data) {
+        var rows = data.trim().split("\n").map(r => r.split(","));
+        var headers = rows[0];
+        var dataRows = rows.slice(1);
+
+        $("#excelTable").DataTable({
+          data: dataRows,
+          columns: headers.map(h => ({ title: h })),
+          language: {
+            search: "ค้นหา:",
+            lengthMenu: "แสดง _MENU_ รายการ",
+            info: "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+            paginate: {
+              first: "หน้าแรก",
+              last: "หน้าสุดท้าย",
+              next: "ถัดไป",
+              previous: "ก่อนหน้า"
+            }
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
