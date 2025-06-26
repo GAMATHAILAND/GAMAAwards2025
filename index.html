@@ -387,7 +387,7 @@
       const yPosSlider = document.getElementById('yPosSlider');
       const downloadBtn = document.getElementById('downloadBtn');
       const loadingOverlay = document.getElementById('loadingOverlay');
-      const previewContainer = document.getElementById('preview');
+      const previewContainer = document.getElementById('preview'); // The 600x600px preview container
 
       // Modal elements
       const imageModal = document.getElementById('imageModal');
@@ -522,8 +522,9 @@
             left: -9999px;
             top: -9999px;
             overflow: hidden;
-            background-color: transparent; /* Changed from transparent to a solid color if issues persist with transparency in html2canvas */
-            display: block; /* Ensure it's treated as a block for layout */
+            background-color: transparent;
+            display: block;
+            box-sizing: border-box; /* Crucial for correct box model */
         `;
         document.body.appendChild(tempRenderDiv);
 
@@ -536,80 +537,130 @@
 
         // Wait for high-res images to load before proceeding
         Promise.all([
-            new Promise(resolve => {
-                if (hiResUserImage.complete) {
-                    resolve();
-                } else {
-                    hiResUserImage.onload = resolve;
-                    hiResUserImage.onerror = () => {
-                        console.error('High-res user image load error. This might cause issues.');
-                        resolve();
-                    };
-                }
+            new Promise((resolve, reject) => {
+                hiResUserImage.onload = resolve;
+                hiResUserImage.onerror = reject;
+                if (hiResUserImage.complete) resolve();
             }),
-            new Promise(resolve => {
-                if (hiResFrameImage.complete) {
-                    resolve();
-                } else {
-                    hiResFrameImage.onload = resolve;
-                    hiResFrameImage.onerror = () => {
-                        console.error('High-res frame image load error. Make sure local frame files exist.');
-                        resolve();
-                    };
-                }
+            new Promise((resolve, reject) => {
+                hiResFrameImage.onload = resolve;
+                hiResFrameImage.onerror = reject;
+                if (hiResFrameImage.complete) resolve();
             })
         ]).then(() => {
             const tempDivSize = 1920; // Target size for the high-res image
-            const originalPreviewWidth = 600; // Original preview container width
+            const previewContainerSize = previewContainer.offsetWidth; // Get the actual rendered width of the preview container (e.g., 600px)
 
-            // Calculate dimensions to fit hiResUserImage perfectly inside tempDivSize while maintaining aspect ratio
+            // Get the current transformed state of the user image in the preview
+            const userImageRect = userImagePreview.getBoundingClientRect();
+            
+            // Calculate the current displayed dimensions and position relative to its parent (image-container)
+            // Note: userImagePreview.style.width/height is 100%, so we need to calculate effective size based on object-fit and scale
             const naturalWidth = hiResUserImage.naturalWidth;
             const naturalHeight = hiResUserImage.naturalHeight;
 
-            let adjustedWidth = tempDivSize;
-            let adjustedHeight = tempDivSize;
+            let baseImageWidth = previewContainerSize;
+            let baseImageHeight = previewContainerSize;
 
-            if (naturalWidth && naturalHeight) { // Ensure natural dimensions are available
+            if (naturalWidth && naturalHeight) {
                 const aspectRatio = naturalWidth / naturalHeight;
-
-                if (aspectRatio > 1) { // Original image is wider than tall
-                    adjustedHeight = tempDivSize / aspectRatio;
-                    adjustedWidth = tempDivSize;
-                } else { // Original image is taller than wide or square
-                    adjustedWidth = tempDivSize * aspectRatio;
-                    adjustedHeight = tempDivSize;
+                if (aspectRatio > 1) { // Landscape
+                    baseImageHeight = previewContainerSize / aspectRatio;
+                } else { // Portrait or Square
+                    baseImageWidth = previewContainerSize * aspectRatio;
                 }
             }
-            
-            // Set calculated dimensions for hiResUserImage
-            hiResUserImage.style.width = `${adjustedWidth}px`;
-            hiResUserImage.style.height = `${adjustedHeight}px`;
-            
-            // Calculate initial centered position before applying user's adjustments
-            const initialLeft = (tempDivSize - adjustedWidth) / 2;
-            const initialTop = (tempDivSize - adjustedHeight) / 2;
 
-            // Apply user's scale and translate transforms
+            // Get current scale and translation values from sliders
             const currentScale = parseFloat(scaleSlider.value) / 100;
-            const currentXPos = parseFloat(xPosSlider.value); // These values are from 600px preview
+            const currentXPos = parseFloat(xPosSlider.value);
             const currentYPos = parseFloat(yPosSlider.value);
 
-            // Scale the translate values from the 600px preview to the 1920px rendering context
-            const translateScaleFactor = tempDivSize / originalPreviewWidth;
+            // Scale factor from preview size to high-res size
+            const renderScaleFactor = tempDivSize / previewContainerSize;
 
-            hiResUserImage.style.transform = `
-                translate(
-                    ${initialLeft + (currentXPos * translateScaleFactor)}px,
-                    ${initialTop + (currentYPos * translateScaleFactor)}px
-                )
-                scale(${currentScale})`;
-            hiResUserImage.style.transformOrigin = '0 0'; // Set origin to top-left for absolute positioning + translate
+            // Calculate the user image's effective size in the high-res context
+            const hiResUserImageEffectiveWidth = baseImageWidth * currentScale * renderScaleFactor;
+            const hiResUserImageEffectiveHeight = baseImageHeight * currentScale * renderScaleFactor;
 
-            // Ensure images are absolutely positioned within the tempRenderDiv
-            hiResUserImage.style.position = 'absolute';
-            hiResUserImage.style.display = 'block'; // Make sure it's visible
+            // Calculate initial offset (if image was centered by object-fit: contain in preview)
+            // This is the offset from the top-left of the preview container if the image were unscaled and centered
+            const initialOffsetX = (previewContainerSize - baseImageWidth) / 2;
+            const initialOffsetY = (previewContainerSize - baseImageHeight) / 2;
 
-            // Frame image always covers the full 1920x1920
+            // Calculate the final translation needed for the hi-res image
+            // This needs to map the transformed position from the 600px preview to the 1920px canvas
+            // The `xPos` and `yPos` from sliders are relative to the center of the 600px container.
+            // We need to apply these as an offset from the initially calculated centered position in the 1920px container.
+            
+            // First, calculate the image's original position relative to preview container's top-left (before user drag/scale)
+            // If the image was originally fitted with object-fit: contain, it might not fill the 600x600 space.
+            // Its top-left would be at (initialOffsetX, initialOffsetY)
+            
+            // Then, apply the user's transformations (xPos, yPos from sliders)
+            // The slider values (-100 to 100) are relative to the 600px preview.
+            // So, translate values from sliders need to be scaled up.
+            const scaledXTranslation = currentXPos * renderScaleFactor; // e.g., 100px on 600px preview = 320px on 1920px render
+            const scaledYTranslation = currentYPos * renderScaleFactor;
+
+            // Calculate hi-res image's position (left, top) relative to the tempRenderDiv's top-left (0,0)
+            // The image's effective top-left after scaling and translating for high-res render.
+            // Start from the center of the high-res div, then shift by half of the effective image size (for center transform origin),
+            // then apply the scaled slider translations.
+            
+            // To properly map, think of it as scaling the *entire coordinate system* from 600x600 to 1920x1920.
+            // The preview's (0,0) becomes (0,0) in high-res.
+            // The preview's `left` and `top` properties (relative to parent) are scaled up.
+            // The `translate` values from sliders are also scaled up.
+
+            // The 'user-image' CSS has `left: 0; top: 0;` and `transform-origin: center;`
+            // and then `transform: translate(${xPos}px, ${yPos}px) scale(${scale})`
+            // Let's replicate this behavior in the high-res context.
+
+            // Calculate the full rendered width/height of the user image considering original aspect ratio and slider scale
+            let finalRenderWidth, finalRenderHeight;
+            if (naturalWidth && naturalHeight) {
+                const effectivePreviewWidth = previewContainer.offsetWidth; // This is 600px or less on smaller screens
+                const effectivePreviewHeight = previewContainer.offsetHeight;
+
+                const baseImageRatio = naturalWidth / naturalHeight;
+
+                // Determine base dimensions for `object-fit: contain` within 600x600 before scaling
+                let previewBaseWidth, previewBaseHeight;
+                if (baseImageRatio > 1) { // Landscape
+                    previewBaseWidth = effectivePreviewWidth;
+                    previewBaseHeight = effectivePreviewWidth / baseImageRatio;
+                } else { // Portrait or Square
+                    previewBaseHeight = effectivePreviewHeight;
+                    previewBaseWidth = effectivePreviewHeight * baseImageRatio;
+                }
+                
+                // Apply the user's scale
+                finalRenderWidth = previewBaseWidth * currentScale * renderScaleFactor;
+                finalRenderHeight = previewBaseHeight * currentScale * renderScaleFactor;
+
+            } else {
+                // Fallback if natural dimensions not available, assume it fills the preview container
+                finalRenderWidth = previewContainerSize * currentScale * renderScaleFactor;
+                finalRenderHeight = previewContainerSize * currentScale * renderScaleFactor;
+            }
+
+            hiResUserImage.style.cssText = `
+                position: absolute;
+                width: ${finalRenderWidth}px;
+                height: ${finalRenderHeight}px;
+                /* No object-fit: contain here, as we are setting explicit width/height */
+                transform-origin: center; /* Important: match preview's transform-origin */
+                left: 50%;
+                top: 50%;
+                transform: translate(
+                    calc(-50% + ${scaledXTranslation}px),
+                    calc(-50% + ${scaledYTranslation}px)
+                ) scale(1); /* Scale is already baked into width/height, set to 1 here */
+                display: block;
+                z-index: 5;
+            `;
+
             hiResFrameImage.style.cssText = `
                 position: absolute;
                 width: 100%;
@@ -629,7 +680,7 @@
                 width: tempDivSize,
                 height: tempDivSize,
                 scale: 1, // Already rendering at target size
-                backgroundColor: null, // Let background be transparent if frame has transparent areas
+                backgroundColor: null,
                 useCORS: false,
                 allowTaint: false,
                 logging: true,
