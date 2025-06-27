@@ -6,6 +6,7 @@
   <title>สร้างกรอบรูปภาพ GAMA Awards</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Prompt', sans-serif; background: #fff; }
     .frame-thumbnail img { width: 80px; height: 80px; object-fit: contain; margin: auto; }
@@ -96,8 +97,10 @@
     const preview = document.getElementById('preview');
     const downloadBtn = document.getElementById('downloadBtn');
     const shareBtn = document.getElementById('shareBtn');
+    const uploadInput = document.getElementById('uploadInput'); // Get the upload input element
 
     let currentFrame = null, scale = 1, x = 0, y = 0, rotation = 0;
+    let uploadedFile = null; // To store the uploaded file for high-resolution processing
 
     // Function to convert an image to a square with padding
     function imageToSquare(img, size = 1000, backgroundColor = '#ffffff') {
@@ -149,14 +152,19 @@
       frameList.appendChild(btn);
     }
 
-    document.getElementById('uploadInput').addEventListener('change', e => {
+    uploadInput.addEventListener('change', e => {
       const file = e.target.files[0];
       if (!file) return;
+
+      uploadedFile = file; // Store the file for later high-res use
+
       const reader = new FileReader();
-      reader.onload = async ev => {
+      reader.onload = ev => {
         const img = new Image();
         img.onload = async () => {
-          const squaredDataUrl = await imageToSquare(img, 1000); // Process image to square (1000px for preview)
+          // Process image to square for preview (e.g., 600px for responsiveness)
+          const previewSize = preview.offsetWidth > 0 ? preview.offsetWidth : 600; // Use actual preview width or default
+          const squaredDataUrl = await imageToSquare(img, previewSize);
           userImage.src = squaredDataUrl;
           userImage.classList.remove('hidden');
           checkReady();
@@ -181,12 +189,17 @@
     });
 
     function checkReady() {
-      const ready = userImage.src && currentFrame;
+      const ready = userImage.src && currentFrame && uploadedFile; // Ensure uploadedFile is available
       downloadBtn.disabled = !ready;
       shareBtn.disabled = !ready;
     }
 
     async function renderCanvas() {
+      if (!uploadedFile) {
+        console.error("No uploaded file found for high-res rendering.");
+        return null;
+      }
+
       const container = document.createElement('div');
       container.style.width = '1920px';
       container.style.height = '1920px';
@@ -200,7 +213,7 @@
       container.style.justifyContent = 'center';
 
       const originalUserImg = new Image();
-      originalUserImg.src = document.getElementById('uploadInput').files[0] ? URL.createObjectURL(document.getElementById('uploadInput').files[0]) : userImage.src;
+      originalUserImg.src = URL.createObjectURL(uploadedFile); // Use the stored file for original image
       originalUserImg.crossOrigin = 'anonymous';
 
       await new Promise(resolve => originalUserImg.onload = resolve);
@@ -212,7 +225,7 @@
       Object.assign(hiResUser.style, {
         width: '100%',
         height: '100%',
-        objectFit: 'cover', // This object-fit is applied to the already-squared image
+        objectFit: 'cover',
         transform: `translate(${x}%, ${y}%) scale(${scale}) rotate(${rotation}deg)`,
         transformOrigin: 'center center',
         position: 'absolute',
@@ -247,22 +260,26 @@
 
     downloadBtn.addEventListener('click', async () => {
       const canvas = await renderCanvas();
-      const link = document.createElement('a');
-      link.download = `gama-frame-${currentFrame}.png`;
-      link.href = canvas.toDataURL();
-      link.click();
+      if (canvas) {
+        const link = document.createElement('a');
+        link.download = `gama-frame-${currentFrame}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+      }
     });
 
     shareBtn.addEventListener('click', async () => {
       const canvas = await renderCanvas();
-      canvas.toBlob(blob => {
-        const file = new File([blob], 'gama-frame.png', { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: 'GAMA Awards Frame' });
-        } else {
-          alert('อุปกรณ์ไม่รองรับการแชร์โดยตรง กรุณาใช้ปุ่มดาวน์โหลด');
-        }
-      });
+      if (canvas) {
+        canvas.toBlob(blob => {
+          const file = new File([blob], 'gama-frame.png', { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: 'GAMA Awards Frame' });
+          } else {
+            alert('อุปกรณ์ไม่รองรับการแชร์โดยตรง กรุณาใช้ปุ่มดาวน์โหลด');
+          }
+        });
+      }
     });
   </script>
 </body>
