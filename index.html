@@ -1,164 +1,377 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>ดาวน์โหลดภาพพร้อมกรอบ</title>
+  <meta charset="UTF-8" />
+  <title>✨ระบบขายหวย</title>
+
+  <!-- Responsive & Fonts -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt :wght@400;500;700&display=swap');
+    * {
+      font-family: 'Prompt', sans-serif;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: sans-serif;
-      text-align: center;
-      background: #f0f0f0;
+      background-color: #f7f7f7;
+      padding: 20px;
       margin: 0;
-      padding: 2em;
+      font-size: 16px;
     }
-    #previewContainer {
-      position: relative;
-      width: 300px;
-      height: 300px;
-      margin: auto;
+
+    .container {
       background: #fff;
-      overflow: hidden;
+      max-width: 600px;
+      margin: auto;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
-    #previewContainer img {
-      position: absolute;
+
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      color: #222;
+      margin-bottom: 30px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    input, select {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      margin-bottom: 15px;
     }
-    #frameImage {
-      z-index: 10;
+
+    button {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
     }
-    #loadingOverlay {
+
+    .btn-green {
+      background: #4CAF50;
+      color: white;
+      border: none;
+    }
+    .btn-blue {
+      background: #2196F3;
+      color: white;
+      border: none;
+    }
+    .btn-delete {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      font-size: 14px;
+      padding: 8px 10px;
+      height: 36px;
+    }
+
+    /* Items List */
+    .items-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .item-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+      background: #f9f9f9;
+      border-radius: 10px;
+    }
+
+    /* Popup */
+    #popup {
       display: none;
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      color: white;
-      font-size: 24px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.2);
+      z-index: 1000;
+      text-align: center;
+      width: 90vw;
+      max-width: 500px;
+    }
+
+    .check-icon {
+      display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 999;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: #2ecc71;
+      color: white;
+      font-size: 30px;
+      margin: 0 auto 15px auto;
+    }
+
+    #receipt {
+      text-align: left;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-top: 10px;
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    #receipt p {
+      margin: 6px 0;
+      color: #333;
+    }
+
+    #receipt hr {
+      border: 0;
+      border-top: 1px dashed #ccc;
+      margin: 15px 0;
+    }
+
+    .action-buttons {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .action-buttons button {
+      width: 100%;
     }
   </style>
 </head>
 <body>
 
-  <h2>ตัวอย่างภาพพร้อมกรอบ</h2>
-  <div id="previewContainer">
-    <img id="userImage" src="https://via.placeholder.com/600x600.png?text=Your+Photo" alt="User" />
-    <img id="frameImage" src="https://via.placeholder.com/600x600.png?text=Frame" alt="Frame" />
+  <div class="container">
+    <h1>✨วันนี้รวย</h1>
+
+    <div class="form-group">
+      <label for="lotteryDate">งวดประจำวันที่</label>
+      <input type="date" id="lotteryDate" required>
+    </div>
+
+    <div class="form-group">
+      <label for="buyerName">ชื่อผู้ซื้อ</label>
+      <input type="text" id="buyerName" placeholder="เช่น สมชาย" required>
+    </div>
+
+    <div class="items-container" id="items-container"></div>
+
+    <button class="btn-blue" onclick="addItem()">+ เพิ่มรายการ</button>
+    <button class="btn-green" onclick="submitAll()">บันทึกการสั่งซื้อทั้งหมด</button>
   </div>
 
-  <br>
-  <button id="downloadBtn">📥 ดาวน์โหลดภาพ</button>
-  <p><small>📱 หากใช้มือถือ: กด “ดาวน์โหลด” แล้วแตะค้างที่ภาพ → เลือก "บันทึกรูปภาพ"</small></p>
+  <!-- Popup -->
+  <div id="popup">
+    <div id="receipt"></div>
 
-  <div id="loadingOverlay">กำลังประมวลผล...</div>
+    <div class="action-buttons">
+      <button class="btn-blue" onclick="downloadReceipt()">ดาวน์โหลดใบเสร็จ</button>
+      <button class="btn-blue" onclick="shareReceipt()">แชร์ในไลน์/เมสเสจ</button>
+      <button class="btn-green" onclick="closeReceipt()">ปิด</button>
+    </div>
+  </div>
 
-  <!-- html2canvas -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js "></script>
   <script>
-    const downloadBtn = document.getElementById('downloadBtn');
-    const userImagePreview = document.getElementById('userImage');
-    const frameImagePreview = document.getElementById('frameImage');
-    const loadingOverlay = document.getElementById('loadingOverlay');
+    function addItem() {
+      const container = document.getElementById("items-container");
+      const itemDiv = document.createElement("div");
+      itemDiv.className = "item-row";
+      itemDiv.innerHTML = `
+        <select required>
+          <option value="">เลือกประเภท</option>
+          <option value="2 ตัว (บน)">2 ตัว (บน)</option>
+          <option value="2 ตัว (ล่าง)">2 ตัว (ล่าง)</option>
+          <option value="3 ตัวหัว (3 ตัวหน้า รางวัลที่1)">3 ตัวหัว (3 ตัวหน้า รางวัลที่1)</option>
+          <option value="3 ตัวท้าย (3 ตัวท้าย รางวัลที่1)">3 ตัวท้าย (3 ตัวท้าย รางวัลที่1)</option>
+          <option value="3 ตัวโต๊ดหัว X3X6 (รางวัลที่1)">3 ตัวโต๊ดหัว X3X6 (รางวัลที่1)</option>
+          <option value="3 ตัวโต๊ดท้าย X3X6 (รางวัลที่1)">3 ตัวโต๊ดท้าย X3X6 (รางวัลที่1)</option>
+        </select>
+        <input type="text" placeholder="เลข" required>
+        <input type="number" placeholder="จำนวนเงิน" required>
+        <button class="btn-delete" onclick="removeItem(this)">ลบ</button>
+      `;
+      container.appendChild(itemDiv);
+    }
 
-    // จำลองว่ารูปโหลดครบแล้ว
-    const userImageLoaded = true;
-    const frameImageLoaded = true;
-    const selectedFrame = "default";
+    function removeItem(btn) {
+      btn.parentElement.remove();
+    }
 
-    // ค่าจำลองการเคลื่อนย้าย/ซูม
-    const initialTranslateX = 0;
-    const initialTranslateY = 0;
-    const currentScale = 1;
+    // ตรวจสอบว่าเลขซ้ำหรือไม่
+    function isDuplicated(number) {
+      return new Set(number).size !== number.length;
+    }
 
-    downloadBtn.addEventListener('click', function () {
-      if (!userImageLoaded || !frameImageLoaded || !selectedFrame) {
-        alert('โปรดอัปโหลดรูปภาพและเลือกกรอบก่อนดาวน์โหลด');
+    // ปรับรูปแบบเลขโต๊ด
+    function formatNumberWithMultiplier(type, number, amount) {
+      if (!type.includes("โต๊ด")) return number;
+
+      const duplicated = isDuplicated(number);
+      const multiplier = duplicated ? 3 : 6;
+      const pricePerUnit = (amount / multiplier).toFixed(0);
+
+      return `${number} 
+        <span style="color: blue;">x${multiplier}</span> 
+        <span style="color: red;">(ตัวละ ${pricePerUnit} บาท)</span>`;
+    }
+
+    async function submitAll() {
+      const dateInput = document.getElementById("lotteryDate").value;
+      const buyerName = document.getElementById("buyerName").value;
+
+      if (!dateInput || !buyerName) {
+        alert("กรุณากรอกข้อมูลให้ครบถ้วน");
         return;
       }
 
-      loadingOverlay.style.display = 'flex';
+      const thaiDate = new Date(dateInput).toLocaleDateString('th-TH', {year: 'numeric', month: 'long', day: 'numeric'});
+      const rows = document.querySelectorAll(".item-row");
 
-      const tempRenderDiv = document.createElement('div');
-      tempRenderDiv.style.width = '1920px';
-      tempRenderDiv.style.height = '1920px';
-      tempRenderDiv.style.position = 'absolute';
-      tempRenderDiv.style.left = '-9999px';
-      tempRenderDiv.style.top = '-9999px';
-      tempRenderDiv.style.display = 'flex';
-      tempRenderDiv.style.alignItems = 'center';
-      tempRenderDiv.style.justifyContent = 'center';
-      tempRenderDiv.style.overflow = 'hidden';
-      tempRenderDiv.style.backgroundColor = 'transparent';
-      document.body.appendChild(tempRenderDiv);
+      let totalAmount = 0;
+      let receiptHTML = '';
+      let dataToSave = [];
 
-      const hiResUserImage = new Image();
-      const hiResFrameImage = new Image();
+      try {
+        rows.forEach(row => {
+          const inputs = row.querySelectorAll("input, select");
+          const type = inputs[0].value;
+          const number = inputs[1].value.trim();
+          const amount = parseFloat(inputs[2].value.trim());
 
-      hiResUserImage.src = userImagePreview.src;
-      hiResFrameImage.src = frameImagePreview.src;
+          if (!type || !number || isNaN(amount)) {
+            throw new Error("กรุณากรอกข้อมูลในทุกช่องให้ครบถ้วน");
+          }
 
-      hiResUserImage.style.transform = `translate(${initialTranslateX}%, ${initialTranslateY}%) scale(${currentScale})`;
-      hiResUserImage.style.transformOrigin = 'center center';
-      hiResUserImage.style.objectFit = 'cover';
-      hiResUserImage.style.width = '100%';
-      hiResUserImage.style.height = '100%';
-      hiResUserImage.style.position = 'absolute';
-      hiResUserImage.style.zIndex = '5';
+          totalAmount += amount;
 
-      hiResFrameImage.style.width = '100%';
-      hiResFrameImage.style.height = '100%';
-      hiResFrameImage.style.position = 'absolute';
-      hiResFrameImage.style.zIndex = '10';
-      hiResFrameImage.style.objectFit = 'contain';
-
-      tempRenderDiv.appendChild(hiResUserImage);
-      tempRenderDiv.appendChild(hiResFrameImage);
-
-      Promise.all([
-        new Promise(resolve => {
-          if (hiResUserImage.complete && hiResUserImage.naturalWidth > 0) resolve();
-          else hiResUserImage.onload = resolve;
-        }),
-        new Promise(resolve => {
-          if (hiResFrameImage.complete && hiResFrameImage.naturalWidth > 0) resolve();
-          else hiResFrameImage.onload = resolve;
-        })
-      ]).then(() => {
-        setTimeout(() => {
-          html2canvas(tempRenderDiv, {
-            width: 1920,
-            height: 1920,
-            scale: 1,
-            backgroundColor: null,
-            useCORS: true
-          }).then(canvas => {
-            document.body.removeChild(tempRenderDiv);
-            const imgData = canvas.toDataURL('image/png');
-
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (isMobile) {
-              const newTab = window.open();
-              newTab.document.write(`<p style="text-align:center;">แตะค้างที่ภาพด้านล่างเพื่อบันทึก</p><img src="${imgData}" style="width:100%">`);
-            } else {
-              const link = document.createElement('a');
-              link.download = `profile-${selectedFrame}-gama-awards.png`;
-              link.href = imgData;
-              link.click();
-            }
-
-            loadingOverlay.style.display = 'none';
-          }).catch(err => {
-            alert('ไม่สามารถสร้างภาพได้ กรุณาลองใหม่');
-            document.body.removeChild(tempRenderDiv);
-            loadingOverlay.style.display = 'none';
+          const formattedNumber = formatNumberWithMultiplier(type, number, amount);
+          receiptHTML += `<p><strong>${type}</strong></p>`;
+          receiptHTML += `<p>เลข ${formattedNumber}</p>`;
+          receiptHTML += `<p>จำนวน ${amount} บาท</p>`;
+          receiptHTML += `<hr>`;
+          dataToSave.push({
+            date: thaiDate,
+            name: buyerName,
+            type,
+            number,
+            amount
           });
-        }, 100);
+        });
+
+        // สร้าง HTML ใบเสร็จ
+        const iconStyle = `
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background-color: #2ecc71;
+          color: white;
+          font-size: 30px;
+          margin: 0 auto 15px auto;
+        `;
+
+        const headerHTML = `
+          <div style="text-align:center;">
+            <div style="${iconStyle}">✓</div>
+            <h3 style="margin-top:10px;">บันทึกการสั่งซื้อ!</h3>
+          </div>
+          <hr style="border-top: 1px dashed #ccc; margin: 20px 0;">
+        `;
+
+        const footerHTML = `
+          <p style="font-weight:bold; color:#e67e22; text-align:center;">รวมทั้งหมด <span>${totalAmount}</span> บาท</p>
+          <p style="text-align:center; font-weight:normal; font-style: italic;">ผู้ซื้อ <span style="font-weight: normal; font-style: normal;">${buyerName}</span></p>
+          <p style="color:#2ecc71; font-weight:bold; text-align:center;">ขอให้โชคดี 🌟✨</p>
+        `;
+
+        const fullReceiptHTML = `
+          ${headerHTML}
+          <p style="text-align:center;"><strong>งวดประจำวันที่</strong> ${thaiDate}</p>
+          <hr style="border-top: 1px dashed #ccc; margin: 15px 0;">
+          ${receiptHTML}
+          ${footerHTML}
+        `;
+
+        const receiptDiv = document.getElementById("receipt");
+        receiptDiv.innerHTML = fullReceiptHTML;
+
+        // ส่งไป Google Sheets
+        fetch("https://script.google.com/macros/s/AKfycbzw0nSTYw2BJOpznxLD8DNyEZDZC_b5VsuTvSz-jG3Xv-GTO8nMVCAONX1n9LFqGvlW/exec", {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(dataToSave)
+        }).then(() => {
+          showPopup();
+        }).catch(err => {
+          console.error("Error:", err);
+          alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
+        });
+
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function showPopup() {
+      document.getElementById("popup").style.display = "block";
+    }
+
+    function closeReceipt() {
+      document.getElementById("popup").style.display = "none";
+      document.getElementById("lotteryDate").value = "";
+      document.getElementById("buyerName").value = "";
+      document.getElementById("items-container").innerHTML = "";
+    }
+
+    async function downloadReceipt() {
+      const receiptDiv = document.getElementById("receipt");
+
+      const canvas = await html2canvas(receiptDiv, {
+        backgroundColor: "#fff",
+        scale: 2
       });
-    });
-  </script>
-</body>
-</html>
+
+      const link = document.createElement("a");
+      link.download = "ใบเสร็จรับเงิน.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    function shareReceipt() {
+      html2canvas(document.getElementById("receipt"), {
+        backgroundColor: "#fff",
+        scale: 2
+      }).then(canvas => {
+        canvas.toBlob(blob => {
+          const file = new File([blob], "ใบเสร็จรับเงิน.png", {type: "image/png"});
+          const item = [new ClipboardItem({[file.type]: file})];
+
+          navigator.clipboard.write(item).then(() => {
+            alert("คัดลอกใบเสร็จแล้ว คุณสามารถกด Ctrl+V หรือแชร์ได้เลย!");
+          }).catch(() => {
+            alert("ไม่สามารถคัดลอกใบเสร็จได้ กรุณาใช้ปุ่มดาวน์โหลดแทน");
+          });
