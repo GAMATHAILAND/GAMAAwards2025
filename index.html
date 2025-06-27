@@ -106,11 +106,11 @@
             background-color: var(--light-gray);
             border: 2px dashed var(--primary-purple);
             border-radius: 8px;
-            cursor: grab; /* Indicate draggable */
+            /* cursor: grab; /* REMOVED: No longer draggable */
         }
-        .image-container:active {
-            cursor: grabbing;
-        }
+        /* .image-container:active { /* REMOVED: No longer draggable */
+            /* cursor: grabbing; */
+        /* } */
 
         /* User Image and Frame Image Layers */
         .image-container > img {
@@ -427,8 +427,8 @@
             let selectedFrame = null;
             let userImageLoaded = false;
             let frameImageLoaded = false;
-            let isDragging = false;
-            let startPointerX, startPointerY; // Initial pointer position during drag
+            // let isDragging = false; // REMOVED: No longer draggable
+            // let startPointerX, startPointerY; // REMOVED: No longer draggable
             let initialTranslateX, initialTranslateY; // Initial image translation (from sliders)
             let currentScale = 1;
 
@@ -552,80 +552,8 @@
             xPosSlider.addEventListener('input', updateImagePosition);
             yPosSlider.addEventListener('input', updateImagePosition);
 
-            // --- Dragging Functionality for User Image ---
-            // Mouse events
-            previewContainer.addEventListener('mousedown', (e) => {
-                if (userImageLoaded && selectedFrame) {
-                    isDragging = true;
-                    e.preventDefault(); // Prevent default browser drag behavior
-                    startPointerX = e.clientX;
-                    startPointerY = e.clientY;
-                    // Store current slider values as initial for relative drag calculation
-                    initialTranslateX = parseFloat(xPosSlider.value);
-                    initialTranslateY = parseFloat(yPosSlider.value);
-                    previewContainer.style.cursor = 'grabbing'; // Change cursor to indicate dragging
-                }
-            });
-
-            previewContainer.addEventListener('mousemove', (e) => {
-                if (!isDragging || !userImageLoaded) return;
-                
-                const deltaX = e.clientX - startPointerX;
-                const deltaY = e.clientY - startPointerY;
-
-                // Calculate new percentage based on drag distance relative to container size
-                const newXPos = initialTranslateX + (deltaX / previewContainer.offsetWidth) * 100;
-                const newYPos = initialTranslateY + (deltaY / previewContainer.offsetHeight) * 100;
-
-                // Limit movement to slider's min/max range
-                xPosSlider.value = Math.max(-100, Math.min(100, newXPos));
-                yPosSlider.value = Math.max(-100, Math.min(100, newYPos));
-                updateImagePosition(); // Apply new position
-            });
-
-            previewContainer.addEventListener('mouseup', () => {
-                isDragging = false;
-                previewContainer.style.cursor = 'grab'; // Reset cursor
-            });
-
-            previewContainer.addEventListener('mouseleave', () => {
-                isDragging = false;
-                previewContainer.style.cursor = 'grab'; // Reset cursor if mouse leaves while dragging
-            });
-            
-            // Touch events for mobile dragging
-            previewContainer.addEventListener('touchstart', (e) => {
-                if (userImageLoaded && selectedFrame && e.touches.length === 1) {
-                    isDragging = true;
-                    e.preventDefault(); // Prevent scrolling on touch devices
-                    const touch = e.touches[0];
-                    startPointerX = touch.clientX;
-                    startPointerY = touch.clientY;
-                    initialTranslateX = parseFloat(xPosSlider.value);
-                    initialTranslateY = parseFloat(yPosSlider.value);
-                    previewContainer.style.cursor = 'grabbing';
-                }
-            }, { passive: false }); // Use passive: false to allow preventDefault
-
-            previewContainer.addEventListener('touchmove', (e) => {
-                if (!isDragging || !userImageLoaded || e.touches.length !== 1) return;
-                
-                const touch = e.touches[0];
-                const deltaX = touch.clientX - startPointerX;
-                const deltaY = touch.clientY - startPointerY;
-
-                const newXPos = initialTranslateX + (deltaX / previewContainer.offsetWidth) * 100;
-                const newYPos = initialTranslateY + (deltaY / previewContainer.offsetHeight) * 100;
-
-                xPosSlider.value = Math.max(-100, Math.min(100, newXPos));
-                yPosSlider.value = Math.max(-100, Math.min(100, newYPos));
-                updateImagePosition();
-            }, { passive: false });
-
-            previewContainer.addEventListener('touchend', () => {
-                isDragging = false;
-                previewContainer.style.cursor = 'grab';
-            });
+            // --- REMOVED: Dragging Functionality for User Image ---
+            // Removed mousedown, mousemove, mouseup, mouseleave, touchstart, touchmove, touchend event listeners from previewContainer
 
             // --- Download Functionality ---
             downloadBtn.addEventListener('click', function() {
@@ -645,9 +573,12 @@
                 tempRenderDiv.style.top = '-9999px';
                 tempRenderDiv.style.overflow = 'hidden';
                 tempRenderDiv.style.backgroundColor = 'transparent'; // Ensure transparent background if needed
-                tempRenderDiv.style.display = 'flex'; // Use flex to layer images
+                
+                // Use relative positioning for children and flexbox for centering
+                tempRenderDiv.style.display = 'flex';
                 tempRenderDiv.style.alignItems = 'center';
                 tempRenderDiv.style.justifyContent = 'center';
+                
                 document.body.appendChild(tempRenderDiv);
 
                 // Create new image elements for the high-res render
@@ -658,18 +589,21 @@
                 hiResFrameImage.src = frameImagePreview.src; // Use the same source as preview
 
                 // Apply current transformations to the high-res user image
+                // The values from sliders (initialTranslateX, initialTranslateY, currentScale) are already correct
                 hiResUserImage.style.transform = `translate(${initialTranslateX}%, ${initialTranslateY}%) scale(${currentScale})`;
                 hiResUserImage.style.transformOrigin = 'center center';
-                hiResUserImage.style.objectFit = 'cover';
+                hiResUserImage.style.objectFit = 'cover'; // Keep aspect ratio, fill space
                 hiResUserImage.style.width = '100%';
                 hiResUserImage.style.height = '100%';
-                hiResUserImage.style.position = 'absolute';
+                hiResUserImage.style.position = 'absolute'; // Position absolutely within flex container
+                hiResUserImage.style.zIndex = '5';
                 hiResUserImage.style.display = 'block';
 
                 hiResFrameImage.style.width = '100%';
                 hiResFrameImage.style.height = '100%';
-                hiResFrameImage.style.position = 'absolute';
+                hiResFrameImage.style.position = 'absolute'; // Position absolutely within flex container
                 hiResFrameImage.style.zIndex = '10'; // Ensure frame is on top
+                hiResFrameImage.style.objectFit = 'contain'; // Keep aspect ratio, fit within space
                 hiResFrameImage.style.display = 'block';
 
                 tempRenderDiv.appendChild(hiResUserImage);
@@ -678,7 +612,7 @@
                 // Wait for both high-resolution images to load in the temporary div
                 Promise.all([
                     new Promise(resolve => {
-                        if (hiResUserImage.complete && hiResUserImage.naturalWidth > 0) { // Check naturalWidth for success
+                        if (hiResUserImage.complete && hiResUserImage.naturalWidth > 0) { 
                             resolve();
                         } else {
                             hiResUserImage.onload = resolve;
@@ -689,7 +623,7 @@
                         }
                     }),
                     new Promise(resolve => {
-                        if (hiResFrameImage.complete && hiResFrameImage.naturalWidth > 0) { // Check naturalWidth for success
+                        if (hiResFrameImage.complete && hiResFrameImage.naturalWidth > 0) { 
                             resolve();
                         } else {
                             hiResFrameImage.onload = resolve;
