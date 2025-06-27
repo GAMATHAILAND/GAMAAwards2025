@@ -3,135 +3,179 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>สร้างกรอบรูปภาพ GAMA Awards</title>
+  <title>GAMA Awards Frame Creator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Prompt', sans-serif; background-color: #f9fafb; color: #1f2937; }
-    .frame-thumbnail img { width: 72px; height: 72px; object-fit: contain; margin: auto; }
-    .frame-thumbnail.selected { border: 2px solid #6366f1; background-color: #eef2ff; }
-    .preview-container {
-      position: relative; width: 100%; max-width: 600px; aspect-ratio: 1 / 1;
-      background: #e5e7eb; overflow: hidden; border-radius: 0.5rem;
+    body {
+      font-family: 'Prompt', sans-serif;
+      background: linear-gradient(to top, #4500b2, #d83361);
+      color: #333;
     }
-    .preview-container img {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+    .header-gradient {
+      background: linear-gradient(to right, #4500b2, #d83361);
+      height: 8px;
     }
-    .frame-img { z-index: 10; pointer-events: none; object-fit: contain; }
-    .user-img { z-index: 5; }
-    #downloadBtn:disabled, #shareBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .image-container {
+      position: relative;
+      width: 100%;
+      padding-top: 100%;
+      background-color: #f9fafb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .image-container > img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .user-image { z-index: 5; }
+    .frame-image {
+      z-index: 10;
+      pointer-events: none;
+      object-fit: contain;
+    }
+    .loading {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      color: #fff;
+    }
   </style>
 </head>
-<body class="p-6">
-  <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
-    <div class="text-center mb-6">
-      <img src="https://gamathailand.github.io/GAMAAwards2025/logo-gama-awards.png" class="h-20 mx-auto" />
-      <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 mt-4">สร้างกรอบรูปภาพ GAMA Awards</h1>
+<body class="flex flex-col items-center">
+  <div class="header-gradient w-full"></div>
+  <div class="container max-w-3xl w-full p-4">
+    <h1 class="text-white text-3xl font-bold text-center my-4">GAMA Awards Frame Creator</h1>
+
+    <input type="file" id="imageUpload" accept="image/*" class="mb-4 w-full" />
+
+    <div class="flex flex-wrap gap-2 justify-center mb-4">
+      <button class="frame-option" data-frame="https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png">MAA</button>
+      <button class="frame-option" data-frame="https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png">MFA</button>
+      <button class="frame-option" data-frame="https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png">MMA</button>
+      <button class="frame-option" data-frame="https://hugmediacreation.com/photo/International%20Management%20Award.png">IMA</button>
+      <button class="frame-option" data-frame="https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png">FLA</button>
+      <button class="frame-option" data-frame="https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png">ERA</button>
+      <button class="frame-option" data-frame="https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png">COE</button>
     </div>
-    <div class="mb-6">
-      <h2 class="text-lg font-medium text-gray-700 mb-2">1 อัปโหลดรูปภาพของคุณ</h2>
-      <input type="file" id="uploadInput" accept="image/*" class="block w-full border-2 border-dashed border-gray-300 rounded-md p-4 text-center cursor-pointer text-sm text-gray-500" />
+
+    <div class="image-container mb-4" id="preview">
+      <img id="userImage" class="user-image hidden" />
+      <img id="frameImage" class="frame-image hidden" />
     </div>
-    <div class="mb-6">
-      <h2 class="text-lg font-medium text-gray-700 mb-2">2 เลือกกรอบ</h2>
-      <div id="frameList" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-4"></div>
+
+    <div class="grid grid-cols-3 gap-2 mb-4">
+      <input type="range" id="scaleSlider" min="50" max="200" value="100">
+      <input type="range" id="xPosSlider" min="-100" max="100" value="0">
+      <input type="range" id="yPosSlider" min="-100" max="100" value="0">
     </div>
-    <div class="mb-6">
-      <div class="preview-container mx-auto" id="preview">
-        <img id="userImage" class="user-img hidden" />
-        <img id="frameImage" class="frame-img hidden" />
-      </div>
-    </div>
-    <div class="mb-6">
-      <h2 class="text-lg font-medium text-gray-700 mb-2">3 ปรับแต่งรูปภาพ</h2>
-      <label class="text-sm text-gray-600">ขยาย/ย่อ</label>
-      <input type="range" id="scaleSlider" min="50" max="200" value="100" class="w-full mb-3">
-      <label class="text-sm text-gray-600">ตำแหน่งแนวนอน</label>
-      <input type="range" id="xSlider" min="-100" max="100" value="0" class="w-full mb-3">
-      <label class="text-sm text-gray-600">ตำแหน่งแนวตั้ง</label>
-      <input type="range" id="ySlider" min="-100" max="100" value="0" class="w-full mb-3">
-      <label class="text-sm text-gray-600">หมุน</label>
-      <input type="range" id="rotateSlider" min="-180" max="180" value="0" class="w-full mb-3">
-    </div>
-    <div>
-      <h2 class="text-lg font-medium text-gray-700 mb-2">4 ดาวน์โหลดรูปภาพของคุณ</h2>
-      <p class="text-sm text-gray-500 mb-4">ภาพของคุณจะถูกดาวน์โหลดที่ความละเอียด 1920x1920</p>
-      <button id="downloadBtn" disabled class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md font-medium">ดาวน์โหลดรูปภาพ</button>
-      <button id="shareBtn" disabled class="w-full mt-3 bg-gray-800 hover:bg-gray-900 text-white py-2 rounded-md font-medium">แชร์รูปภาพ</button>
-    </div>
+
+    <button id="downloadBtn" class="bg-purple-700 text-white w-full py-2 rounded mb-2">ดาวน์โหลด</button>
+    <button id="shareBtn" class="bg-blue-600 text-white w-full py-2 rounded">แชร์</button>
   </div>
+
+  <div id="loadingOverlay" class="loading hidden">
+    <span>กำลังประมวลผล...</span>
+  </div>
+
   <script>
-    const frameUrls = {
-      MAA: 'https://gamathailand.github.io/GAMAAwards2025/MASTER%20MULTILINE%20Award.png',
-      MFA: 'https://gamathailand.github.io/GAMAAwards2025/MASTER%20FIRM%20Award.png',
-      MMA: 'https://gamathailand.github.io/GAMAAwards2025/MASTER%20AGENCY%20Award.png',
-      IMA: 'https://gamathailand.github.io/GAMAAwards2025/International%20Management%20Award.png',
-      FLA: 'https://gamathailand.github.io/GAMAAwards2025/Frontline%20Leader%20Awards.png',
-      ERA: 'https://gamathailand.github.io/GAMAAwards2025/Excellence%20Recruitment%20Award.png',
-      COE: 'https://gamathailand.github.io/GAMAAwards2025/Circle%20of%20Excellence%20Award.png'
-    };
+    const imageUpload = document.getElementById('imageUpload');
     const userImage = document.getElementById('userImage');
     const frameImage = document.getElementById('frameImage');
-    const frameList = document.getElementById('frameList');
-    const uploadInput = document.getElementById('uploadInput');
+    const preview = document.getElementById('preview');
     const downloadBtn = document.getElementById('downloadBtn');
     const shareBtn = document.getElementById('shareBtn');
-    let currentFrame = null, scale = 1, x = 0, y = 0, rotation = 0;
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const scaleSlider = document.getElementById('scaleSlider');
+    const xSlider = document.getElementById('xPosSlider');
+    const ySlider = document.getElementById('yPosSlider');
 
-    for (let key in frameUrls) {
-      const div = document.createElement('div');
-      div.className = 'frame-thumbnail p-2 border rounded cursor-pointer text-center';
-      div.innerHTML = `<img src="${frameUrls[key]}" /><div class="mt-1 text-sm">${key}</div>`;
-      div.onclick = () => {
-        document.querySelectorAll('.frame-thumbnail').forEach(el => el.classList.remove('selected'));
-        div.classList.add('selected');
-        frameImage.src = frameUrls[key];
-        frameImage.classList.remove('hidden');
-        currentFrame = key;
-        checkReady();
-      };
-      frameList.appendChild(div);
-    }
+    let selectedFrame = '';
 
-    uploadInput.addEventListener('change', e => {
+    imageUpload.addEventListener('change', e => {
       const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const size = Math.max(img.width, img.height);
-          canvas.width = canvas.height = size;
-          const ctx = canvas.getContext('2d');
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, size, size);
-          ctx.drawImage(img, (size - img.width) / 2, (size - img.height) / 2);
-          userImage.src = canvas.toDataURL();
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          userImage.src = reader.result;
           userImage.classList.remove('hidden');
-          checkReady();
+          updateTransform();
         };
-        img.src = ev.target.result;
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      }
     });
 
-    ['scaleSlider', 'xSlider', 'ySlider', 'rotateSlider'].forEach(id => {
-      document.getElementById(id).addEventListener('input', () => {
-        scale = document.getElementById('scaleSlider').value / 100;
-        x = document.getElementById('xSlider').value;
-        y = document.getElementById('ySlider').value;
-        rotation = document.getElementById('rotateSlider').value;
-        userImage.style.transform = `translate(${x}%, ${y}%) scale(${scale}) rotate(${rotation}deg)`;
+    document.querySelectorAll('.frame-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedFrame = btn.dataset.frame;
+        frameImage.src = selectedFrame;
+        frameImage.classList.remove('hidden');
       });
     });
 
-    function checkReady() {
-      const ready = userImage.src && currentFrame;
-      downloadBtn.disabled = !ready;
-      shareBtn.disabled = !ready;
+    [scaleSlider, xSlider, ySlider].forEach(slider => {
+      slider.addEventListener('input', updateTransform);
+    });
+
+    function updateTransform() {
+      const scale = scaleSlider.value / 100;
+      const x = xSlider.value;
+      const y = ySlider.value;
+      userImage.style.transform = `translate(${x}%, ${y}%) scale(${scale})`;
+      userImage.style.transformOrigin = 'center';
     }
+
+    async function renderCombinedImage() {
+      loadingOverlay.classList.remove('hidden');
+      const clone = preview.cloneNode(true);
+      clone.style.width = '1920px';
+      clone.style.height = '1920px';
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '-9999px';
+      document.body.appendChild(clone);
+
+      const canvas = await html2canvas(clone, {
+        backgroundColor: null,
+        useCORS: true,
+        allowTaint: true
+      });
+
+      document.body.removeChild(clone);
+      loadingOverlay.classList.add('hidden');
+      return canvas;
+    }
+
+    downloadBtn.addEventListener('click', async () => {
+      const canvas = await renderCombinedImage();
+      if (!canvas) return;
+      const link = document.createElement('a');
+      link.download = 'gama-profile.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    });
+
+    shareBtn.addEventListener('click', async () => {
+      const canvas = await renderCombinedImage();
+      canvas.toBlob(async blob => {
+        const file = new File([blob], 'gama-profile.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'GAMA Profile Frame' });
+        } else {
+          const item = [new ClipboardItem({ [file.type]: file })];
+          await navigator.clipboard.write(item);
+          alert('คัดลอกรูปภาพแล้ว! วางในแอปอื่นได้เลย');
+        }
+      });
+    });
   </script>
 </body>
 </html>
