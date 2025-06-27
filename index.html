@@ -83,7 +83,7 @@
       background: white; /* Modal background is white */
       padding: 2rem;
       border-radius: 16px;
-      max-width: 550px; /* Increased max-width for wider popup */
+      max-width: 550px; /* Increased max-width for wider popup, as requested before */
       width: 90%;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
       font-family: 'Prompt', sans-serif;
@@ -165,14 +165,13 @@
 
       try {
         console.log("Fetching data with query:", q); // Debug: Log the query
-
         const res = await axios.get(API_URL + `?q=${encodeURIComponent(q)}`);
-        const data = res.data;
+        const data = res.data; // This 'data' object will contain the fetched info
 
-        console.log("API Response data:", data); // CRITICAL DEBUG STEP: Check this in console
+        console.log("API Response data:", data); // Check this in console
 
         if (!data || !data.name) {
-          console.log("Data not found or name is missing from response."); // Debug: Log if data is missing
+          console.log("Data not found or name is missing from response.");
           showModal(`
             <div class="modal-content">
               <span class="close-button" onclick="closeModal(event)">&times;</span>
@@ -181,8 +180,8 @@
             </div>
           `);
         } else {
-          console.log("Data found, attempting to display:", data); // Debug: Log if data is found
-          // Populate the modal with actual data
+          console.log("Data found. Displaying static fields and QR code.");
+          // Populate the modal with ONLY static labels and QR code
           showModal(`
             <div class="modal-content">
               <span onclick="closeModal(event)" class="close-button">&times;</span>
@@ -191,12 +190,7 @@
               <h2 style="color:#6a11cb; font-size: 1.3rem; font-weight: bold; margin-bottom: 1.5rem;">ข้อมูลผู้รับรางวัล</h2>
 
               <div style="text-align: left; font-size: 1rem;">
-                <p><span style="color: #555;">ID</span><br><strong>${data.id || '-'}</strong></p>
-                <p><span style="color: #555;">ชื่อ–นามสกุล</span><br><strong>${data.name || '-'}</strong></p>
-                <p><span style="color: #555;">สังกัด</span><br><strong>${data.organization || '-'}</strong></p>
-                <p><span style="color: #555;">ประเภทรางวัล</span><br><strong>${data.awardType || '-'}</strong></p>
-                <p><span style="color: #555;">ระดับ</span><br><strong>${data.level || '-'}</strong></p>
-              </div>
+                <p><span style="color: #555;">ID</span><br><strong></strong></p> <p><span style="color: #555;">ชื่อ–นามสกุล</span><br><strong></strong></p> <p><span style="color: #555;">สังกัด</span><br><strong></strong></p> <p><span style="color: #555;">ประเภทรางวัล</span><br><strong></strong></p> <p><span style="color: #555;">ระดับ</span><br><strong></strong></p> </div>
 
               <div style="margin-top: 1.5rem; text-align: center;">
                 <canvas id="qrcode"></canvas>
@@ -204,17 +198,17 @@
             </div>
           `);
 
-          // Generate QR code after modal content is in DOM
+          // Generate QR code (still uses data.id for the QR code itself)
           setTimeout(() => {
             if (document.getElementById("qrcode")) {
-              console.log("Generating QR code for:", data.id); // Debug: QR code generation
+              console.log("Generating QR code for:", data.id); // QR code still uses the ID
               QRCode.toCanvas(document.getElementById("qrcode"), data.id || 'N/A', { width: 120 });
             }
           }, 100); // Small delay to ensure canvas is rendered
         }
       } catch (e) {
         errBox.textContent = "เกิดข้อผิดพลาดในการค้นหา กรุณาลองใหม่";
-        console.error("Error during API call:", e); // Debug: Log API error
+        console.error("Error during API call:", e); // Log API error
       } finally {
         // Hide loader regardless of success or failure
         loader.style.display = "none";
