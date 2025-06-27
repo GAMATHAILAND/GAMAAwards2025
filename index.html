@@ -231,7 +231,7 @@
 
     <div class="container">
         <div class="logo-header">
-            <img src="https://hugmediacreation.com/photo/GAMA%20Awards.png" alt="GAMA Awards Logo">
+            <img src="./GAMA%20Awards.png" alt="GAMA Awards Logo">
         </div>
         <h1>GAMA Awards Frame</h1>
         <p style="text-align: center; color: #666; margin-bottom: 30px;">
@@ -311,13 +311,14 @@
         let frameImages = {}; // To store loaded frame images
 
         const frames = [
-            { id: 'MAA', name: 'Master Multiline Award', url: 'https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png' },
-            { id: 'MFA', name: 'Master Firm Award', url: 'https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png' },
-            { id: 'MMA', name: 'Master Agency Award', url: 'https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png' },
-            { id: 'IMA', name: 'International Management Award', url: 'https://hugmediacreation.com/photo/International%20Management%20Award.png' },
-            { id: 'FLA', name: 'Frontline Leader Award', url: 'https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png' },
-            { id: 'ERA', name: 'Excellence Recruitment Awards', url: 'https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png' },
-            { id: 'COE', name: 'Circle of Excellence Award', url: 'https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png' }
+            // Updated URLs to assume local hosting in the same directory (or adjust to './photo/...')
+            { id: 'MAA', name: 'Master Multiline Award', url: './MASTER%20MULTILINE%20Award.png' },
+            { id: 'MFA', name: 'Master Firm Award', url: './MASTER%20FIRM%20Award.png' },
+            { id: 'MMA', name: 'Master Agency Award', url: './MASTER%20AGENCY%20Award.png' },
+            { id: 'IMA', name: 'International Management Award', url: './International%20Management%20Award.png' },
+            { id: 'FLA', name: 'Frontline Leader Award', url: './Frontline%20Leader%20Awards.png' },
+            { id: 'ERA', name: 'Excellence Recruitment Awards', url: './Excellence%20Recruitment%20Award.png' },
+            { id: 'COE', name: 'Circle of Excellence Award', url: './Circle%20of%20Excellence%20Award.png' }
         ];
 
         // Set canvas dimensions
@@ -330,14 +331,16 @@
             for (const frame of frames) {
                 const img = new Image();
                 img.src = frame.url;
-                img.crossOrigin = "anonymous"; // Essential for loading cross-origin images to canvas
+                // crossOrigin is still good practice, but if hosted on same domain, it's not strictly required for CORS.
+                // It helps if you later use a CDN that *does* set CORS headers.
+                img.crossOrigin = "anonymous"; 
                 await new Promise(resolve => {
                     img.onload = () => {
                         frameImages[frame.id] = img; // Store with frame.id as key
                         resolve();
                     };
                     img.onerror = () => {
-                        console.error(`Failed to load frame image: ${frame.url}`);
+                        console.error(`Failed to load frame image: ${frame.url}. Please ensure the image is accessible and hosted on the same domain or a CORS-enabled server.`);
                         resolve(); // Still resolve to continue with other images
                     };
                 });
@@ -357,7 +360,7 @@
                 thumbnail.dataset.frameId = frame.id;
 
                 const img = new Image();
-                img.src = frame.url;
+                img.src = frame.url; // Thumbnail image src
                 img.alt = frame.name;
                 thumbnail.appendChild(img);
 
@@ -410,18 +413,17 @@
                 const canvasAspectRatio = canvasWidth / canvasHeight;
 
                 // Determine how to fit the image: "cover" the canvas area
+                // This logic ensures the image always fills the canvas, cropping if necessary.
                 if (imgAspectRatio > canvasAspectRatio) {
-                    // Image is wider than canvas, so scale height to match canvas height
-                    // and crop horizontally
+                    // Image is wider than canvas, scale height to match canvas height, then crop horizontally
                     sourceHeight = imgHeight;
                     sourceWidth = imgHeight * canvasAspectRatio;
-                    sourceX = (imgWidth - sourceWidth) / 2;
+                    sourceX = (imgWidth - sourceWidth) / 2; // Center horizontally
                 } else {
-                    // Image is taller or same aspect ratio as canvas, scale width
-                    // and crop vertically
+                    // Image is taller or same aspect ratio as canvas, scale width to match canvas width, then crop vertically
                     sourceWidth = imgWidth;
                     sourceHeight = imgWidth / canvasAspectRatio;
-                    sourceY = (imgHeight - sourceHeight) / 2;
+                    sourceY = (imgHeight - sourceHeight) / 2; // Center vertically
                 }
 
                 // Apply zoom (scale) from slider
@@ -429,34 +431,31 @@
                 const scaledSourceWidth = sourceWidth / scale;
                 const scaledSourceHeight = sourceHeight / scale;
 
-                // Adjust sourceX/Y to keep the "center" of the scaled image
-                // around the center of the original image (before scaling)
+                // Adjust sourceX/Y to keep the "center" of the scaled portion of the image
+                // around the center of the original image's calculated "fit" area.
                 sourceX += (sourceWidth - scaledSourceWidth) / 2;
                 sourceY += (sourceHeight - scaledSourceHeight) / 2;
-                sourceWidth = scaledSourceWidth;
-                sourceHeight = scaledSourceHeight;
-                
-                // Ensure source dimensions don't go out of bounds
+
+                // Ensure source dimensions don't go out of bounds of the original image
                 sourceX = Math.max(0, sourceX);
                 sourceY = Math.max(0, sourceY);
-                sourceWidth = Math.min(imgWidth - sourceX, sourceWidth);
-                sourceHeight = Math.min(imgHeight - sourceY, sourceHeight);
+                sourceWidth = Math.min(imgWidth - sourceX, scaledSourceWidth);
+                sourceHeight = Math.min(imgHeight - sourceY, scaledSourceHeight);
 
                 // Apply position adjustments from sliders
-                // These shifts are relative to the canvas size, scaled by 0.5 (max shift is half canvas)
-                const horizontalShift = parseFloat(horizontalSlider.value) * (canvasWidth / 2);
-                const verticalShift = parseFloat(verticalSlider.value) * (canvasHeight / 2);
-
-                // Adjust destination coordinates based on sliders
-                // This essentially moves the drawn image within the canvas
-                destX = horizontalShift;
-                destY = verticalShift;
+                // These shifts are relative to the canvas size.
+                // The slider values range from -0.5 to 0.5, allowing movement
+                // up to half the canvas width/height from the center.
+                destX = parseFloat(horizontalSlider.value) * (canvasWidth / 2);
+                destY = parseFloat(verticalSlider.value) * (canvasHeight / 2);
                 
                 // Draw the user image
+                // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
                 ctx.drawImage(userImage, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
             }
 
             // Draw selected frame on top of the user image
+            // This is the correct way to layer the frame on top.
             if (selectedFrame && frameImages[selectedFrame]) {
                 ctx.drawImage(frameImages[selectedFrame], 0, 0, previewCanvas.width, previewCanvas.height);
             }
