@@ -205,7 +205,7 @@
         
         <div class="mb-8">
             <h2 class="text-xl font-medium mb-4 text-center text-gray-700">เลือกกรอบรูปภาพ</h2>
-            <div class="flex flex-wrap justify-center gap-3">
+            <div id="frameOptionsContainer" class="flex flex-wrap justify-center gap-3">
                 </div>
         </div>
         
@@ -283,7 +283,8 @@
             const imageUpload = document.getElementById('imageUpload');
             const uploadBtn = document.getElementById('uploadBtn');
             const selectedFileName = document.getElementById('selectedFileName');
-            const frameThumbnailsContainer = document.querySelector('.frame-selection .flex.flex-wrap'); // Select the div where thumbnails will be
+            // UPDATED SELECTOR HERE: Use the new ID
+            const frameOptionsContainer = document.getElementById('frameOptionsContainer'); 
             const placeholderText = document.getElementById('placeholderText');
             
             const sizeSlider = document.getElementById('sizeSlider');
@@ -349,7 +350,7 @@
 
             // Function to render frame thumbnails dynamically
             function renderFrameThumbnails() {
-                frameThumbnailsContainer.innerHTML = ''; // Clear existing thumbnails
+                frameOptionsContainer.innerHTML = ''; // Clear existing thumbnails
                 frames.forEach(frame => {
                     const optionDiv = document.createElement('div');
                     optionDiv.classList.add('frame-option', 'rounded-lg', 'p-2', 'text-center');
@@ -375,7 +376,7 @@
                         selectedFrameId = frame.id; // Set the selected frame ID
                         drawCanvasPreview(); // Redraw preview
                     });
-                    frameThumbnailsContainer.appendChild(optionDiv);
+                    frameOptionsContainer.appendChild(optionDiv);
                 });
             }
 
