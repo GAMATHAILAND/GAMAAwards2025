@@ -169,7 +169,7 @@
         const res = await axios.get(API_URL + `?q=${encodeURIComponent(q)}`);
         const data = res.data;
 
-        console.log("API Response data:", data); // **** CRITICAL DEBUG STEP: Check this in console ****
+        console.log("API Response data:", data); // CRITICAL DEBUG STEP: Check this in console
 
         if (!data || !data.name) {
           console.log("Data not found or name is missing from response."); // Debug: Log if data is missing
@@ -178,7 +178,6 @@
               <span class="close-button" onclick="closeModal(event)">&times;</span>
               <h2 style="color:#6a11cb;">ขออภัยในความผิดพลาด</h2>
               <p>ระบบไม่พบข้อมูลของท่าน<br>กรุณาติดต่อเจ้าหน้าที่ฯ</p>
-              <p style="font-size:0.8em; color:#ccc;">Debugging Info: ${JSON.stringify(data)}</p>
             </div>
           `);
         } else {
@@ -202,7 +201,6 @@
               <div style="margin-top: 1.5rem; text-align: center;">
                 <canvas id="qrcode"></canvas>
               </div>
-              <p style="font-size:0.8em; color:#ccc;">Debugging Info: ${JSON.stringify(data)}</p>
             </div>
           `);
 
