@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GAMA Awards Frame Creator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Prompt', sans-serif; /* Use Prompt font */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -25,12 +28,14 @@
         }
 
         h1 {
+            font-family: 'Prompt', sans-serif;
             color: #333;
             text-align: center;
             margin-bottom: 20px;
         }
 
         .section-title {
+            font-family: 'Prompt', sans-serif;
             font-size: 1.2em;
             margin-top: 25px;
             margin-bottom: 15px;
@@ -108,6 +113,7 @@
         }
 
         .frame-label {
+            font-family: 'Prompt', sans-serif;
             text-align: center;
             font-size: 0.85em;
             color: #666;
@@ -119,6 +125,7 @@
         }
 
         .slider-group label {
+            font-family: 'Prompt', sans-serif;
             display: block;
             margin-bottom: 10px;
             font-weight: bold;
@@ -190,6 +197,7 @@
         }
 
         .download-button {
+            font-family: 'Prompt', sans-serif;
             display: block;
             width: fit-content;
             margin: 20px auto;
@@ -221,17 +229,21 @@
         }
 
         .logo-header img {
-            width: 100px; /* Adjust as needed */
+            width: 150px; /* Adjusted size for clarity */
             height: auto;
         }
 
+        /* Hide the hidden canvas */
+        #hiddenCanvas {
+            display: none;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="logo-header">
-            <img src="./GAMA%20Awards.png" alt="GAMA Awards Logo">
+            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo">
         </div>
         <h1>GAMA Awards Frame</h1>
         <p style="text-align: center; color: #666; margin-bottom: 30px;">
@@ -296,6 +308,8 @@
         </div>
     </div>
 
+    <canvas id="hiddenCanvas"></canvas>
+
     <script>
         const imageUpload = document.getElementById('imageUpload');
         const frameThumbnailsContainer = document.getElementById('frameThumbnails');
@@ -303,45 +317,53 @@
         const horizontalSlider = document.getElementById('horizontalSlider');
         const verticalSlider = document.getElementById('verticalSlider');
         const previewCanvas = document.getElementById('previewCanvas');
+        const hiddenCanvas = document.getElementById('hiddenCanvas'); // Reference to the hidden canvas
         const downloadBtn = document.getElementById('downloadBtn');
-        const ctx = previewCanvas.getContext('2d');
+        const ctxPreview = previewCanvas.getContext('2d');
+        const ctxHidden = hiddenCanvas.getContext('2d'); // Context for hidden canvas
 
         let userImage = null;
         let selectedFrame = null;
         let frameImages = {}; // To store loaded frame images
 
+        // --- IMPORTANT: Update these URLs if you host the images on your own server/GitHub Pages ---
+        // For best results and to avoid CORS issues, download these images and place them
+        // in the same directory as your HTML file, or in a subfolder like './photo/'.
+        // If in './photo/', change 'url: './FILENAME.png'' to 'url: './photo/FILENAME.png''.
         const frames = [
-            // Updated URLs to assume local hosting in the same directory (or adjust to './photo/...')
-            { id: 'MAA', name: 'Master Multiline Award', url: './MASTER%20MULTILINE%20Award.png' },
-            { id: 'MFA', name: 'Master Firm Award', url: './MASTER%20FIRM%20Award.png' },
-            { id: 'MMA', name: 'Master Agency Award', url: './MASTER%20AGENCY%20Award.png' },
-            { id: 'IMA', name: 'International Management Award', url: './International%20Management%20Award.png' },
-            { id: 'FLA', name: 'Frontline Leader Award', url: './Frontline%20Leader%20Awards.png' },
-            { id: 'ERA', name: 'Excellence Recruitment Awards', url: './Excellence%20Recruitment%20Award.png' },
-            { id: 'COE', name: 'Circle of Excellence Award', url: './Circle%20of%20Excellence%20Award.png' }
+            { id: 'MAA', name: 'Master Multiline Award', url: 'https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png' },
+            { id: 'MFA', name: 'Master Firm Award', url: 'https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png' },
+            { id: 'MMA', name: 'Master Agency Award', url: 'https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png' },
+            { id: 'IMA', name: 'International Management Award', url: 'https://hugmediacreation.com/photo/International%20Management%20Award.png' },
+            { id: 'FLA', name: 'Frontline Leader Award', url: 'https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png' },
+            { id: 'ERA', name: 'Excellence Recruitment Awards', url: 'https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png' },
+            { id: 'COE', name: 'Circle of Excellence Award', url: 'https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png' }
         ];
 
-        // Set canvas dimensions
-        const canvasSize = 500; // Define a consistent size for the canvas
-        previewCanvas.width = canvasSize;
-        previewCanvas.height = canvasSize;
+        // Set preview canvas dimensions
+        const previewCanvasSize = 500;
+        previewCanvas.width = previewCanvasSize;
+        previewCanvas.height = previewCanvasSize;
+
+        // Set hidden canvas dimensions for high-resolution download
+        const downloadCanvasSize = 1920;
+        hiddenCanvas.width = downloadCanvasSize;
+        hiddenCanvas.height = downloadCanvasSize;
 
         // Function to load all frame images
         async function loadFrameImages() {
             for (const frame of frames) {
                 const img = new Image();
                 img.src = frame.url;
-                // crossOrigin is still good practice, but if hosted on same domain, it's not strictly required for CORS.
-                // It helps if you later use a CDN that *does* set CORS headers.
-                img.crossOrigin = "anonymous"; 
+                img.crossOrigin = "anonymous"; // Essential for loading cross-origin images to canvas
                 await new Promise(resolve => {
                     img.onload = () => {
                         frameImages[frame.id] = img; // Store with frame.id as key
                         resolve();
                     };
                     img.onerror = () => {
-                        console.error(`Failed to load frame image: ${frame.url}. Please ensure the image is accessible and hosted on the same domain or a CORS-enabled server.`);
-                        resolve(); // Still resolve to continue with other images
+                        console.error(`Failed to load frame image: ${frame.url}. This is likely a CORS issue. Please host images on the same domain as your HTML or use a CORS-enabled server.`);
+                        resolve(); // Still resolve to continue with other images even if one fails
                     };
                 });
             }
@@ -372,7 +394,7 @@
                     document.querySelectorAll('.frame-thumbnail').forEach(t => t.classList.remove('selected'));
                     thumbnail.classList.add('selected');
                     selectedFrame = frame.id;
-                    drawCanvas();
+                    drawCanvas(ctxPreview, previewCanvasSize); // Draw on preview canvas
                 });
 
                 thumbnailWrapper.appendChild(thumbnail);
@@ -381,22 +403,14 @@
             });
         }
 
-        // Function to draw image and frame on canvas
-        function drawCanvas() {
-            ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-
-            if (!userImage && !selectedFrame) {
-                downloadBtn.classList.add('disabled-button');
-                downloadBtn.disabled = true;
-                return;
-            }
+        // Generic function to draw image and frame on a given canvas context
+        function drawImageAndFrame(ctx, canvasSize) {
+            ctx.clearRect(0, 0, canvasSize, canvasSize);
 
             // Draw user image if available
             if (userImage) {
                 const imgWidth = userImage.width;
                 const imgHeight = userImage.height;
-                const canvasWidth = previewCanvas.width;
-                const canvasHeight = previewCanvas.height;
 
                 let sourceX = 0;
                 let sourceY = 0;
@@ -405,34 +419,35 @@
 
                 let destX = 0;
                 let destY = 0;
-                let destWidth = canvasWidth;
-                let destHeight = canvasHeight;
+                let destWidth = canvasSize;
+                let destHeight = canvasSize;
 
                 // Calculate aspect ratio of image and canvas
                 const imgAspectRatio = imgWidth / imgHeight;
-                const canvasAspectRatio = canvasWidth / canvasHeight;
+                const canvasAspectRatio = canvasSize / canvasSize; // Always 1 for square canvas
 
-                // Determine how to fit the image: "cover" the canvas area
-                // This logic ensures the image always fills the canvas, cropping if necessary.
+                // "Cover" logic: Scale image to fill the canvas, cropping if necessary.
                 if (imgAspectRatio > canvasAspectRatio) {
-                    // Image is wider than canvas, scale height to match canvas height, then crop horizontally
+                    // Image is wider than canvas (or square), so scale height to match canvas height
+                    // and crop horizontally
                     sourceHeight = imgHeight;
-                    sourceWidth = imgHeight * canvasAspectRatio;
+                    sourceWidth = imgHeight * canvasAspectRatio; // Desired source width to match canvas aspect
                     sourceX = (imgWidth - sourceWidth) / 2; // Center horizontally
                 } else {
-                    // Image is taller or same aspect ratio as canvas, scale width to match canvas width, then crop vertically
+                    // Image is taller than canvas (or square), so scale width to match canvas width
+                    // and crop vertically
                     sourceWidth = imgWidth;
-                    sourceHeight = imgWidth / canvasAspectRatio;
+                    sourceHeight = imgWidth / canvasAspectRatio; // Desired source height to match canvas aspect
                     sourceY = (imgHeight - sourceHeight) / 2; // Center vertically
                 }
 
-                // Apply zoom (scale) from slider
+                // Apply zoom (scale) from slider to the source image area
                 const scale = parseFloat(sizeSlider.value);
                 const scaledSourceWidth = sourceWidth / scale;
                 const scaledSourceHeight = sourceHeight / scale;
 
                 // Adjust sourceX/Y to keep the "center" of the scaled portion of the image
-                // around the center of the original image's calculated "fit" area.
+                // around the center of the original image's calculated "fit" area, relative to current source.
                 sourceX += (sourceWidth - scaledSourceWidth) / 2;
                 sourceY += (sourceHeight - scaledSourceHeight) / 2;
 
@@ -442,12 +457,13 @@
                 sourceWidth = Math.min(imgWidth - sourceX, scaledSourceWidth);
                 sourceHeight = Math.min(imgHeight - sourceY, scaledSourceHeight);
 
-                // Apply position adjustments from sliders
+                // Apply position adjustments from sliders to the destination coordinates
                 // These shifts are relative to the canvas size.
-                // The slider values range from -0.5 to 0.5, allowing movement
-                // up to half the canvas width/height from the center.
-                destX = parseFloat(horizontalSlider.value) * (canvasWidth / 2);
-                destY = parseFloat(verticalSlider.value) * (canvasHeight / 2);
+                const horizontalShift = parseFloat(horizontalSlider.value) * (canvasSize / 2);
+                const verticalShift = parseFloat(verticalSlider.value) * (canvasSize / 2);
+
+                destX = horizontalShift;
+                destY = verticalShift;
                 
                 // Draw the user image
                 // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
@@ -455,12 +471,15 @@
             }
 
             // Draw selected frame on top of the user image
-            // This is the correct way to layer the frame on top.
             if (selectedFrame && frameImages[selectedFrame]) {
-                ctx.drawImage(frameImages[selectedFrame], 0, 0, previewCanvas.width, previewCanvas.height);
+                ctx.drawImage(frameImages[selectedFrame], 0, 0, canvasSize, canvasSize);
             }
+        }
 
-            // Enable download button if both image and frame are present
+        // Function to draw on preview canvas
+        function drawCanvasPreview() {
+            drawImageAndFrame(ctxPreview, previewCanvasSize);
+            // Update download button state
             if (userImage && selectedFrame) {
                 downloadBtn.classList.remove('disabled-button');
                 downloadBtn.disabled = false;
@@ -483,7 +502,7 @@
                         sizeSlider.value = 1.0;
                         horizontalSlider.value = 0;
                         verticalSlider.value = 0;
-                        drawCanvas();
+                        drawCanvasPreview();
                     };
                     img.src = e.target.result;
                 };
@@ -491,16 +510,38 @@
             }
         });
 
-        sizeSlider.addEventListener('input', drawCanvas);
-        horizontalSlider.addEventListener('input', drawCanvas);
-        verticalSlider.addEventListener('input', drawCanvas);
+        sizeSlider.addEventListener('input', drawCanvasPreview);
+        horizontalSlider.addEventListener('input', drawCanvasPreview);
+        verticalSlider.addEventListener('input', drawCanvasPreview);
 
         downloadBtn.addEventListener('click', () => {
             if (userImage && selectedFrame) {
+                // Draw onto the hidden, high-resolution canvas for download
+                drawImageAndFrame(ctxHidden, downloadCanvasSize);
+
+                // Get the data URL from the hidden canvas
+                const dataURL = hiddenCanvas.toDataURL('image/png');
+
+                // Create a temporary link element for download
                 const link = document.createElement('a');
-                link.download = `GAMA_Awards_Profile_${selectedFrame}.png`;
-                link.href = previewCanvas.toDataURL('image/png');
+                link.download = `GAMA_Awards_Profile_${selectedFrame}_${downloadCanvasSize}x${downloadCanvasSize}.png`;
+                link.href = dataURL;
+
+                // For mobile compatibility, programmatically click the link.
+                // This triggers the download prompt in mobile browsers.
+                document.body.appendChild(link); // Append to body (required for Firefox)
                 link.click();
+                document.body.removeChild(link); // Clean up
+
+                // Important Note on Saving to Photo Album:
+                // Browsers (especially Safari on iOS) typically handle image downloads by showing
+                // a preview and then allowing the user to tap "Save Image" or "Add to Photos".
+                // Android browsers might download directly to the Downloads folder.
+                // Direct saving to the photo album *without user interaction* is a security
+                // restriction and is NOT possible directly from a web page (JavaScript/HTML).
+                // If this is a critical feature, consider building a Progressive Web App (PWA)
+                // or a native mobile application.
+                alert('รูปภาพถูกเตรียมสำหรับการดาวน์โหลดแล้ว! โปรดแตะปุ่ม "บันทึกรูปภาพ" หรือ "ดาวน์โหลด" ในหน้าจอถัดไปเพื่อบันทึกลงเครื่องของคุณ');
             }
         });
 
