@@ -75,6 +75,12 @@
             gap: 15px;
         }
 
+        .frame-thumbnail-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .frame-thumbnail {
             width: 80px;
             height: 80px;
@@ -92,6 +98,7 @@
             max-width: 100%;
             max-height: 100%;
             display: block;
+            object-fit: contain; /* Ensure the thumbnail image fits */
         }
 
         .frame-thumbnail.selected {
@@ -314,8 +321,9 @@
         ];
 
         // Set canvas dimensions
-        previewCanvas.width = 500;
-        previewCanvas.height = 500;
+        const canvasSize = 500; // Define a consistent size for the canvas
+        previewCanvas.width = canvasSize;
+        previewCanvas.height = canvasSize;
 
         // Function to load all frame images
         async function loadFrameImages() {
@@ -325,7 +333,7 @@
                 img.crossOrigin = "anonymous"; // Essential for loading cross-origin images to canvas
                 await new Promise(resolve => {
                     img.onload = () => {
-                        frameImages[frame.id] = img;
+                        frameImages[frame.id] = img; // Store with frame.id as key
                         resolve();
                     };
                     img.onerror = () => {
@@ -382,33 +390,73 @@
 
             // Draw user image if available
             if (userImage) {
-                const imgRatio = userImage.width / userImage.height;
-                const canvasRatio = previewCanvas.width / previewCanvas.height;
+                const imgWidth = userImage.width;
+                const imgHeight = userImage.height;
+                const canvasWidth = previewCanvas.width;
+                const canvasHeight = previewCanvas.height;
 
-                let drawWidth, drawHeight;
-                let offsetX, offsetY;
+                let sourceX = 0;
+                let sourceY = 0;
+                let sourceWidth = imgWidth;
+                let sourceHeight = imgHeight;
 
-                // Adjust based on sliders
-                const scale = parseFloat(sizeSlider.value);
-                const horizontalShift = parseFloat(horizontalSlider.value) * previewCanvas.width;
-                const verticalShift = parseFloat(verticalSlider.value) * previewCanvas.height;
+                let destX = 0;
+                let destY = 0;
+                let destWidth = canvasWidth;
+                let destHeight = canvasHeight;
 
-                // Center and scale image to fill the canvas area, then apply adjustments
-                if (imgRatio > canvasRatio) { // Image is wider than canvas
-                    drawHeight = previewCanvas.height * scale;
-                    drawWidth = userImage.width * (drawHeight / userImage.height);
-                } else { // Image is taller or same ratio
-                    drawWidth = previewCanvas.width * scale;
-                    drawHeight = userImage.height * (drawWidth / userImage.width);
+                // Calculate aspect ratio of image and canvas
+                const imgAspectRatio = imgWidth / imgHeight;
+                const canvasAspectRatio = canvasWidth / canvasHeight;
+
+                // Determine how to fit the image: "cover" the canvas area
+                if (imgAspectRatio > canvasAspectRatio) {
+                    // Image is wider than canvas, so scale height to match canvas height
+                    // and crop horizontally
+                    sourceHeight = imgHeight;
+                    sourceWidth = imgHeight * canvasAspectRatio;
+                    sourceX = (imgWidth - sourceWidth) / 2;
+                } else {
+                    // Image is taller or same aspect ratio as canvas, scale width
+                    // and crop vertically
+                    sourceWidth = imgWidth;
+                    sourceHeight = imgWidth / canvasAspectRatio;
+                    sourceY = (imgHeight - sourceHeight) / 2;
                 }
 
-                offsetX = (previewCanvas.width - drawWidth) / 2 + horizontalShift;
-                offsetY = (previewCanvas.height - drawHeight) / 2 + verticalShift;
+                // Apply zoom (scale) from slider
+                const scale = parseFloat(sizeSlider.value);
+                const scaledSourceWidth = sourceWidth / scale;
+                const scaledSourceHeight = sourceHeight / scale;
 
-                ctx.drawImage(userImage, offsetX, offsetY, drawWidth, drawHeight);
+                // Adjust sourceX/Y to keep the "center" of the scaled image
+                // around the center of the original image (before scaling)
+                sourceX += (sourceWidth - scaledSourceWidth) / 2;
+                sourceY += (sourceHeight - scaledSourceHeight) / 2;
+                sourceWidth = scaledSourceWidth;
+                sourceHeight = scaledSourceHeight;
+                
+                // Ensure source dimensions don't go out of bounds
+                sourceX = Math.max(0, sourceX);
+                sourceY = Math.max(0, sourceY);
+                sourceWidth = Math.min(imgWidth - sourceX, sourceWidth);
+                sourceHeight = Math.min(imgHeight - sourceY, sourceHeight);
+
+                // Apply position adjustments from sliders
+                // These shifts are relative to the canvas size, scaled by 0.5 (max shift is half canvas)
+                const horizontalShift = parseFloat(horizontalSlider.value) * (canvasWidth / 2);
+                const verticalShift = parseFloat(verticalSlider.value) * (canvasHeight / 2);
+
+                // Adjust destination coordinates based on sliders
+                // This essentially moves the drawn image within the canvas
+                destX = horizontalShift;
+                destY = verticalShift;
+                
+                // Draw the user image
+                ctx.drawImage(userImage, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
             }
 
-            // Draw selected frame if available
+            // Draw selected frame on top of the user image
             if (selectedFrame && frameImages[selectedFrame]) {
                 ctx.drawImage(frameImages[selectedFrame], 0, 0, previewCanvas.width, previewCanvas.height);
             }
@@ -432,6 +480,10 @@
                     const img = new Image();
                     img.onload = () => {
                         userImage = img;
+                        // Reset sliders to default when a new image is uploaded
+                        sizeSlider.value = 1.0;
+                        horizontalSlider.value = 0;
+                        verticalSlider.value = 0;
                         drawCanvas();
                     };
                     img.src = e.target.result;
