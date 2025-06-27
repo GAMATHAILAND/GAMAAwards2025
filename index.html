@@ -10,14 +10,29 @@
     body { font-family: 'Prompt', sans-serif; background: #fff; }
     .frame-thumbnail img { width: 80px; height: 80px; object-fit: contain; margin: auto; }
     .frame-thumbnail.selected { border: 3px solid #9333ea; }
-    .preview-container { position: relative; width: 100%; aspect-ratio: 1 / 1; background: #f3f4f6; overflow: hidden; }
-    .preview-container img { position: absolute; width: 100%; height: 100%; object-fit: cover; }
-    .preview-container .frame-img { z-index: 10; pointer-events: none; object-fit: contain; }
+    .preview-container {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      aspect-ratio: 1 / 1;
+      background: #f3f4f6;
+      overflow: hidden;
+    }
+    .preview-container img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .preview-container .frame-img {
+      z-index: 10;
+      pointer-events: none;
+      object-fit: contain;
+    }
     .preview-container .user-img { z-index: 5; }
     #downloadBtn:disabled, #shareBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-    @media (max-width: 768px) {
-      .preview-container { width: 100%; height: auto; aspect-ratio: unset; padding-top: 100%; }
-    }
   </style>
 </head>
 <body class="p-6 bg-gray-100">
@@ -38,7 +53,7 @@
     </div>
 
     <div class="mb-6">
-      <div class="preview-container rounded" id="preview">
+      <div class="preview-container rounded mx-auto" id="preview">
         <img id="userImage" class="user-img hidden" />
         <img id="frameImage" class="frame-img hidden" />
       </div>
@@ -140,26 +155,33 @@
       container.style.top = '-9999px';
       container.style.overflow = 'hidden';
       container.style.background = 'transparent';
+      container.style.display = 'flex';
+      container.style.alignItems = 'center';
+      container.style.justifyContent = 'center';
 
       const hiResUser = new Image();
       hiResUser.src = userImage.src;
       hiResUser.crossOrigin = 'anonymous';
-      hiResUser.style.width = '100%';
-      hiResUser.style.height = '100%';
-      hiResUser.style.objectFit = 'cover';
-      hiResUser.style.transform = `translate(${x}%, ${y}%) scale(${scale}) rotate(${rotation}deg)`;
-      hiResUser.style.transformOrigin = 'center center';
-      hiResUser.style.position = 'absolute';
-      hiResUser.style.zIndex = '5';
+      Object.assign(hiResUser.style, {
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        transform: `translate(${x}%, ${y}%) scale(${scale}) rotate(${rotation}deg)`,
+        transformOrigin: 'center center',
+        position: 'absolute',
+        zIndex: '5'
+      });
 
       const hiResFrame = new Image();
       hiResFrame.src = frameImage.src;
       hiResFrame.crossOrigin = 'anonymous';
-      hiResFrame.style.width = '100%';
-      hiResFrame.style.height = '100%';
-      hiResFrame.style.objectFit = 'contain';
-      hiResFrame.style.position = 'absolute';
-      hiResFrame.style.zIndex = '10';
+      Object.assign(hiResFrame.style, {
+        width: '100%',
+        height: '100%',
+        objectFit: 'contain',
+        position: 'absolute',
+        zIndex: '10'
+      });
 
       container.appendChild(hiResUser);
       container.appendChild(hiResFrame);
