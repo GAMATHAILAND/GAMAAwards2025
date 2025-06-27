@@ -1,228 +1,219 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" />
-
-  <!-- Google Fonts + jQuery + QR -->
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-
   <style>
     body {
-      font-family: 'Prompt', sans-serif;
       margin: 0;
-      padding: 0;
-      background: linear-gradient(to top, #4b0082, #e75480);
-      color: #fff;
+      font-family: 'Prompt', sans-serif;
+      background: linear-gradient(to top, #6a11cb, #c94bdb);
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      justify-content: flex-start;
-      padding-top: 40px;
+      flex-direction: column;
+      padding: 20px;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 380px; /* Adjusted max-width for the input and button container */
+      width: 100%;
+      text-align: center;
+      margin-top: 2rem; /* Add some top margin to center vertically */
     }
 
     .logo {
-      width: 140px;
-      margin-bottom: 20px;
+      width: 120px;
+      margin-bottom: 1rem;
     }
 
-    h1 {
-      font-weight: 500;
-      margin-bottom: 20px;
-      font-size: 22px;
-      text-align: center;
+    .title {
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin-bottom: 0.25rem;
     }
 
-    .search-box {
-      background: #fff;
-      color: #333;
-      padding: 30px 20px;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-      width: 100%;
-      max-width: 360px;
-      text-align: center;
+    .subtitle {
+      font-size: 0.9rem;
+      color: #eee;
+      margin-bottom: 2rem;
     }
 
-    input {
-      width: 100%;
+    input[type="text"] {
+      width: calc(100% - 24px); /* Adjust width to account for padding */
       padding: 12px;
-      font-size: 16px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      margin-bottom: 15px;
-      text-align: center;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      background: #f3f3f3;
+      text-align: center; /* Center the text inside the input */
     }
 
     button {
-      padding: 10px 24px;
-      font-size: 16px;
-      background: #a044ff;
-      color: #fff;
+      background: #FFD700; /* Yellow color */
+      color: #333; /* Black text */
+      padding: 12px;
+      width: 100%;
       border: none;
-      border-radius: 12px;
+      border-radius: 8px;
+      font-size: 1rem;
       cursor: pointer;
-      font-weight: 500;
+      font-weight: bold;
     }
 
-    .not-found {
-      color: yellow;
-      margin-top: 15px;
-    }
-
-    /* Popup Card */
-    .popup {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #fff;
-      color: #333;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-      padding: 30px;
-      width: 90%;
-      max-width: 360px;
-      z-index: 1000;
+    .modal {
       display: none;
-      text-align: center;
-    }
-
-    .popup img.logo {
-      width: 90px;
-      margin-bottom: 10px;
-    }
-
-    .popup h2 {
-      color: #4b0082;
-      font-size: 20px;
-      margin-bottom: 15px;
-    }
-
-    .popup p {
-      margin: 6px 0;
-      font-size: 16px;
-    }
-
-    #qr img {
-      margin-top: 15px;
-      width: 128px;
-    }
-
-    .overlay {
       position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0,0,0,0.4);
-      display: none;
-      z-index: 999;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
     }
 
-    @media(max-width: 480px) {
-      .search-box, .popup {
-        padding: 20px;
-      }
+    .modal-content {
+      animation: fadeIn 0.2s ease;
+    }
+
+    .close-button {
+      position: absolute;
+      top: 12px;
+      right: 20px;
+      cursor: pointer;
+      font-size: 24px;
+      color: #999;
+    }
+
+    .error {
+      color: #c4004e;
+      font-weight: bold;
+      font-size: 1rem;
+      margin-top: 1rem;
+    }
+
+    /* Loading Spinner Styles */
+    .loader {
+      display: none; /* Hidden by default */
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #6a11cb;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
     }
   </style>
 </head>
 <body>
+  <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards" class="logo" />
+  <h1 class="title">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
+  <p class="subtitle">กรุณากรอกข้อมูลเพื่อตรวจสอบรายชื่อ</p>
 
-  <img class="logo" src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards">
-  <h1>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
-
-  <div class="search-box">
-    <input type="text" id="searchInput" placeholder="พิมพ์ ชื่อ-นามสกุล หรือรหัสใบอนุญาตตัวแทนฯ">
+  <div class="container">
+    <input type="text" id="searchInput" placeholder="เช่น สมชาย ใจดี หรือ MMA-001" />
     <button onclick="search()">ค้นหา</button>
-    <div class="not-found" id="notFound"></div>
+    <div class="loader" id="loader"></div> <div id="errorMsg" class="error"></div>
   </div>
 
-  <!-- Popup + Overlay -->
-  <div class="overlay" id="overlay" onclick="closePopup()"></div>
-
-  <div class="popup" id="popup">
-    <img class="logo" src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="Logo">
-    <h2>ข้อมูลผู้รับรางวัล</h2>
-    <p id="name"></p>
-    <p id="type"></p>
-    <p id="level"></p>
-    <p id="org"></p>
-    <div id="qr"></div>
+  <div id="resultModal" class="modal" onclick="closeModal(event)">
+    <div class="modal-content" id="resultContent">
+      </div>
   </div>
 
   <script>
-    let data = [];
+    const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec";
 
-    $.get("data2.csv", function(csv) {
-      const lines = csv.trim().split("\n");
-      const headers = lines[0].split(",");
+    async function search() {
+      const q = document.getElementById('searchInput').value.trim();
+      const errBox = document.getElementById('errorMsg');
+      const loader = document.getElementById('loader');
+      errBox.textContent = "";
 
-      for (let i = 1; i < lines.length; i++) {
-        const row = lines[i].split(",");
-        const entry = {};
-        headers.forEach((h, idx) => {
-          entry[h.trim()] = row[idx]?.trim() || "";
-        });
-        data.push(entry);
+      if (q.length < 2) {
+        errBox.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
+        return;
       }
-    });
 
-    function normalize(text) {
-      return (text || "").toLowerCase().replace(/\s+/g, " ").trim();
+      // Show loader
+      loader.style.display = "block";
+
+      // Simulate a 1.5-second delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      try {
+        const res = await axios.get(API_URL + `?q=${encodeURIComponent(q)}`);
+        const data = res.data;
+
+        if (!data || !data.name) {
+          showModal(`
+            <div style="background: white; padding: 2rem; border-radius: 16px; max-width: 420px; width: 90%; text-align: center; position: relative;">
+              <span class="close-button" onclick="closeModal(event)">&times;</span>
+              <h2 style="color:#6a11cb;">ขออภัยในความผิดพลาด</h2>
+              <p>ระบบไม่พบข้อมูลของท่าน<br>กรุณาติดต่อเจ้าหน้าที่ฯ</p>
+            </div>
+          `);
+        } else {
+          showModal(`
+            <div style="position: relative; background: white; padding: 2rem; border-radius: 16px; max-width: 420px; width: 90%; box-shadow: 0 4px 16px rgba(0,0,0,0.1); font-family: 'Prompt', sans-serif;">
+              <span onclick="closeModal(event)" class="close-button">&times;</span>
+              <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" style="position: absolute; top: 20px; right: 20px; height: 36px;" alt="logo" />
+              
+              <h2 style="color:#6a11cb; font-size: 1.3rem; font-weight: bold; margin-bottom: 1.5rem;">ข้อมูลผู้รับรางวัล</h2>
+
+              <div style="text-align: left; font-size: 1rem;">
+                <p><span style="color: #555;">ID</span><br><strong>${data.id}</strong></p>
+                <p><span style="color: #555;">ชื่อ–นามสกุล</span><br><strong>${data.name}</strong></p>
+                <p><span style="color: #555;">สังกัด</span><br><strong>${data.organization}</strong></p>
+                <p><span style="color: #555;">ประเภทรางวัล</span><br><strong>${data.awardType}</strong></p>
+                <p><span style="color: #555;">ระดับ</span><br><strong>${data.level}</strong></p>
+              </div>
+
+              <div style="margin-top: 1.5rem; text-align: center;">
+                <canvas id="qrcode"></canvas>
+              </div>
+            </div>
+          `);
+
+          setTimeout(() => {
+            QRCode.toCanvas(document.getElementById("qrcode"), data.id, { width: 120 });
+          }, 100);
+        }
+      } catch (e) {
+        errBox.textContent = "เกิดข้อผิดพลาดในการค้นหา กรุณาลองใหม่";
+        console.error(e);
+      } finally {
+        // Hide loader regardless of success or failure
+        loader.style.display = "none";
+      }
     }
 
-    function search() {
-      const query = normalize(document.getElementById("searchInput").value);
-      const notFound = document.getElementById("notFound");
-      const popup = document.getElementById("popup");
-      const overlay = document.getElementById("overlay");
-      notFound.innerText = "";
-      popup.style.display = "none";
-      overlay.style.display = "none";
-
-      const match = data.find(entry =>
-        normalize(entry["ID"]).includes(query) ||
-        normalize(entry["ชื่อ-นามสกุล"]).includes(query) ||
-        normalize(entry["รหัสใบอนุญาต"]).includes(query)
-      );
-
-      if (match) {
-        document.getElementById("name").innerText = "ชื่อ: " + match["ชื่อ-นามสกุล"];
-        document.getElementById("type").innerText = "ประเภทรางวัล: " + match["ประเภทรางวัล"];
-        document.getElementById("level").innerText = "ระดับ: " + match["ระดับ"];
-        document.getElementById("org").innerText = "สังกัด: " + match["สังกัด"];
-
-        document.getElementById("qr").innerHTML = "";
-        QRCode.toDataURL(match["ID"], { width: 128 }, function (err, url) {
-          if (err) {
-            console.error(err);
-            return;
-          }
-          const img = document.createElement("img");
-          img.src = url;
-          img.alt = "QR Code";
-          document.getElementById("qr").appendChild(img);
-        });
-
-        popup.style.display = "block";
-        overlay.style.display = "block";
-      } else {
-        notFound.innerText = "ขออภัยในความผิดพลาด ระบบไม่พบข้อมูลของท่าน กรุณาติดต่อเจ้าหน้าที่ฯ";
-      }
+    function showModal(contentHTML) {
+      document.getElementById("resultContent").innerHTML = contentHTML;
+      document.getElementById("resultModal").style.display = "flex";
     }
 
-    function closePopup() {
-      document.getElementById("popup").style.display = "none";
-      document.getElementById("overlay").style.display = "none";
+    function closeModal(e) {
+      if (e.target.id === "resultModal" || e.target.classList.contains("close-button")) {
+        document.getElementById("resultModal").style.display = "none";
+      }
     }
   </script>
-
 </body>
 </html>
