@@ -115,7 +115,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* User image covers the container */
+            object-fit: cover; /* User image covers the container while maintaining aspect ratio */
             transform-origin: center center; /* Ensures scaling/translation from center */
             will-change: transform; /* Performance hint for browser */
         }
@@ -126,7 +126,7 @@
         .frame-image {
             pointer-events: none; /* Allows clicks to pass through to the user image below for dragging */
             z-index: 10; /* Frame always on top */
-            object-fit: contain; /* Frame image contains within the area */
+            object-fit: contain; /* Frame image contains within the area, maintaining aspect ratio */
         }
 
         /* Slider Styling */
@@ -408,12 +408,11 @@
             const xPosSlider = document.getElementById('xPosSlider');
             const yPosSlider = document.getElementById('yPosSlider');
             const downloadBtn = document.getElementById('downloadBtn');
-            const shareBtn = document.getElementById('shareBtn'); // Added share button
+            const shareBtn = document.getElementById('shareBtn');
             const loadingOverlay = document.getElementById('loadingOverlay');
             const previewContainer = document.getElementById('preview');
 
             // --- Frame URLs Mapping ---
-            // These URLs point to your frame images hosted on hugmediacreation.com
             const frameUrls = {
                 'MAA': 'https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png',
                 'MFA': 'https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png',
@@ -428,51 +427,42 @@
             let selectedFrame = null;
             let userImageLoaded = false;
             let frameImageLoaded = false;
-            let initialTranslateX, initialTranslateY; // Initial image translation (from sliders)
+            let initialTranslateX, initialTranslateY;
             let currentScale = 1;
 
             // --- Helper Functions ---
 
-            // Checks if both user image and frame are loaded to enable download button
-            function checkDownloadAvailability() {
-                downloadBtn.disabled = !(userImageLoaded && selectedFrame && frameImageLoaded);
-            }
-
-            // Checks if both user image and frame are loaded to enable share button
-            function checkShareAvailability() {
-                shareBtn.disabled = !(userImageLoaded && selectedFrame && frameImageLoaded);
+            // Checks if both user image and frame are loaded to enable buttons
+            function checkButtonAvailability() {
+                const isReady = userImageLoaded && selectedFrame !== null && frameImageLoaded;
+                downloadBtn.disabled = !isReady;
+                shareBtn.disabled = !isReady;
             }
 
             // Applies transform styles to the user image in the preview
             function updateImagePosition() {
                 if (!userImageLoaded) return;
 
-                // Get values directly from sliders (they represent percentages)
                 const scale = parseFloat(scaleSlider.value) / 100;
                 const xPos = parseFloat(xPosSlider.value);
                 const yPos = parseFloat(yPosSlider.value);
 
-                // Update current state
                 currentScale = scale;
                 initialTranslateX = xPos;
                 initialTranslateY = yPos;
 
-                // Apply transform using percentage translation for responsiveness
                 userImagePreview.style.transform = `translate(${initialTranslateX}%, ${initialTranslateY}%) scale(${currentScale})`;
             }
 
             // --- Event Listeners ---
 
-            // Simulate click on hidden file input when upload button is clicked
             uploadBtn.addEventListener('click', function() {
                 imageUpload.click();
             });
 
-            // Handle user image file upload
             imageUpload.addEventListener('change', function(event) {
                 if (event.target.files && event.target.files[0]) {
                     const file = event.target.files[0];
-                    // Validate file type (simple check, can be more robust)
                     if (!file.type.startsWith('image/')) {
                         alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
                         resetImageUpload();
@@ -485,7 +475,7 @@
                     reader.onload = function(e) {
                         const img = new Image();
                         img.onload = function() {
-                            userImagePreview.src = img.src; // Set source to actual image data
+                            userImagePreview.src = img.src;
                             placeholderText.classList.add('hidden');
                             userImagePreview.classList.remove('hidden');
                             userImageLoaded = true;
@@ -494,14 +484,13 @@
                             xPosSlider.value = 0;
                             yPosSlider.value = 0;
                             updateImagePosition(); // Apply default positions
-                            checkDownloadAvailability();
-                            checkShareAvailability(); // Update share button
+                            checkButtonAvailability();
                         };
                         img.onerror = function() {
                             alert('เกิดข้อผิดพลาดในการโหลดรูปภาพของคุณ กรุณาลองใหม่ (ไฟล์อาจเสียหายหรือไม่ใช่รูปภาพ)');
                             resetImageUpload();
                         };
-                        img.src = e.target.result; // Start loading the image data
+                        img.src = e.target.result;
                     };
                     reader.onerror = function() {
                         alert('เกิดข้อผิดพลาดในการอ่านไฟล์รูปภาพ กรุณาลองใหม่');
@@ -509,7 +498,6 @@
                     };
                     reader.readAsDataURL(file);
                 } else {
-                    // No file selected or file selection cancelled
                     resetImageUpload();
                 }
             });
@@ -517,171 +505,50 @@
             function resetImageUpload() {
                 selectedFileName.textContent = '';
                 userImagePreview.classList.add('hidden');
-                userImagePreview.src = ''; // Clear image source
+                userImagePreview.src = '';
                 placeholderText.classList.remove('hidden');
                 userImageLoaded = false;
-                checkDownloadAvailability();
-                checkShareAvailability(); // Update share button
+                checkButtonAvailability();
             }
 
-
-            // Handle frame selection
             frameOptions.forEach(option => {
                 option.addEventListener('click', function() {
-                    const frameId = this.dataset.frame; // Get frame ID from data-frame attribute
+                    const frameId = this.dataset.frame;
 
-                    // Remove 'selected' class from all other options
                     frameOptions.forEach(opt => opt.classList.remove('selected'));
-                    // Add 'selected' class to the clicked option
                     this.classList.add('selected');
 
-                    selectedFrame = frameId; // Store selected frame ID
+                    selectedFrame = frameId;
 
-                    // Load frame image for the main preview area
                     frameImagePreview.onload = function() {
                         frameImagePreview.classList.remove('hidden');
                         frameImageLoaded = true;
-                        checkDownloadAvailability();
-                        checkShareAvailability(); // Update share button
+                        checkButtonAvailability();
                     };
                     frameImagePreview.onerror = function() {
                         console.error('Failed to load frame image:', frameUrls[frameId]);
                         alert('เกิดข้อผิดพลาดในการโหลดกรอบรูป กรุณาตรวจสอบลิงก์รูปภาพกรอบอีกครั้ง หรือรูปภาพอาจถูกลบไปแล้ว');
                         frameImageLoaded = false;
-                        checkDownloadAvailability();
-                        checkShareAvailability(); // Update share button
+                        checkButtonAvailability();
                     };
-                    frameImagePreview.src = frameUrls[frameId]; // Set the source of the frame image
+                    frameImagePreview.src = frameUrls[frameId];
                 });
             });
 
-            // Event listeners for sliders to update image position
             scaleSlider.addEventListener('input', updateImagePosition);
             xPosSlider.addEventListener('input', updateImagePosition);
             yPosSlider.addEventListener('input', updateImagePosition);
 
-            // --- Download Functionality ---
-            downloadBtn.addEventListener('click', function() {
+            // Function to render the combined image using html2canvas
+            async function renderCombinedImage() {
+                // Ensure both user image and frame image are fully loaded and rendered in the DOM
                 if (!userImageLoaded || !selectedFrame || !frameImageLoaded) {
-                    alert('โปรดอัปโหลดรูปภาพและเลือกกรอบก่อนดาวน์โหลด');
-                    return;
+                    alert('โปรดอัปโหลดรูปภาพและเลือกกรอบก่อนดำเนินการ');
+                    return null;
                 }
 
-                loadingOverlay.classList.remove('hidden'); // Show loading overlay
+                loadingOverlay.classList.remove('hidden');
 
-                // Create a temporary div to render the full-resolution image
-                const tempRenderDiv = document.createElement('div');
-                tempRenderDiv.style.width = '1920px'; // Desired output resolution (e.g., for square profile pic)
-                tempRenderDiv.style.height = '1920px';
-                tempRenderDiv.style.position = 'absolute';
-                tempRenderDiv.style.left = '-9999px'; // Hide it off-screen
-                tempRenderDiv.style.top = '-9999px';
-                tempRenderDiv.style.overflow = 'hidden';
-                tempRenderDiv.style.backgroundColor = 'transparent';
-                tempRenderDiv.style.display = 'flex';
-                tempRenderDiv.style.alignItems = 'center';
-                tempRenderDiv.style.justifyContent = 'center';
-                document.body.appendChild(tempRenderDiv);
-
-                // Create new image elements for the high-res render
-                const hiResUserImage = new Image();
-                const hiResFrameImage = new Image();
-
-                hiResUserImage.src = userImagePreview.src;
-                hiResFrameImage.src = frameImagePreview.src;
-
-                hiResUserImage.style.transform = `translate(${initialTranslateX}%, ${initialTranslateY}%) scale(${currentScale})`;
-                hiResUserImage.style.transformOrigin = 'center center';
-                hiResUserImage.style.objectFit = 'cover';
-                hiResUserImage.style.width = '100%';
-                hiResUserImage.style.height = '100%';
-                hiResUserImage.style.position = 'absolute';
-                hiResUserImage.style.zIndex = '5';
-                hiResUserImage.style.display = 'block';
-
-                hiResFrameImage.style.width = '100%';
-                hiResFrameImage.style.height = '100%';
-                hiResFrameImage.style.position = 'absolute';
-                hiResFrameImage.style.zIndex = '10';
-                hiResFrameImage.style.objectFit = 'contain';
-                hiResFrameImage.style.display = 'block';
-
-                tempRenderDiv.appendChild(hiResUserImage);
-                tempRenderDiv.appendChild(hiResFrameImage);
-
-                Promise.all([
-                    new Promise(resolve => {
-                        if (hiResUserImage.complete && hiResUserImage.naturalWidth > 0) {
-                            resolve();
-                        } else {
-                            hiResUserImage.onload = resolve;
-                            hiResUserImage.onerror = () => {
-                                console.error('High-res user image failed to load or is invalid.');
-                                resolve();
-                            };
-                        }
-                    }),
-                    new Promise(resolve => {
-                        if (hiResFrameImage.complete && hiResFrameImage.naturalWidth > 0) {
-                            resolve();
-                        } else {
-                            hiResFrameImage.onload = resolve;
-                            hiResFrameImage.onerror = () => {
-                                console.error('High-res frame image failed to load. Check CORS or URL.');
-                                resolve();
-                            };
-                        }
-                    })
-                ]).then(() => {
-                    // Wait a short moment to ensure images are rendered in the temp div
-                    setTimeout(() => {
-                        html2canvas(tempRenderDiv, {
-                            width: 1920,
-                            height: 1920,
-                            scale: 1,
-                            backgroundColor: null,
-                            useCORS: true,
-                            allowTaint: false,
-                            logging: true,
-                            imageTimeout: 15000
-                        }).then(canvas => {
-                            document.body.removeChild(tempRenderDiv);
-
-                            try {
-                                const link = document.createElement('a');
-                                link.download = `profile-${selectedFrame}-gama-awards.png`;
-                                link.href = canvas.toDataURL('image/png');
-                                link.click();
-                            } catch (e) {
-                                console.error('Error creating data URL or download link:', e);
-                                alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหาภายในหรือรูปภาพต้นฉบับเสียหาย หรือปัญหา CORS)');
-                            }
-                            loadingOverlay.classList.add('hidden');
-                        }).catch(err => {
-                            console.error('Error generating image with html2canvas:', err);
-                            alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ กรุณาลองใหม่อีกครั้ง');
-                            document.body.removeChild(tempRenderDiv);
-                            loadingOverlay.classList.add('hidden');
-                        });
-                    }, 100); // Small delay to allow rendering
-                }).catch(err => {
-                    console.error('Error waiting for high-res images to load before html2canvas:', err);
-                    alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อดาวน์โหลด กรุณาลองใหม่อีกครั้ง');
-                    document.body.removeChild(tempRenderDiv);
-                    loadingOverlay.classList.add('hidden');
-                });
-            });
-
-            // --- Share Functionality ---
-            shareBtn.addEventListener('click', async function() { // Make it async
-                if (!userImageLoaded || !selectedFrame || !frameImageLoaded) {
-                    alert('โปรดอัปโหลดรูปภาพและเลือกกรอบก่อนแชร์');
-                    return;
-                }
-
-                loadingOverlay.classList.remove('hidden'); // Show loading overlay
-
-                // Reuse the same logic for high-res rendering as download
                 const tempRenderDiv = document.createElement('div');
                 tempRenderDiv.style.width = '1920px';
                 tempRenderDiv.style.height = '1920px';
@@ -689,7 +556,7 @@
                 tempRenderDiv.style.left = '-9999px';
                 tempRenderDiv.style.top = '-9999px';
                 tempRenderDiv.style.overflow = 'hidden';
-                tempRenderDiv.style.backgroundColor = 'transparent';
+                tempRenderDiv.style.backgroundColor = 'transparent'; // Use transparent background for PNG
                 tempRenderDiv.style.display = 'flex';
                 tempRenderDiv.style.alignItems = 'center';
                 tempRenderDiv.style.justifyContent = 'center';
@@ -701,6 +568,7 @@
                 hiResUserImage.src = userImagePreview.src;
                 hiResFrameImage.src = frameImagePreview.src;
 
+                // Apply the same transformations (scale, translate) to the high-res user image
                 hiResUserImage.style.transform = `translate(${initialTranslateX}%, ${initialTranslateY}%) scale(${currentScale})`;
                 hiResUserImage.style.transformOrigin = 'center center';
                 hiResUserImage.style.objectFit = 'cover';
@@ -721,6 +589,7 @@
                 tempRenderDiv.appendChild(hiResFrameImage);
 
                 try {
+                    // Wait for both high-res images to load in the temporary div
                     await Promise.all([
                         new Promise(resolve => {
                             if (hiResUserImage.complete && hiResUserImage.naturalWidth > 0) resolve();
@@ -732,21 +601,54 @@
                         })
                     ]);
 
-                    await new Promise(r => setTimeout(r, 100)); // Small delay for rendering
+                    // Add a slightly longer delay to ensure DOM rendering and image composition
+                    await new Promise(r => setTimeout(r, 250)); // Increased from 100ms
 
                     const canvas = await html2canvas(tempRenderDiv, {
                         width: 1920,
                         height: 1920,
-                        scale: 1,
-                        backgroundColor: null,
-                        useCORS: true,
-                        allowTaint: false,
+                        scale: 1, // Crucial for exact resolution and preventing unintended scaling
+                        backgroundColor: null, // Makes background transparent for PNG
+                        useCORS: true, // Allow loading cross-origin images (frames)
+                        allowTaint: true, // Allow tainted canvas, if CORS is an issue for some frames
                         logging: true,
-                        imageTimeout: 15000
+                        imageTimeout: 20000 // Increased timeout for image loading
                     });
+                    return canvas;
+                } catch (err) {
+                    console.error('Error in renderCombinedImage:', err);
+                    alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ กรุณาลองใหม่อีกครั้ง');
+                    return null;
+                } finally {
+                    // Clean up the temporary div after capture or on error
+                    if (tempRenderDiv.parentNode) {
+                        document.body.removeChild(tempRenderDiv);
+                    }
+                    loadingOverlay.classList.add('hidden');
+                }
+            }
 
-                    document.body.removeChild(tempRenderDiv); // Clean up temp div
 
+            // --- Download Functionality ---
+            downloadBtn.addEventListener('click', async function() {
+                const canvas = await renderCombinedImage();
+                if (canvas) {
+                    try {
+                        const link = document.createElement('a');
+                        link.download = `profile-${selectedFrame}-gama-awards.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    } catch (e) {
+                        console.error('Error creating data URL or download link:', e);
+                        alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหาภายในหรือรูปภาพต้นฉบับเสียหาย)');
+                    }
+                }
+            });
+
+            // --- Share Functionality ---
+            shareBtn.addEventListener('click', async function() {
+                const canvas = await renderCombinedImage();
+                if (canvas) {
                     canvas.toBlob(async blob => {
                         const file = new File([blob], `profile-${selectedFrame}-gama-awards.png`, {type: "image/png"});
 
@@ -761,7 +663,7 @@
                                 console.log('รูปถูกแชร์แล้วผ่าน Web Share API');
                             } catch (error) {
                                 console.error('Error sharing via Web Share API:', error);
-                                // Fallback to clipboard if share fails (e.g., user cancels)
+                                // Fallback to clipboard if share fails (e.g., user cancels share dialog)
                                 tryClipboardShare(file);
                             }
                         } else if (navigator.clipboard && navigator.clipboard.write) {
@@ -771,15 +673,6 @@
                             alert("อุปกรณ์ของคุณไม่รองรับการแชร์รูปภาพโดยตรง กรุณาดาวน์โหลดแล้วแชร์ด้วยตนเอง");
                         }
                     }, 'image/png'); // Specify MIME type for toBlob
-
-                } catch (err) {
-                    console.error('Error during share process:', err);
-                    alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อแชร์ กรุณาลองใหม่อีกครั้ง');
-                    if (tempRenderDiv.parentNode) { // Check if it's still in DOM before removing
-                        document.body.removeChild(tempRenderDiv);
-                    }
-                } finally {
-                    loadingOverlay.classList.add('hidden'); // Hide loading overlay
                 }
             });
 
@@ -798,8 +691,7 @@
 
             // --- Initial Setup ---
             updateImagePosition(); // Set initial position based on slider defaults
-            checkDownloadAvailability(); // Check initial state for download button
-            checkShareAvailability(); // Check initial state for share button
+            checkButtonAvailability(); // Check initial state for download and share buttons
         });
     </script>
 </body>
