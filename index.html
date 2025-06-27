@@ -1,230 +1,460 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ตรวจสอบรายชื่อผู้เข้ารับรางวัล</title>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Prompt', sans-serif;
-      background: linear-gradient(to top, #6a11cb, #c94bdb);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      padding: 20px;
-      color: #fff;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAMA Awards Frame Creator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
 
-    .container {
-      max-width: 380px; /* Adjusted max-width for the input and button container */
-      width: 100%;
-      text-align: center;
-      margin-top: 2rem; /* Add some top margin to center vertically */
-    }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
 
-    .logo {
-      width: 120px;
-      margin-bottom: 1rem;
-    }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
 
-    .title {
-      font-size: 1.6rem;
-      font-weight: bold;
-      margin-bottom: 0.25rem;
-    }
+        .section-title {
+            font-size: 1.2em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            color: #555;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
 
-    .subtitle {
-      font-size: 0.9rem;
-      color: #eee;
-      margin-bottom: 2rem;
-    }
+        .upload-section, .frame-selection, .adjustment-section, .preview-section, .download-section {
+            margin-bottom: 20px;
+        }
 
-    input[type="text"] {
-      width: calc(100% - 24px); /* Adjust width to account for padding */
-      padding: 12px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      background: #f3f3f3;
-      text-align: center; /* Center the text inside the input */
-    }
+        .file-input-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            text-align: center;
+            border: none;
+            width: fit-content;
+            margin: 0 auto;
+        }
 
-    button {
-      background: #FFD700; /* Yellow color */
-      color: #333; /* Black text */
-      padding: 12px;
-      width: 100%;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      cursor: pointer;
-      font-weight: bold;
-    }
+        .file-input-wrapper:hover {
+            background: linear-gradient(90deg, #5c0cad 0%, #1a64e0 100%);
+        }
 
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-    }
+        #imageUpload {
+            display: none;
+        }
 
-    .modal-content {
-      animation: fadeIn 0.2s ease;
-      background: white; /* Modal background is white */
-      padding: 2rem;
-      border-radius: 16px;
-      max-width: 550px; /* Increased max-width for wider popup, as requested before */
-      width: 90%;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-      font-family: 'Prompt', sans-serif;
-      position: relative; /* Added for absolute positioning of close button and logo */
-    }
+        .frame-thumbnails {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
 
-    .close-button {
-      position: absolute;
-      top: 12px;
-      right: 20px;
-      cursor: pointer;
-      font-size: 24px;
-      color: #999;
-    }
+        .frame-thumbnail {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: border-color 0.3s ease, transform 0.2s ease;
+        }
 
-    .error {
-      color: #c4004e;
-      font-weight: bold;
-      font-size: 1rem;
-      margin-top: 1rem;
-    }
+        .frame-thumbnail img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
 
-    /* Loading Spinner Styles */
-    .loader {
-      display: none; /* Hidden by default */
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #6a11cb;
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
+        .frame-thumbnail.selected {
+            border-color: #6a11cb;
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(106, 17, 203, 0.5);
+        }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+        .frame-label {
+            text-align: center;
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-  </style>
+        .slider-group {
+            margin-bottom: 20px;
+        }
+
+        .slider-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #777;
+        }
+
+        input[type="range"] {
+            width: calc(100% - 100px); /* Adjust width to make space for labels */
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+            flex-grow: 1;
+        }
+
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #6a11cb;
+            cursor: grab;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #6a11cb;
+            cursor: grab;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .preview-canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            width: 300px; /* Fixed size for preview */
+            height: 300px; /* Fixed size for preview */
+            margin: 20px auto;
+            position: relative;
+        }
+
+        #previewCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        .download-button {
+            display: block;
+            width: fit-content;
+            margin: 20px auto;
+            background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 1.1em;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .download-button:hover {
+            background: linear-gradient(90deg, #5c0cad 0%, #1a64e0 100%);
+            transform: translateY(-2px);
+        }
+
+        .disabled-button {
+            background: #cccccc !important;
+            cursor: not-allowed !important;
+        }
+
+        .logo-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-header img {
+            width: 100px; /* Adjust as needed */
+            height: auto;
+        }
+
+    </style>
 </head>
 <body>
-  <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards" class="logo" />
-  <h1 class="title">ตรวจสอบรายชื่อผู้เข้ารับรางวัล</h1>
-  <p class="subtitle">กรุณากรอกข้อมูลเพื่อตรวจสอบรายชื่อ</p>
 
-  <div class="container">
-    <input type="text" id="searchInput" placeholder="เช่น สมชาย ใจดี หรือ MMA-001" />
-    <button onclick="search()">ค้นหา</button>
-    <div class="loader" id="loader"></div> <div id="errorMsg" class="error"></div>
-  </div>
+    <div class="container">
+        <div class="logo-header">
+            <img src="https://hugmediacreation.com/photo/GAMA%20Awards.png" alt="GAMA Awards Logo">
+        </div>
+        <h1>GAMA Awards Frame</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            เปลี่ยนรูปโปรไฟล์ของคุณให้โดดเด่นด้วยกรอบรูปภาพพิเศษจาก GAMA Awards อัพโหลดรูปภาพของคุณ เลือกกรอบที่ชอบ และดาวน์โหลดเพื่อใช้เป็นรูปโปรไฟล์ใหม่ของคุณ
+        </p>
 
-  <div id="resultModal" class="modal" onclick="closeModal(event)">
+        <div class="upload-section">
+            <div class="section-title">อัพโหลดรูปโปรไฟล์ของคุณ:</div>
+            <label for="imageUpload" class="file-input-wrapper">
+                เลือกรูปภาพจากเครื่อง
+            </label>
+            <input type="file" id="imageUpload" accept="image/*">
+        </div>
+
+        <div class="frame-selection">
+            <div class="section-title">เลือกกรอบรูปภาพ</div>
+            <div class="frame-thumbnails" id="frameThumbnails">
+                </div>
+        </div>
+
+        <div class="adjustment-section">
+            <div class="section-title">ปรับแต่งรูปภาพ</div>
+
+            <div class="slider-group">
+                <label>ขนาด:</label>
+                <div class="slider-container">
+                    <span>เล็ก</span>
+                    <input type="range" id="sizeSlider" min="0.1" max="2.0" step="0.01" value="1.0">
+                    <span>ใหญ่</span>
+                </div>
+            </div>
+
+            <div class="slider-group">
+                <label>ตำแหน่งแนวนอน:</label>
+                <div class="slider-container">
+                    <span>ซ้าย</span>
+                    <input type="range" id="horizontalSlider" min="-0.5" max="0.5" step="0.01" value="0">
+                    <span>ขวา</span>
+                </div>
+            </div>
+
+            <div class="slider-group">
+                <label>ตำแหน่งแนวตั้ง:</label>
+                <div class="slider-container">
+                    <span>บน</span>
+                    <input type="range" id="verticalSlider" min="-0.5" max="0.5" step="0.01" value="0">
+                    <span>ล่าง</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <div class="section-title">ตัวอย่าง</div>
+            <div class="preview-canvas-container">
+                <canvas id="previewCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="download-section">
+            <button id="downloadBtn" class="download-button disabled-button" disabled>ดาวน์โหลดรูปโปรไฟล์</button>
+            <p style="text-align: center; color: #777; margin-top: 10px;">ดาวน์โหลดและใช้เป็นรูปโปรไฟล์ของคุณบนโซเชียลมีเดีย</p>
+        </div>
     </div>
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec";
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const frameThumbnailsContainer = document.getElementById('frameThumbnails');
+        const sizeSlider = document.getElementById('sizeSlider');
+        const horizontalSlider = document.getElementById('horizontalSlider');
+        const verticalSlider = document.getElementById('verticalSlider');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const ctx = previewCanvas.getContext('2d');
 
-    async function search() {
-      const q = document.getElementById('searchInput').value.trim();
-      const errBox = document.getElementById('errorMsg');
-      const loader = document.getElementById('loader');
-      errBox.textContent = "";
+        let userImage = null;
+        let selectedFrame = null;
+        let frameImages = {}; // To store loaded frame images
 
-      if (q.length < 2) {
-        errBox.textContent = "กรุณากรอกข้อมูลให้ครบถ้วน";
-        return;
-      }
+        const frames = [
+            { id: 'MAA', name: 'Master Multiline Award', url: 'https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png' },
+            { id: 'MFA', name: 'Master Firm Award', url: 'https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png' },
+            { id: 'MMA', name: 'Master Agency Award', url: 'https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png' },
+            { id: 'IMA', name: 'International Management Award', url: 'https://hugmediacreation.com/photo/International%20Management%20Award.png' },
+            { id: 'FLA', name: 'Frontline Leader Award', url: 'https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png' },
+            { id: 'ERA', name: 'Excellence Recruitment Awards', url: 'https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png' },
+            { id: 'COE', name: 'Circle of Excellence Award', url: 'https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png' }
+        ];
 
-      // Show loader
-      loader.style.display = "block";
+        // Set canvas dimensions
+        previewCanvas.width = 500;
+        previewCanvas.height = 500;
 
-      // Simulate a 1-second delay
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 1-second delay for simulation
-
-      try {
-        console.log("Fetching data with query:", q); // Debug: Log the query
-        const res = await axios.get(API_URL + `?q=${encodeURIComponent(q)}`);
-        const data = res.data; // This 'data' object will contain the fetched info
-
-        console.log("API Response data:", data); // Check this in console
-
-        if (!data || !data.name) {
-          console.log("Data not found or name is missing from response.");
-          showModal(`
-            <div class="modal-content">
-              <span class="close-button" onclick="closeModal(event)">&times;</span>
-              <h2 style="color:#6a11cb;">ขออภัยในความผิดพลาด</h2>
-              <p>ระบบไม่พบข้อมูลของท่าน<br>กรุณาติดต่อเจ้าหน้าที่ฯ</p>
-            </div>
-          `);
-        } else {
-          console.log("Data found. Displaying static fields and QR code.");
-          // Populate the modal with ONLY static labels and QR code
-          showModal(`
-            <div class="modal-content">
-              <span onclick="closeModal(event)" class="close-button">&times;</span>
-              <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" style="position: absolute; top: 20px; right: 20px; height: 36px;" alt="logo" />
-              
-              <h2 style="color:#6a11cb; font-size: 1.3rem; font-weight: bold; margin-bottom: 1.5rem;">ข้อมูลผู้รับรางวัล</h2>
-
-              <div style="text-align: left; font-size: 1rem;">
-                <p><span style="color: #555;">ID</span><br><strong></strong></p> <p><span style="color: #555;">ชื่อ–นามสกุล</span><br><strong></strong></p> <p><span style="color: #555;">สังกัด</span><br><strong></strong></p> <p><span style="color: #555;">ประเภทรางวัล</span><br><strong></strong></p> <p><span style="color: #555;">ระดับ</span><br><strong></strong></p> </div>
-
-              <div style="margin-top: 1.5rem; text-align: center;">
-                <canvas id="qrcode"></canvas>
-              </div>
-            </div>
-          `);
-
-          // Generate QR code (still uses data.id for the QR code itself)
-          setTimeout(() => {
-            if (document.getElementById("qrcode")) {
-              console.log("Generating QR code for:", data.id); // QR code still uses the ID
-              QRCode.toCanvas(document.getElementById("qrcode"), data.id || 'N/A', { width: 120 });
+        // Function to load all frame images
+        async function loadFrameImages() {
+            for (const frame of frames) {
+                const img = new Image();
+                img.src = frame.url;
+                img.crossOrigin = "anonymous"; // Essential for loading cross-origin images to canvas
+                await new Promise(resolve => {
+                    img.onload = () => {
+                        frameImages[frame.id] = img;
+                        resolve();
+                    };
+                    img.onerror = () => {
+                        console.error(`Failed to load frame image: ${frame.url}`);
+                        resolve(); // Still resolve to continue with other images
+                    };
+                });
             }
-          }, 100); // Small delay to ensure canvas is rendered
+            renderThumbnails();
         }
-      } catch (e) {
-        errBox.textContent = "เกิดข้อผิดพลาดในการค้นหา กรุณาลองใหม่";
-        console.error("Error during API call:", e); // Log API error
-      } finally {
-        // Hide loader regardless of success or failure
-        loader.style.display = "none";
-      }
-    }
 
-    function showModal(contentHTML) {
-      document.getElementById("resultModal").innerHTML = contentHTML; // Assign content to the modal directly
-      document.getElementById("resultModal").style.display = "flex";
-    }
+        // Function to render frame thumbnails
+        function renderThumbnails() {
+            frameThumbnailsContainer.innerHTML = '';
+            frames.forEach(frame => {
+                const thumbnailWrapper = document.createElement('div');
+                thumbnailWrapper.classList.add('frame-thumbnail-wrapper');
 
-    function closeModal(e) {
-      if (e.target.id === "resultModal" || e.target.classList.contains("close-button")) {
-        document.getElementById("resultModal").style.display = "none";
-      }
-    }
-  </script>
+                const thumbnail = document.createElement('div');
+                thumbnail.classList.add('frame-thumbnail');
+                thumbnail.dataset.frameId = frame.id;
+
+                const img = new Image();
+                img.src = frame.url;
+                img.alt = frame.name;
+                thumbnail.appendChild(img);
+
+                const label = document.createElement('div');
+                label.classList.add('frame-label');
+                label.textContent = frame.id; // Using ID for brevity below thumbnail
+
+                thumbnail.addEventListener('click', () => {
+                    document.querySelectorAll('.frame-thumbnail').forEach(t => t.classList.remove('selected'));
+                    thumbnail.classList.add('selected');
+                    selectedFrame = frame.id;
+                    drawCanvas();
+                });
+
+                thumbnailWrapper.appendChild(thumbnail);
+                thumbnailWrapper.appendChild(label);
+                frameThumbnailsContainer.appendChild(thumbnailWrapper);
+            });
+        }
+
+        // Function to draw image and frame on canvas
+        function drawCanvas() {
+            ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+            if (!userImage && !selectedFrame) {
+                downloadBtn.classList.add('disabled-button');
+                downloadBtn.disabled = true;
+                return;
+            }
+
+            // Draw user image if available
+            if (userImage) {
+                const imgRatio = userImage.width / userImage.height;
+                const canvasRatio = previewCanvas.width / previewCanvas.height;
+
+                let drawWidth, drawHeight;
+                let offsetX, offsetY;
+
+                // Adjust based on sliders
+                const scale = parseFloat(sizeSlider.value);
+                const horizontalShift = parseFloat(horizontalSlider.value) * previewCanvas.width;
+                const verticalShift = parseFloat(verticalSlider.value) * previewCanvas.height;
+
+                // Center and scale image to fill the canvas area, then apply adjustments
+                if (imgRatio > canvasRatio) { // Image is wider than canvas
+                    drawHeight = previewCanvas.height * scale;
+                    drawWidth = userImage.width * (drawHeight / userImage.height);
+                } else { // Image is taller or same ratio
+                    drawWidth = previewCanvas.width * scale;
+                    drawHeight = userImage.height * (drawWidth / userImage.width);
+                }
+
+                offsetX = (previewCanvas.width - drawWidth) / 2 + horizontalShift;
+                offsetY = (previewCanvas.height - drawHeight) / 2 + verticalShift;
+
+                ctx.drawImage(userImage, offsetX, offsetY, drawWidth, drawHeight);
+            }
+
+            // Draw selected frame if available
+            if (selectedFrame && frameImages[selectedFrame]) {
+                ctx.drawImage(frameImages[selectedFrame], 0, 0, previewCanvas.width, previewCanvas.height);
+            }
+
+            // Enable download button if both image and frame are present
+            if (userImage && selectedFrame) {
+                downloadBtn.classList.remove('disabled-button');
+                downloadBtn.disabled = false;
+            } else {
+                downloadBtn.classList.add('disabled-button');
+                downloadBtn.disabled = true;
+            }
+        }
+
+        // Event Listeners
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        userImage = img;
+                        drawCanvas();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        sizeSlider.addEventListener('input', drawCanvas);
+        horizontalSlider.addEventListener('input', drawCanvas);
+        verticalSlider.addEventListener('input', drawCanvas);
+
+        downloadBtn.addEventListener('click', () => {
+            if (userImage && selectedFrame) {
+                const link = document.createElement('a');
+                link.download = `GAMA_Awards_Profile_${selectedFrame}.png`;
+                link.href = previewCanvas.toDataURL('image/png');
+                link.click();
+            }
+        });
+
+        // Initialize by loading frame images
+        loadFrameImages();
+    </script>
 </body>
 </html>
