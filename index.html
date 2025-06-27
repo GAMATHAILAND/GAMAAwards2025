@@ -182,7 +182,7 @@
     <div class="header-gradient"></div>
     <div class="container mx-auto px-4 py-8">
         <div class="flex justify-center mb-6">
-            <img src="./assets/logo-gama-awards.png" alt="GAMA Awards Logo" class="h-[97.5px]"> 
+            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="h-[97.5px]"> 
         </div>
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">GAMA Awards Frame</h1>
         <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">เปลี่ยนรูปโปรไฟล์ของคุณให้โดดเด่นด้วยกรอบรูปภาพพิเศษจาก GAMA Awards อัพโหลดรูปภาพของคุณ เลือกกรอบที่ชอบ และดาวน์โหลดเพื่อใช้เป็นรูปโปรไฟล์ใหม่ของคุณ</p>
@@ -303,16 +303,15 @@
             let selectedFrameId = null;
             let frameImages = {}; // Stores actual Image objects of frames
 
-            // Frame URLs (UPDATED TO LOCAL RELATIVE PATHS - CRITICAL!)
-            // Ensure these filenames match the files in your 'assets' folder
+            // Frame URLs (UPDATED TO EXTERNAL URLs)
             const frames = [
-                { id: 'MAA', name: 'Master Multiline Award', url: './assets/MASTER MULTILINE Award.png' },
-                { id: 'MFA', name: 'Master Firm Award', url: './assets/MASTER FIRM Award.png' },
-                { id: 'MMA', name: 'Master Agency Award', url: './assets/MASTER AGENCY Award.png' }, // CORRECTED FILENAME HERE to match GitHub screenshot
-                { id: 'IMA', name: 'International Management Award', url: './assets/International Management Award.png' },
-                { id: 'FLA', name: 'Frontline Leader Award', url: './assets/Frontline Leader Awards.png' },
-                { id: 'ERA', name: 'Excellence Recruitment Awards', url: './assets/Excellence Recruitment Award.png' },
-                { id: 'COE', name: 'Circle of Excellence Award', url: './assets/Circle of Excellence Award.png' }
+                { id: 'MAA', name: 'Master Multiline Award', url: 'https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png' },
+                { id: 'MFA', name: 'Master Firm Award', url: 'https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png' },
+                { id: 'MMA', name: 'Master Agency Award', url: 'https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png' },
+                { id: 'IMA', name: 'International Management Award', url: 'https://hugmediacreation.com/photo/International%20Management%20Award.png' },
+                { id: 'FLA', name: 'Frontline Leader Award', url: 'https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png' },
+                { id: 'ERA', name: 'Excellence Recruitment Awards', url: 'https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png' }, 
+                { id: 'COE', name: 'Circle of Excellence Award', url: 'https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png' }
             ];
 
             // Canvas sizes
@@ -331,14 +330,15 @@
                 for (const frame of frames) {
                     const img = new Image();
                     img.src = frame.url;
+                    img.crossOrigin = "anonymous"; // IMPORTANT for CORS when drawing to canvas from external URLs
                     await new Promise(resolve => {
                         img.onload = () => {
                             frameImages[frame.id] = img;
                             resolve();
                         };
                         img.onerror = () => {
-                            console.error(`Failed to load frame image: ${frame.url}. Ensure the file exists in the 'assets' folder and filename is correct.`);
-                            alert(`ไม่สามารถโหลดกรอบรูป ${frame.id} ได้! โปรดตรวจสอบว่าไฟล์ ${frame.url} อยู่ในโฟลเดอร์ 'assets' และชื่อไฟล์ถูกต้อง`);
+                            console.error(`Failed to load frame image: ${frame.url}. Ensure the URL is correct and the server supports CORS.`);
+                            alert(`ไม่สามารถโหลดกรอบรูป ${frame.id} ได้! โปรดตรวจสอบว่า URL ถูกต้อง หรืออาจเกิดจากปัญหา CORS บนเซิร์ฟเวอร์.`);
                             resolve(); // Resolve anyway to not block other images
                         };
                     });
@@ -357,6 +357,7 @@
                     const img = document.createElement('img');
                     img.src = frame.url;
                     img.alt = frame.name;
+                    img.crossOrigin = "anonymous"; // Also set for thumbnails
                     img.classList.add('w-20', 'h-20', 'object-contain', 'mx-auto');
 
                     const p = document.createElement('p');
@@ -520,7 +521,7 @@
                     alert('รูปภาพถูกเตรียมสำหรับการดาวน์โหลดแล้ว! โปรดแตะปุ่ม "บันทึกรูปภาพ" หรือ "ดาวน์โหลด" ในหน้าจอถัดไปเพื่อบันทึกลงเครื่องของคุณ');
                 } catch (e) {
                     console.error('Error generating image or download link:', e);
-                    alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหาภายในหรือรูปภาพต้นฉบับเสียหาย)');
+                    alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหา CORS หรือรูปภาพต้นฉบับเสียหาย)');
                 } finally {
                     loadingOverlay.classList.add('hidden'); // Hide loading spinner
                 }
