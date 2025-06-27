@@ -9,33 +9,67 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
+        /* Define CSS Variables for easy theme management */
         :root {
-            --primary-purple: #8A2BE2; /* Amethyst */
-            --dark-pink: #C71585; /* MediumVioletRed */
-            --light-gray: #f0f0f0;
-            --dark-gray: #333;
+            --primary-purple: #4500b2; /* Deep Purple */
+            --primary-pink: #d83361; /* Dark Pink */
+            --light-gray: #f9fafb;
+            --medium-gray: #e5e7eb;
+            --dark-text: #333;
+            --light-text: #666;
             --white: #fff;
         }
 
+        /* Base Body Styles */
         body {
             font-family: 'Prompt', sans-serif;
             min-height: 100vh;
-            color: var(--dark-gray);
-            /* Background gradient from purple (bottom) to dark pink (top) */
-            background: linear-gradient(to top, var(--primary-purple), var(--dark-pink));
+            color: var(--dark-text);
+            /* Background gradient from bottom-purple to top-pink */
+            background: linear-gradient(to top, var(--primary-purple), var(--primary-pink));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
+        /* Header Gradient Bar */
+        .header-gradient {
+            background: linear-gradient(to right, var(--primary-purple), var(--primary-pink));
+            height: 8px;
+            width: 100%;
+        }
+
+        /* Card Styling */
+        .card {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem; /* Default padding */
+        }
+        @media (min-width: 768px) { /* Adjust padding for larger screens */
+            .card {
+                padding: 2rem;
+            }
+        }
+
+        /* Frame Option Styling */
         .frame-option {
             transition: all 0.3s ease;
             cursor: pointer;
             background-color: var(--white);
-            border: 1px solid #e5e7eb;
-            display: flex; /* Flexbox for centering content */
-            flex-direction: column; /* Stack image and text */
-            align-items: center; /* Center horizontally */
-            justify-content: center; /* Center vertically */
-            padding: 8px; /* Reduced padding */
+            border: 1px solid var(--medium-gray);
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem; /* Padding for individual frame options */
+            width: 90px; /* Fixed width for consistent display */
+            height: 90px; /* Fixed height for consistent display */
+            flex-shrink: 0; /* Prevent shrinking in flex container */
+            text-align: center;
         }
 
         .frame-option:hover {
@@ -44,61 +78,70 @@
         }
 
         .frame-option.selected {
-            border: 3px solid var(--primary-purple); /* Stronger border for selected */
+            border: 3px solid var(--primary-purple);
             transform: translateY(-5px);
-            box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow */
+            box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.15);
         }
         
         .frame-option img {
-            width: 60px; /* Smaller preview images for frames */
+            width: 60px; /* Fixed size for frame preview images */
             height: 60px;
+            object-fit: contain;
+            margin: 0 auto; /* Center image */
+        }
+        .frame-option p {
+            font-size: 0.8rem; /* Smaller text for frame names */
+            font-weight: 500;
+            margin-top: 0.25rem;
+            color: var(--dark-text);
         }
 
-        /* Adjusted image-container for responsiveness */
+        /* Image Container (Preview Area) */
         .image-container {
             position: relative;
             width: 100%;
             padding-top: 100%; /* 1:1 Aspect Ratio (height equals width) */
             overflow: hidden;
             margin: 0 auto;
-            background-color: var(--light-gray); /* Match earlier minimal design */
-            border: 2px dashed var(--primary-purple); /* Border to match overall theme */
+            background-color: var(--light-gray);
+            border: 2px dashed var(--primary-purple);
             border-radius: 8px;
-            cursor: grab; /* Indicates draggable */
+            cursor: grab; /* Indicate draggable */
         }
         .image-container:active {
             cursor: grabbing;
         }
 
+        /* User Image and Frame Image Layers */
         .image-container > img {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Use contain to show entire image initially */
-            pointer-events: none; /* Allows dragging through to the user image */
+            object-fit: cover; /* User image covers the container */
+            transform-origin: center center; /* Ensures scaling/translation from center */
+            will-change: transform; /* Performance hint for browser */
         }
-
-        /* user-image and frame-image styles */
         .user-image {
-            transform-origin: center;
-            object-fit: cover; /* Ensures the image covers the area *before* transform */
+            z-index: 5; /* User image beneath the frame */
             /* Initial transform will be applied via JS */
-            will-change: transform; /* Hint for browser performance */
         }
-
         .frame-image {
-            pointer-events: none; /* Allows clicks to pass through */
-            z-index: 10; /* Ensures frame is on top of user image */
+            pointer-events: none; /* Allows clicks to pass through to the user image below for dragging */
+            z-index: 10; /* Frame always on top */
+            object-fit: contain; /* Frame image contains within the area */
         }
 
+        /* Slider Styling */
         .slider {
             -webkit-appearance: none;
+            width: 100%;
             height: 8px;
             border-radius: 4px;
-            background: var(--light-gray);
+            background: var(--medium-gray);
             outline: none;
+            transition: opacity .2s;
         }
 
         .slider::-webkit-slider-thumb {
@@ -107,13 +150,12 @@
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background: var(--primary-purple); /* Match primary theme color */
+            background: var(--primary-purple);
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-
         .slider::-webkit-slider-thumb:hover {
-            background-color: var(--dark-pink);
+            background-color: var(--primary-pink);
         }
 
         .slider::-moz-range-thumb {
@@ -125,56 +167,31 @@
             transition: background-color 0.3s ease;
         }
         .slider::-moz-range-thumb:hover {
-            background-color: var(--dark-pink);
+            background-color: var(--primary-pink);
         }
 
+        /* Button Styling */
         .btn {
             transition: all 0.3s ease;
         }
-
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            color: white;
-            font-size: 24px;
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
-        .spinner {
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 5px solid white;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-
-        .card {
-            background-color: var(--white);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
+        /* File Upload Hidden Input */
         .file-upload {
             position: relative;
             overflow: hidden;
             display: inline-block;
             width: 100%;
         }
-
         .file-upload input[type=file] {
             position: absolute;
             top: 0;
@@ -190,7 +207,37 @@
             display: block;
         }
 
-        /* Responsive adjustments */
+        /* Loading Overlay */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: var(--white);
+            font-size: 24px;
+            flex-direction: row; /* Ensure spinner and text are in a row */
+        }
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid var(--white);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Adjustments */
         @media (max-width: 768px) {
             .container {
                 padding-left: 1rem;
@@ -205,30 +252,36 @@
             .text-xl {
                 font-size: 1.5rem;
             }
+            .frame-option {
+                width: 80px; /* Even smaller for mobile */
+                height: 80px;
+                padding: 0.4rem;
+            }
             .frame-option img {
-                width: 48px;
-                height: 48px;
+                width: 50px;
+                height: 50px;
             }
             .frame-option p {
-                font-size: 0.8em;
+                font-size: 0.75rem;
             }
             .grid-cols-1 .lg\:col-span-2 {
                 grid-column: span 1 / span 1;
             }
-            .card {
-                padding: 1rem;
-            }
         }
     </style>
 </head>
-<body class="min-h-screen">
-    <div class="header-gradient" style="background: linear-gradient(to right, var(--primary-purple), var(--dark-pink)); height: 8px;"></div>
-    <div class="container mx-auto px-4 py-8">
+<body class="min-h-screen flex flex-col items-center">
+    <div class="header-gradient"></div>
+
+    <div class="container mx-auto px-4 py-8 max-w-7xl w-full">
         <div class="flex justify-center mb-6">
             <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="h-24">
         </div>
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">GAMA Awards Frame</h1>
-        <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">เปลี่ยนรูปโปรไฟล์ของคุณให้โดดเด่นด้วยกรอบรูปภาพพิเศษจาก GAMA Awards อัพโหลดรูปภาพของคุณ เลือกกรอบที่ชอบ และดาวน์โหลดเพื่อใช้เป็นรูปโปรไฟล์ใหม่ของคุณ</p>
+
+        <h1 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4">GAMA Awards Frame Creator</h1>
+        <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
+            เปลี่ยนรูปโปรไฟล์ของคุณให้โดดเด่นด้วยกรอบรูปภาพพิเศษจาก GAMA Awards อัพโหลดรูปภาพของคุณ เลือกกรอบที่ชอบ และดาวน์โหลดเพื่อใช้เป็นรูปโปรไฟล์ใหม่ของคุณ
+        </p>
 
         <div class="mb-8 max-w-xl mx-auto">
             <div class="card p-6">
@@ -249,33 +302,33 @@
         <div class="mb-8">
             <h2 class="text-xl font-medium mb-4 text-center text-gray-700">เลือกกรอบรูปภาพ</h2>
             <div class="flex flex-wrap justify-center gap-3">
-                <div class="frame-option rounded-lg text-center" data-frame="MAA">
-                    <img src="https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png" alt="MAA" class="object-contain mx-auto">
-                    <p class="text-sm font-medium mt-1 text-gray-800">MAA</p>
+                <div class="frame-option rounded-lg" data-frame="MAA">
+                    <img src="https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png" alt="MAA" class="mx-auto">
+                    <p>MAA</p>
                 </div>
-                <div class="frame-option rounded-lg text-center" data-frame="MFA">
-                    <img src="https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png" alt="MFA" class="object-contain mx-auto">
-                    <p class="text-sm font-medium mt-1 text-gray-800">MFA</p>
+                <div class="frame-option rounded-lg" data-frame="MFA">
+                    <img src="https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png" alt="MFA" class="mx-auto">
+                    <p>MFA</p>
                 </div>
-                <div class="frame-option rounded-lg text-center" data-frame="MMA">
-                    <img src="https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png" alt="MMA" class="object-contain mx-auto">
-                    <p class="text-sm font-medium mt-1 text-gray-800">MMA</p>
+                <div class="frame-option rounded-lg" data-frame="MMA">
+                    <img src="https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png" alt="MMA" class="mx-auto">
+                    <p>MMA</p>
                 </div>
-                <div class="frame-option rounded-lg text-center" data-frame="IMA">
-                    <img src="https://hugmediacreation.com/photo/International%20Management%20Award.png" alt="IMA" class="object-contain mx-auto">
-                    <p class="text-sm font-medium mt-1 text-gray-800">IMA</p>
+                <div class="frame-option rounded-lg" data-frame="IMA">
+                    <img src="https://hugmediacreation.com/photo/International%20Management%20Award.png" alt="IMA" class="mx-auto">
+                    <p>IMA</p>
                 </div>
-                <div class="frame-option rounded-lg text-center" data-frame="FLA">
-                    <img src="https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png" alt="FLA" class="object-contain mx-auto">
-                    <p class="text-sm font-medium mt-1 text-gray-800">FLA</p>
+                <div class="frame-option rounded-lg" data-frame="FLA">
+                    <img src="https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png" alt="FLA" class="mx-auto">
+                    <p>FLA</p>
                 </div>
-                <div class="frame-option rounded-lg text-center" data-frame="ERA">
-                    <img src="https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png" alt="ERA" class="object-contain mx-auto">
-                    <p class="text-sm font-medium mt-1 text-gray-800">ERA</p>
+                <div class="frame-option rounded-lg" data-frame="ERA">
+                    <img src="https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png" alt="ERA" class="mx-auto">
+                    <p>ERA</p>
                 </div>
-                <div class="frame-option rounded-lg text-center" data-frame="COE">
-                    <img src="https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png" alt="COE" class="object-contain mx-auto">
-                    <p class="text-sm font-medium mt-1 text-gray-800">COE</p>
+                <div class="frame-option rounded-lg" data-frame="COE">
+                    <img src="https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png" alt="COE" class="mx-auto">
+                    <p>COE</p>
                 </div>
             </div>
         </div>
@@ -290,8 +343,8 @@
                             </svg>
                             <p class="text-gray-500">โปรดอัพโหลดรูปภาพและเลือกกรอบ</p>
                         </div>
-                        <img id="userImage" class="user-image absolute hidden" src="" alt="User uploaded image" style="top: 0; left: 0; width: 100%; height: 100%;">
-                        <img id="frameImage" class="frame-image absolute hidden" src="" alt="Selected frame" style="top: 0; left: 0; width: 100%; height: 100%;">
+                        <img id="userImage" class="user-image hidden" src="" alt="User uploaded image">
+                        <img id="frameImage" class="frame-image hidden" src="" alt="Selected frame">
                     </div>
                 </div>
             </div>
@@ -337,7 +390,7 @@
             </div>
         </div>
 
-        <div class="text-center text-sm text-gray-500 mb-8">
+        <div class="text-center text-sm text-gray-500 mt-8 mb-4">
             © GAMA Awards 2025 - ระบบใส่กรอบรูปภาพ
         </div>
     </div>
@@ -349,7 +402,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Elements
+            // --- DOM Elements ---
             const imageUpload = document.getElementById('imageUpload');
             const uploadBtn = document.getElementById('uploadBtn');
             const selectedFileName = document.getElementById('selectedFileName');
@@ -362,9 +415,10 @@
             const yPosSlider = document.getElementById('yPosSlider');
             const downloadBtn = document.getElementById('downloadBtn');
             const loadingOverlay = document.getElementById('loadingOverlay');
-            const previewContainer = document.getElementById('preview'); // The image-container div
+            const previewContainer = document.getElementById('preview'); // The image-container div for preview
 
-            // Frame URLs (UPDATED TO EXTERNAL URLs)
+            // --- Frame URLs Mapping ---
+            // These URLs point to your frame images hosted on hugmediacreation.com
             const frameUrls = {
                 'MAA': 'https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png',
                 'MFA': 'https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png',
@@ -375,29 +429,48 @@
                 'COE': 'https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png'
             };
 
-            // State
+            // --- State Variables ---
             let selectedFrame = null;
             let userImageLoaded = false;
             let frameImageLoaded = false;
             let isDragging = false;
-            let startX, startY;
-            let currentTranslateX = 0;
-            let currentTranslateY = 0;
+            let startPointerX, startPointerY; // Initial pointer position during drag
+            let initialTranslateX, initialTranslateY; // Initial image translation (from sliders)
             let currentScale = 1;
 
-            // Function to check if both images are loaded for download enablement
+            // --- Helper Functions ---
+
+            // Checks if both user image and frame are loaded to enable download button
             function checkDownloadAvailability() {
                 downloadBtn.disabled = !(userImageLoaded && selectedFrame && frameImageLoaded);
             }
 
+            // Applies transform styles to the user image in the preview
+            function updateImagePosition() {
+                if (!userImageLoaded) return;
+
+                // Get values directly from sliders (they represent percentages)
+                const scale = parseFloat(scaleSlider.value) / 100;
+                const xPos = parseFloat(xPosSlider.value);
+                const yPos = parseFloat(yPosSlider.value);
+
+                // Update current state
+                currentScale = scale;
+                initialTranslateX = xPos;
+                initialTranslateY = yPos;
+
+                // Apply transform using percentage translation for responsiveness
+                userImagePreview.style.transform = `translate(${initialTranslateX}%, ${initialTranslateY}%) scale(${currentScale})`;
+            }
+
             // --- Event Listeners ---
 
-            // Trigger file input when the upload button is clicked
+            // Simulate click on hidden file input when upload button is clicked
             uploadBtn.addEventListener('click', function() {
                 imageUpload.click();
             });
 
-            // Handle file upload
+            // Handle user image file upload
             imageUpload.addEventListener('change', function() {
                 if (this.files && this.files[0]) {
                     const file = this.files[0];
@@ -413,10 +486,7 @@
                             scaleSlider.value = 100;
                             xPosSlider.value = 0;
                             yPosSlider.value = 0;
-                            currentTranslateX = 0;
-                            currentTranslateY = 0;
-                            currentScale = 1;
-                            updateImagePosition(); // Apply default positions for preview
+                            updateImagePosition(); // Apply default positions
                             checkDownloadAvailability();
                         };
                         userImagePreview.onerror = function() {
@@ -428,6 +498,7 @@
                     };
                     reader.readAsDataURL(file);
                 } else {
+                    // No file selected
                     selectedFileName.textContent = '';
                     userImagePreview.classList.add('hidden');
                     placeholderText.classList.remove('hidden');
@@ -436,17 +507,19 @@
                 }
             });
 
-            // Select frame
+            // Handle frame selection
             frameOptions.forEach(option => {
                 option.addEventListener('click', function() {
-                    const frameId = this.dataset.frame;
+                    const frameId = this.dataset.frame; // Get frame ID from data-frame attribute
 
+                    // Remove 'selected' class from all other options
                     frameOptions.forEach(opt => opt.classList.remove('selected'));
+                    // Add 'selected' class to the clicked option
                     this.classList.add('selected');
 
-                    selectedFrame = frameId;
+                    selectedFrame = frameId; // Store selected frame ID
 
-                    // Load frame image for preview and set frameImageLoaded flag
+                    // Load frame image for the main preview area
                     frameImagePreview.onload = function() {
                         frameImagePreview.classList.remove('hidden');
                         frameImageLoaded = true;
@@ -454,91 +527,76 @@
                     };
                     frameImagePreview.onerror = function() {
                         console.error('Failed to load frame image:', frameUrls[frameId]);
-                        alert('เกิดข้อผิดพลาดในการโหลดกรอบรูป กรุณาตรวจสอบลิงก์รูปภาพกรอบอีกครั้ง');
+                        alert('เกิดข้อผิดพลาดในการโหลดกรอบรูป กรุณาตรวจสอบลิงก์รูปภาพกรอบอีกครั้ง หรือรูปภาพอาจถูกลบไปแล้ว');
                         frameImageLoaded = false;
                         checkDownloadAvailability();
                     };
-                    frameImagePreview.src = frameUrls[frameId];
+                    frameImagePreview.src = frameUrls[frameId]; // Set the source of the frame image
                 });
             });
 
-            // Update image position and scale for the PREVIEW
-            function updateImagePosition() {
-                if (!userImageLoaded) return;
-
-                const scale = parseFloat(scaleSlider.value) / 100;
-                currentScale = scale; // Update currentScale from slider
-                
-                // Translate values are now directly used for preview
-                currentTranslateX = parseFloat(xPosSlider.value);
-                currentTranslateY = parseFloat(yPosSlider.value);
-
-                userImagePreview.style.transform = `translate(${currentTranslateX}%, ${currentTranslateY}%) scale(${currentScale})`;
-            }
-
-            // Event listeners for sliders
+            // Event listeners for sliders to update image position
             scaleSlider.addEventListener('input', updateImagePosition);
             xPosSlider.addEventListener('input', updateImagePosition);
             yPosSlider.addEventListener('input', updateImagePosition);
 
-            // --- Dragging functionality ---
+            // --- Dragging Functionality for User Image ---
+            // Mouse events
             previewContainer.addEventListener('mousedown', (e) => {
                 if (userImageLoaded && selectedFrame) {
                     isDragging = true;
-                    // Prevent image from being dragged as a ghost image
-                    e.preventDefault();
-                    // Calculate click position relative to the image's current transformed position
-                    const rect = userImagePreview.getBoundingClientRect();
-                    startX = e.clientX - rect.left - (rect.width / 2);
-                    startY = e.clientY - rect.top - (rect.height / 2);
-                    
-                    // Store the initial slider values at the start of the drag
-                    // These will be modified relative to their initial values
-                    startXPos = parseFloat(xPosSlider.value);
-                    startYPos = parseFloat(yPosSlider.value);
-                    previewContainer.style.cursor = 'grabbing';
+                    e.preventDefault(); // Prevent default browser drag behavior
+                    startPointerX = e.clientX;
+                    startPointerY = e.clientY;
+                    // Store current slider values as initial for relative drag calculation
+                    initialTranslateX = parseFloat(xPosSlider.value);
+                    initialTranslateY = parseFloat(yPosSlider.value);
+                    previewContainer.style.cursor = 'grabbing'; // Change cursor to indicate dragging
                 }
             });
 
             previewContainer.addEventListener('mousemove', (e) => {
                 if (!isDragging || !userImageLoaded) return;
                 
-                const rect = userImagePreview.getBoundingClientRect();
-                const deltaX = e.clientX - (rect.left + rect.width / 2) - startX;
-                const deltaY = e.clientY - (rect.top + rect.height / 2) - startY;
-                
-                // Calculate new slider values based on drag distance
-                // The factor 200 below converts pixels to percentage for slider range -100 to 100
-                const newXPos = startXPos + (deltaX / previewContainer.offsetWidth) * 200;
-                const newYPos = startYPos + (deltaY / previewContainer.offsetHeight) * 200;
+                const deltaX = e.clientX - startPointerX;
+                const deltaY = e.clientY - startPointerY;
 
+                // Calculate new percentage based on drag distance relative to container size
+                // Factor of 200 (100 / 0.5) because slider range is -100 to 100, which covers 200% movement
+                // If container is 300px wide, 100% translate is 300px. Slider 100 means move 300px.
+                // 100% of container width in CSS `translate` equals `100` on slider.
+                // So, 1 unit on slider corresponds to 1% of container width.
+                // To move 1% of container width, we need to drag `containerWidth / 100` pixels.
+                // So, deltaX pixels corresponds to `deltaX / (containerWidth / 100)` percentage.
+                const newXPos = initialTranslateX + (deltaX / previewContainer.offsetWidth) * 100;
+                const newYPos = initialTranslateY + (deltaY / previewContainer.offsetHeight) * 100;
+
+                // Limit movement to slider's min/max range
                 xPosSlider.value = Math.max(-100, Math.min(100, newXPos));
                 yPosSlider.value = Math.max(-100, Math.min(100, newYPos));
-                updateImagePosition();
+                updateImagePosition(); // Apply new position
             });
 
             previewContainer.addEventListener('mouseup', () => {
                 isDragging = false;
-                previewContainer.style.cursor = 'grab';
+                previewContainer.style.cursor = 'grab'; // Reset cursor
             });
 
             previewContainer.addEventListener('mouseleave', () => {
                 isDragging = false;
-                previewContainer.style.cursor = 'grab';
+                previewContainer.style.cursor = 'grab'; // Reset cursor if mouse leaves while dragging
             });
             
             // Touch events for mobile dragging
             previewContainer.addEventListener('touchstart', (e) => {
                 if (userImageLoaded && selectedFrame && e.touches.length === 1) {
                     isDragging = true;
-                    e.preventDefault(); // Prevent scrolling
+                    e.preventDefault(); // Prevent scrolling on touch devices
                     const touch = e.touches[0];
-                    const rect = userImagePreview.getBoundingClientRect();
-                    startX = touch.clientX - rect.left - (rect.width / 2);
-                    startY = touch.clientY - rect.top - (rect.height / 2);
-
-                    startXPos = parseFloat(xPosSlider.value);
-                    startYPos = parseFloat(yPosSlider.value);
+                    startPointerX = touch.clientX;
+                    startPointerY = touch.clientY;
+                    initialTranslateX = parseFloat(xPosSlider.value);
+                    initialTranslateY = parseFloat(yPosSlider.value);
                     previewContainer.style.cursor = 'grabbing';
                 }
             }, { passive: false }); // Use passive: false to allow preventDefault
@@ -547,12 +605,11 @@
                 if (!isDragging || !userImageLoaded || e.touches.length !== 1) return;
                 
                 const touch = e.touches[0];
-                const rect = userImagePreview.getBoundingClientRect();
-                const deltaX = touch.clientX - (rect.left + rect.width / 2) - startX;
-                const deltaY = touch.clientY - (rect.top + rect.height / 2) - startY;
+                const deltaX = touch.clientX - startPointerX;
+                const deltaY = touch.clientY - startPointerY;
 
-                const newXPos = startXPos + (deltaX / previewContainer.offsetWidth) * 200;
-                const newYPos = startYPos + (deltaY / previewContainer.offsetHeight) * 200;
+                const newXPos = initialTranslateX + (deltaX / previewContainer.offsetWidth) * 100;
+                const newYPos = initialTranslateY + (deltaY / previewContainer.offsetHeight) * 100;
 
                 xPosSlider.value = Math.max(-100, Math.min(100, newXPos));
                 yPosSlider.value = Math.max(-100, Math.min(100, newYPos));
@@ -564,25 +621,24 @@
                 previewContainer.style.cursor = 'grab';
             });
 
-
-            // Download functionality using html2canvas
+            // --- Download Functionality ---
             downloadBtn.addEventListener('click', function() {
                 if (!userImageLoaded || !selectedFrame || !frameImageLoaded) {
                     alert('โปรดอัปโหลดรูปภาพและเลือกกรอบก่อนดาวน์โหลด');
                     return;
                 }
 
-                loadingOverlay.classList.remove('hidden');
+                loadingOverlay.classList.remove('hidden'); // Show loading overlay
 
                 // Create a temporary div to render the full-resolution image
                 const tempRenderDiv = document.createElement('div');
-                tempRenderDiv.style.width = '1920px'; // Desired output resolution
-                tempRenderDiv.style.height = '1920px'; // Desired output resolution
+                tempRenderDiv.style.width = '1920px'; // Desired output resolution (e.g., for square profile pic)
+                tempRenderDiv.style.height = '1920px';
                 tempRenderDiv.style.position = 'absolute';
                 tempRenderDiv.style.left = '-9999px'; // Hide it off-screen
                 tempRenderDiv.style.top = '-9999px';
                 tempRenderDiv.style.overflow = 'hidden';
-                tempRenderDiv.style.backgroundColor = 'transparent';
+                tempRenderDiv.style.backgroundColor = 'transparent'; // Ensure transparent background if needed
                 tempRenderDiv.style.display = 'flex'; // Use flex to layer images
                 tempRenderDiv.style.alignItems = 'center';
                 tempRenderDiv.style.justifyContent = 'center';
@@ -592,28 +648,30 @@
                 const hiResUserImage = new Image();
                 const hiResFrameImage = new Image();
 
-                hiResUserImage.src = userImagePreview.src;
-                hiResFrameImage.src = frameImagePreview.src;
+                hiResUserImage.src = userImagePreview.src; // Use the same source as preview
+                hiResFrameImage.src = frameImagePreview.src; // Use the same source as preview
 
-                // Apply transformations based on original slider values for the 1920px canvas
-                hiResUserImage.style.transform = `translate(${currentTranslateX}%, ${currentTranslateY}%) scale(${currentScale})`;
+                // Apply current transformations to the high-res user image
+                // The values from sliders (initialTranslateX, initialTranslateY, currentScale) are already correct
+                // for direct application, as they are percentage-based or absolute scale.
+                hiResUserImage.style.transform = `translate(${initialTranslateX}%, ${initialTranslateY}%) scale(${currentScale})`;
                 hiResUserImage.style.transformOrigin = 'center center';
                 hiResUserImage.style.objectFit = 'cover';
                 hiResUserImage.style.width = '100%';
                 hiResUserImage.style.height = '100%';
-                hiResUserImage.style.position = 'absolute'; // Position relative to tempRenderDiv
+                hiResUserImage.style.position = 'absolute';
                 hiResUserImage.style.display = 'block';
 
                 hiResFrameImage.style.width = '100%';
                 hiResFrameImage.style.height = '100%';
-                hiResFrameImage.style.position = 'absolute'; // Position relative to tempRenderDiv
-                hiResFrameImage.style.zIndex = '10';
+                hiResFrameImage.style.position = 'absolute';
+                hiResFrameImage.style.zIndex = '10'; // Ensure frame is on top
                 hiResFrameImage.style.display = 'block';
 
                 tempRenderDiv.appendChild(hiResUserImage);
                 tempRenderDiv.appendChild(hiResFrameImage);
 
-                // Wait for images to load in the temporary div
+                // Wait for both high-resolution images to load in the temporary div
                 Promise.all([
                     new Promise(resolve => {
                         if (hiResUserImage.complete) {
@@ -621,8 +679,8 @@
                         } else {
                             hiResUserImage.onload = resolve;
                             hiResUserImage.onerror = () => {
-                                console.error('High-res user image load error.');
-                                resolve(); // Resolve even on error to avoid blocking
+                                console.error('High-res user image failed to load.');
+                                resolve(); // Allow continuation even if one image fails to load
                             };
                         }
                     }),
@@ -632,35 +690,37 @@
                         } else {
                             hiResFrameImage.onload = resolve;
                             hiResFrameImage.onerror = () => {
-                                console.error('High-res frame image load error.');
+                                console.error('High-res frame image failed to load. Check CORS or URL.');
                                 resolve();
                             };
                         }
                     })
                 ]).then(() => {
+                    // All images loaded, now capture the div
                     html2canvas(tempRenderDiv, {
                         width: 1920,
                         height: 1920,
                         scale: 1, // Render at 1:1 pixel ratio for the 1920x1920 div
-                        backgroundColor: null, // Transparent background if not fully covered
-                        useCORS: true, // Necessary if images are from different origin
-                        allowTaint: false, // Prevents tainted canvas issues, requires useCORS
-                        logging: true,
-                        imageTimeout: 15000
+                        backgroundColor: null, // Keeps background transparent if it's not explicitly set
+                        useCORS: true, // Crucial for external images to be rendered
+                        allowTaint: false, // Prevents issues with tainted canvas
+                        logging: true, // Enable logging for debugging
+                        imageTimeout: 15000 // Timeout for image loading
                     }).then(canvas => {
+                        // Remove the temporary div after capture
                         document.body.removeChild(tempRenderDiv);
 
                         try {
+                            // Create a download link and trigger click
                             const link = document.createElement('a');
                             link.download = `profile-${selectedFrame}-gama-awards.png`;
-                            link.href = canvas.toDataURL('image/png');
+                            link.href = canvas.toDataURL('image/png'); // Get image data as PNG
                             link.click();
                         } catch (e) {
                             console.error('Error creating data URL or download link:', e);
-                            alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหาภายในหรือรูปภาพต้นฉบับเสียหาย)');
+                            alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหาภายในหรือรูปภาพต้นฉบับเสียหาย หรือปัญหา CORS)');
                         }
-
-                        loadingOverlay.classList.add('hidden');
+                        loadingOverlay.classList.add('hidden'); // Hide loading overlay
                     }).catch(err => {
                         console.error('Error generating image with html2canvas:', err);
                         alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ กรุณาลองใหม่อีกครั้ง');
@@ -668,15 +728,16 @@
                         loadingOverlay.classList.add('hidden');
                     });
                 }).catch(err => {
-                    console.error('Error waiting for high-res images to load:', err);
+                    console.error('Error waiting for high-res images to load before html2canvas:', err);
                     alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อดาวน์โหลด กรุณาลองใหม่อีกครั้ง');
                     document.body.removeChild(tempRenderDiv);
                     loadingOverlay.classList.add('hidden');
                 });
             });
 
-            // Initialize position on load
-            updateImagePosition();
+            // --- Initial Setup ---
+            updateImagePosition(); // Set initial position based on slider defaults
+            checkDownloadAvailability(); // Check initial state for download button
         });
     </script>
 </body>
