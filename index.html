@@ -17,7 +17,7 @@
       max-width: 600px;
       aspect-ratio: 1 / 1;
       background: #f3f4f6;
-      overflow: hidden;
+      overflow: hidden; /* Ensures anything outside the square is hidden */
     }
     .preview-container img {
       position: absolute;
@@ -25,14 +25,17 @@
       left: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain; /* Changed to 'contain' initially for uploaded image */
     }
     .preview-container .frame-img {
       z-index: 10;
       pointer-events: none;
       object-fit: contain;
     }
-    .preview-container .user-img { z-index: 5; }
+    .preview-container .user-img {
+        z-index: 5;
+        object-fit: cover; /* User image will cover its parent div, then transformations apply */
+    }
     #downloadBtn:disabled, #shareBtn:disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
@@ -94,12 +97,11 @@
     const frameList = document.getElementById('frameList');
     const userImage = document.getElementById('userImage');
     const frameImage = document.getElementById('frameImage');
-    const preview = document.getElementById('preview');
     const downloadBtn = document.getElementById('downloadBtn');
     const shareBtn = document.getElementById('shareBtn');
 
     let currentFrame = null, scale = 1, x = 0, y = 0, rotation = 0;
-    let croppedUserImageSrc = ''; // To store the base64 of the cropped image
+    let originalUserImageSrc = ''; // To store the original uploaded image data URL
 
     // Populate frame list
     for (let key in frameUrls) {
@@ -117,54 +119,34 @@
       frameList.appendChild(btn);
     }
 
-    // Handle image upload and cropping
+    // Handle image upload - store original and display in preview
     document.getElementById('uploadInput').addEventListener('change', e => {
       const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
       reader.onload = ev => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          let srcX, srcY, srcWidth, srcHeight;
-          const aspectRatio = img.width / img.height;
-
-          // Determine cropping area to make it square, prioritizing the center
-          if (img.width > img.height) { // Landscape
-            srcHeight = img.height;
-            srcWidth = img.height;
-            srcX = (img.width - img.height) / 2;
-            srcY = 0;
-          } else { // Portrait or Square
-            srcWidth = img.width;
-            srcHeight = img.width;
-            srcX = 0;
-            srcY = (img.height - img.width) / 2;
-          }
-
-          canvas.width = 1920; // Target resolution for cropped image
-          canvas.height = 1920;
-
-          ctx.drawImage(img, srcX, srcY, srcWidth, srcHeight, 0, 0, canvas.width, canvas.height);
-          croppedUserImageSrc = canvas.toDataURL('image/png'); // Store as PNG for transparency support
-
-          userImage.src = croppedUserImageSrc;
-          userImage.classList.remove('hidden');
-          checkReady();
-        };
-        img.src = ev.target.result;
+        originalUserImageSrc = ev.target.result; // Store the original image
+        userImage.src = originalUserImageSrc;
+        userImage.classList.remove('hidden');
+        // Reset transformations for new image
+        scale = 1; x = 0; y = 0; rotation = 0;
+        document.getElementById('scaleSlider').value = 100;
+        document.getElementById('xSlider').value = 0;
+        document.getElementById('ySlider').value = 0;
+        document.getElementById('rotateSlider').value = 0;
+        applyTransform(); // Apply default (reset) transform
+        checkReady();
       };
       reader.readAsDataURL(file);
     });
 
     function applyTransform() {
+      // These transformations directly apply to the preview image's style
       userImage.style.transform = `translate(${x}%, ${y}%) scale(${scale}) rotate(${rotation}deg)`;
     }
 
-    // Apply transformations from sliders
+    // Apply transformations from sliders to the preview
     ['scaleSlider', 'xSlider', 'ySlider', 'rotateSlider'].forEach(id => {
       document.getElementById(id).addEventListener('input', () => {
         scale = document.getElementById('scaleSlider').value / 100;
@@ -176,62 +158,69 @@
     });
 
     function checkReady() {
-      const ready = userImage.src && currentFrame && userImage.src !== window.location.href; // Ensure userImage is actually set
+      const ready = originalUserImageSrc && currentFrame;
       downloadBtn.disabled = !ready;
       shareBtn.disabled = !ready;
     }
 
     async function renderCanvas() {
+      // Create a temporary container for rendering the high-res image
       const container = document.createElement('div');
-      container.style.width = '1920px';
-      container.style.height = '1920px';
+      container.style.width = '1920px'; // Target width
+      container.style.height = '1920px'; // Target height (square)
       container.style.position = 'absolute';
-      container.style.left = '-9999px';
+      container.style.left = '-9999px'; // Move off-screen
       container.style.top = '-9999px';
-      container.style.overflow = 'hidden';
-      container.style.background = 'transparent';
-      container.style.display = 'flex';
+      container.style.overflow = 'hidden'; // Crucial for cropping effect
+      container.style.background = 'transparent'; // Ensure transparent background
+      container.style.display = 'flex'; // Use flex to center if needed, though html2canvas handles content directly
       container.style.alignItems = 'center';
       container.style.justifyContent = 'center';
 
+      // Load original high-res user image
       const hiResUser = new Image();
-      hiResUser.src = croppedUserImageSrc; // Use the cropped high-res image
-      hiResUser.crossOrigin = 'anonymous';
-      await new Promise(resolve => hiResUser.onload = resolve); // Ensure image is loaded
+      hiResUser.src = originalUserImageSrc;
+      hiResUser.crossOrigin = 'anonymous'; // Important for cross-origin images
+      await new Promise(resolve => hiResUser.onload = resolve); // Wait for image to load
+
+      // Apply transformations to the high-res user image for rendering
+      // The image fills the 1920x1920 container and then is transformed
       Object.assign(hiResUser.style, {
         width: '100%',
         height: '100%',
-        objectFit: 'cover',
+        objectFit: 'cover', // This ensures the image covers the 1920x1920 square
         transform: `translate(${x}%, ${y}%) scale(${scale}) rotate(${rotation}deg)`,
         transformOrigin: 'center center',
         position: 'absolute',
         zIndex: '5'
       });
 
+      // Load high-res frame image
       const hiResFrame = new Image();
       hiResFrame.src = frameImage.src;
       hiResFrame.crossOrigin = 'anonymous';
-      await new Promise(resolve => hiResFrame.onload = resolve); // Ensure image is loaded
+      await new Promise(resolve => hiResFrame.onload = resolve); // Wait for image to load
       Object.assign(hiResFrame.style, {
         width: '100%',
         height: '100%',
-        objectFit: 'contain',
+        objectFit: 'contain', // Frame should be contained within the square
         position: 'absolute',
         zIndex: '10'
       });
 
       container.appendChild(hiResUser);
       container.appendChild(hiResFrame);
-      document.body.appendChild(container);
+      document.body.appendChild(container); // Append to body for html2canvas to see it
 
+      // Render the container to a canvas
       const canvas = await html2canvas(container, {
         width: 1920,
         height: 1920,
-        backgroundColor: null,
+        backgroundColor: null, // Transparent background
         useCORS: true,
-        scale: 1 // html2canvas will render at the container's set dimensions
+        scale: 1 // Render at the exact dimensions of the container (1920x1920)
       });
-      document.body.removeChild(container);
+      document.body.removeChild(container); // Clean up the temporary container
       return canvas;
     }
 
@@ -239,7 +228,7 @@
       const canvas = await renderCanvas();
       const link = document.createElement('a');
       link.download = `gama-frame-${currentFrame}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = canvas.toDataURL('image/png'); // Use PNG for transparency
       link.click();
     });
 
@@ -252,7 +241,7 @@
         } else {
           alert('อุปกรณ์ไม่รองรับการแชร์โดยตรง กรุณาใช้ปุ่มดาวน์โหลด');
         }
-      }, 'image/png');
+      }, 'image/png'); // Use PNG for transparency
     });
   </script>
 </body>
