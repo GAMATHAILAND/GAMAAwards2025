@@ -1,377 +1,806 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <title>✨ระบบขายหวย</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAMA Awards Frame Creator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Responsive & Fonts -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Prompt :wght@400;500;700&display=swap');
-    * {
-      font-family: 'Prompt', sans-serif;
-      box-sizing: border-box;
-    }
+    <style>
+        /* Define CSS Variables for easy theme management */
+        :root {
+            --primary-purple: #4500b2; /* Deep Purple */
+            --primary-pink: #d83361; /* Dark Pink */
+            --light-gray: #f9fafb;
+            --medium-gray: #e5e7eb;
+            --dark-text: #333;
+            --light-text: #666;
+            --white: #fff;
+        }
 
-    body {
-      background-color: #f7f7f7;
-      padding: 20px;
-      margin: 0;
-      font-size: 16px;
-    }
+        /* Base Body Styles */
+        body {
+            font-family: 'Prompt', sans-serif;
+            min-height: 100vh;
+            color: var(--dark-text);
+            /* Background gradient from bottom-purple to top-pink */
+            background: linear-gradient(to top, var(--primary-purple), var(--primary-pink));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-    .container {
-      background: #fff;
-      max-width: 600px;
-      margin: auto;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    }
+        /* Header Gradient Bar */
+        .header-gradient {
+            background: linear-gradient(to right, var(--primary-purple), var(--primary-pink));
+            height: 8px;
+            width: 100%;
+        }
 
-    h1 {
-      text-align: center;
-      font-size: 28px;
-      color: #222;
-      margin-bottom: 30px;
-    }
+        /* Card Styling */
+        .card {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem; /* Default padding */
+        }
+        @media (min-width: 768px) { /* Adjust padding for larger screens */
+            .card {
+                padding: 2rem;
+            }
+        }
 
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-    }
+        /* Frame Option Styling */
+        .frame-option {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background-color: var(--white);
+            border: 1px solid var(--medium-gray);
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem; /* Padding for individual frame options */
+            width: 90px; /* Fixed width for consistent display */
+            height: 90px; /* Fixed height for consistent display */
+            flex-shrink: 0; /* Prevent shrinking in flex container */
+            text-align: center;
+        }
 
-    input, select {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      margin-bottom: 15px;
-    }
+        .frame-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
 
-    button {
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 10px;
-      cursor: pointer;
-    }
+        .frame-option.selected {
+            border: 3px solid var(--primary-purple);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.15);
+        }
+        
+        .frame-option img {
+            width: 60px; /* Fixed size for frame preview images */
+            height: 60px;
+            object-fit: contain;
+            margin: 0 auto; /* Center image */
+        }
+        .frame-option p {
+            font-size: 0.8rem; /* Smaller text for frame names */
+            font-weight: 500;
+            margin-top: 0.25rem;
+            color: var(--dark-text);
+        }
 
-    .btn-green {
-      background: #4CAF50;
-      color: white;
-      border: none;
-    }
-    .btn-blue {
-      background: #2196F3;
-      color: white;
-      border: none;
-    }
-    .btn-delete {
-      background-color: #e74c3c;
-      color: white;
-      border: none;
-      font-size: 14px;
-      padding: 8px 10px;
-      height: 36px;
-    }
+        /* Image Container (Preview Area) */
+        .image-container {
+            position: relative;
+            width: 100%;
+            padding-top: 100%; /* 1:1 Aspect Ratio (height equals width) */
+            overflow: hidden;
+            margin: 0 auto;
+            background-color: var(--light-gray);
+            border: 2px dashed var(--primary-purple);
+            border-radius: 8px;
+        }
 
-    /* Items List */
-    .items-container {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
+        /* User Image and Frame Image Layers */
+        .image-container > img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* User image covers the container */
+            transform-origin: center center; /* Ensures scaling/translation from center */
+            will-change: transform; /* Performance hint for browser */
+        }
+        .user-image {
+            z-index: 5; /* User image beneath the frame */
+            /* Initial transform will be applied via JS */
+        }
+        .frame-image {
+            pointer-events: none; /* Allows clicks to pass through to the user image below for dragging */
+            z-index: 10; /* Frame always on top */
+            object-fit: contain; /* Frame image contains within the area */
+        }
 
-    .item-row {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding: 14px;
-      background: #f9f9f9;
-      border-radius: 10px;
-    }
+        /* Slider Styling */
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--medium-gray);
+            outline: none;
+            transition: opacity .2s;
+        }
 
-    /* Popup */
-    #popup {
-      display: none;
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 24px;
-      box-shadow: 0 6px 30px rgba(0,0,0,0.2);
-      z-index: 1000;
-      text-align: center;
-      width: 90vw;
-      max-width: 500px;
-    }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-purple);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .slider::-webkit-slider-thumb:hover {
+            background-color: var(--primary-pink);
+        }
 
-    .check-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background-color: #2ecc71;
-      color: white;
-      font-size: 30px;
-      margin: 0 auto 15px auto;
-    }
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-purple);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .slider::-moz-range-thumb:hover {
+            background-color: var(--primary-pink);
+        }
 
-    #receipt {
-      text-align: left;
-      font-size: 16px;
-      line-height: 1.6;
-      margin-top: 10px;
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
+        /* Button Styling */
+        .btn {
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
-    #receipt p {
-      margin: 6px 0;
-      color: #333;
-    }
+        /* File Upload Hidden Input */
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-upload input[type=file] {
+            position: absolute;
+            top: 0;
+            right: 0;
+            min-width: 100%;
+            min-height: 100%;
+            font-size: 100px;
+            text-align: right;
+            filter: alpha(opacity=0);
+            opacity: 0;
+            outline: none;
+            cursor: pointer;
+            display: block;
+        }
 
-    #receipt hr {
-      border: 0;
-      border-top: 1px dashed #ccc;
-      margin: 15px 0;
-    }
+        /* Loading Overlay */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: var(--white);
+            font-size: 24px;
+            flex-direction: row; /* Ensure spinner and text are in a row */
+        }
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid var(--white);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-    .action-buttons {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .action-buttons button {
-      width: 100%;
-    }
-  </style>
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .h-24 {
+                height: 5rem; /* Smaller logo on mobile */
+            }
+            .text-3xl {
+                font-size: 2rem;
+            }
+            .text-xl {
+                font-size: 1.5rem;
+            }
+            .frame-option {
+                width: 80px; /* Even smaller for mobile */
+                height: 80px;
+                padding: 0.4rem;
+            }
+            .frame-option img {
+                width: 50px;
+                height: 50px;
+            }
+            .frame-option p {
+                font-size: 0.75rem;
+            }
+            .grid-cols-1 .lg\:col-span-2 {
+                grid-column: span 1 / span 1;
+            }
+        }
+    </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col items-center">
+    <div class="header-gradient"></div>
 
-  <div class="container">
-    <h1>✨วันนี้รวย</h1>
+    <div class="container mx-auto px-4 py-8 max-w-7xl w-full">
+        <div class="flex justify-center mb-6">
+            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="h-24">
+        </div>
 
-    <div class="form-group">
-      <label for="lotteryDate">งวดประจำวันที่</label>
-      <input type="date" id="lotteryDate" required>
+        <h1 class="text-3xl md:text-4xl font-bold text-center text-white mb-4">GAMA Awards Frame Creator</h1>
+        <p class="text-center text-white mb-8 max-w-2xl mx-auto">
+            เปลี่ยนรูปโปรไฟล์ของคุณให้โดดเด่นด้วยกรอบรูปภาพพิเศษจาก GAMA Awards อัพโหลดรูปภาพของคุณ เลือกกรอบที่ชอบ และดาวน์โหลดเพื่อใช้เป็นรูปโปรไฟล์ใหม่ของคุณ
+        </p>
+
+        <div class="mb-8 max-w-xl mx-auto">
+            <div class="card p-6">
+                <label class="block text-lg font-medium mb-3 text-gray-700">อัพโหลดรูปโปรไฟล์ของคุณ:</label>
+                <div class="file-upload">
+                    <button id="uploadBtn" class="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn">
+                        เลือกรูปภาพจากเครื่อง
+                    </button>
+                    <input type="file" id="imageUpload" accept="image/*">
+                </div>
+                <p id="selectedFileName" class="mt-2 text-center text-sm text-gray-500"></p>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-xl font-medium mb-4 text-center text-white">เลือกกรอบรูปภาพ</h2>
+            <div class="flex flex-wrap justify-center gap-3">
+                <div class="frame-option rounded-lg" data-frame="MAA">
+                    <img src="https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png" alt="MAA" class="mx-auto">
+                    <p>MAA</p>
+                </div>
+                <div class="frame-option rounded-lg" data-frame="MFA">
+                    <img src="https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png" alt="MFA" class="mx-auto">
+                    <p>MFA</p>
+                </div>
+                <div class="frame-option rounded-lg" data-frame="MMA">
+                    <img src="https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png" alt="MMA" class="mx-auto">
+                    <p>MMA</p>
+                </div>
+                <div class="frame-option rounded-lg" data-frame="IMA">
+                    <img src="https://hugmediacreation.com/photo/International%20Management%20Award.png" alt="IMA" class="mx-auto">
+                    <p>IMA</p>
+                </div>
+                <div class="frame-option rounded-lg" data-frame="FLA">
+                    <img src="https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png" alt="FLA" class="mx-auto">
+                    <p>FLA</p>
+                </div>
+                <div class="frame-option rounded-lg" data-frame="ERA">
+                    <img src="https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png" alt="ERA" class="mx-auto">
+                    <p>ERA</p>
+                </div>
+                <div class="frame-option rounded-lg" data-frame="COE">
+                    <img src="https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png" alt="COE" class="mx-auto">
+                    <p>COE</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="lg:col-span-2">
+                <div class="card p-4">
+                    <div id="preview" class="image-container flex items-center justify-center">
+                        <div id="placeholderText" class="text-center p-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p class="text-gray-500">โปรดอัพโหลดรูปภาพและเลือกกรอบ</p>
+                        </div>
+                        <img id="userImage" class="user-image hidden" src="" alt="User uploaded image">
+                        <img id="frameImage" class="frame-image hidden" src="" alt="Selected frame">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6">
+                <h3 class="text-lg font-medium mb-4 text-gray-700">ปรับแต่งรูปภาพ</h3>
+
+                <div class="mb-4">
+                    <label for="scaleSlider" class="block text-sm font-medium mb-1 text-gray-600">ขนาด:</label>
+                    <input type="range" id="scaleSlider" class="slider w-full" min="50" max="300" value="100">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>เล็ก</span>
+                        <span>ใหญ่</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="xPosSlider" class="block text-sm font-medium mb-1 text-gray-600">ตำแหน่งแนวนอน:</label>
+                    <input type="range" id="xPosSlider" class="slider w-full" min="-100" max="100" value="0">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>ซ้าย</span>
+                        <span>ขวา</span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label for="yPosSlider" class="block text-sm font-medium mb-1 text-gray-600">ตำแหน่งแนวตั้ง:</label>
+                    <input type="range" id="yPosSlider" class="slider w-full" min="-100" max="100" value="0">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>บน</span>
+                        <span>ล่าง</span>
+                    </div>
+                </div>
+
+                <button id="downloadBtn" class="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn disabled:opacity-50 disabled:cursor-not-allowed mb-3" disabled>
+                    ดาวน์โหลดรูปโปรไฟล์
+                </button>
+                
+                <button id="shareBtn" class="w-full bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn disabled:opacity-50 disabled:cursor-not-allowed mt-3" disabled>
+                    แชร์รูปโปรไฟล์
+                </button>
+
+                <p class="mt-4 text-sm text-gray-500 text-center">ดาวน์โหลดและใช้เป็นรูปโปรไฟล์ของคุณบนโซเชียลมีเดีย</p>
+            </div>
+        </div>
+
+        <div class="text-center text-sm text-gray-500 mt-8 mb-4">
+            © GAMA Awards 2025 - ระบบใส่กรอบรูปภาพ
+        </div>
     </div>
 
-    <div class="form-group">
-      <label for="buyerName">ชื่อผู้ซื้อ</label>
-      <input type="text" id="buyerName" placeholder="เช่น สมชาย" required>
+    <div id="loadingOverlay" class="loading hidden">
+        <div class="spinner"></div>
+        <span>กำลังประมวลผล...</span>
     </div>
 
-    <div class="items-container" id="items-container"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- DOM Elements ---
+            const imageUpload = document.getElementById('imageUpload');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const selectedFileName = document.getElementById('selectedFileName');
+            const frameOptions = document.querySelectorAll('.frame-option');
+            const userImagePreview = document.getElementById('userImage');
+            const frameImagePreview = document.getElementById('frameImage');
+            const placeholderText = document.getElementById('placeholderText');
+            const scaleSlider = document.getElementById('scaleSlider');
+            const xPosSlider = document.getElementById('xPosSlider');
+            const yPosSlider = document.getElementById('yPosSlider');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const shareBtn = document.getElementById('shareBtn'); // Added share button
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const previewContainer = document.getElementById('preview');
 
-    <button class="btn-blue" onclick="addItem()">+ เพิ่มรายการ</button>
-    <button class="btn-green" onclick="submitAll()">บันทึกการสั่งซื้อทั้งหมด</button>
-  </div>
+            // --- Frame URLs Mapping ---
+            // These URLs point to your frame images hosted on hugmediacreation.com
+            const frameUrls = {
+                'MAA': 'https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png',
+                'MFA': 'https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png',
+                'MMA': 'https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png',
+                'IMA': 'https://hugmediacreation.com/photo/International%20Management%20Award.png',
+                'FLA': 'https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png',
+                'ERA': 'https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png',
+                'COE': 'https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png'
+            };
 
-  <!-- Popup -->
-  <div id="popup">
-    <div id="receipt"></div>
+            // --- State Variables ---
+            let selectedFrame = null;
+            let userImageLoaded = false;
+            let frameImageLoaded = false;
+            let initialTranslateX, initialTranslateY; // Initial image translation (from sliders)
+            let currentScale = 1;
 
-    <div class="action-buttons">
-      <button class="btn-blue" onclick="downloadReceipt()">ดาวน์โหลดใบเสร็จ</button>
-      <button class="btn-blue" onclick="shareReceipt()">แชร์ในไลน์/เมสเสจ</button>
-      <button class="btn-green" onclick="closeReceipt()">ปิด</button>
-    </div>
-  </div>
+            // --- Helper Functions ---
 
-  <!-- Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js "></script>
-  <script>
-    function addItem() {
-      const container = document.getElementById("items-container");
-      const itemDiv = document.createElement("div");
-      itemDiv.className = "item-row";
-      itemDiv.innerHTML = `
-        <select required>
-          <option value="">เลือกประเภท</option>
-          <option value="2 ตัว (บน)">2 ตัว (บน)</option>
-          <option value="2 ตัว (ล่าง)">2 ตัว (ล่าง)</option>
-          <option value="3 ตัวหัว (3 ตัวหน้า รางวัลที่1)">3 ตัวหัว (3 ตัวหน้า รางวัลที่1)</option>
-          <option value="3 ตัวท้าย (3 ตัวท้าย รางวัลที่1)">3 ตัวท้าย (3 ตัวท้าย รางวัลที่1)</option>
-          <option value="3 ตัวโต๊ดหัว X3X6 (รางวัลที่1)">3 ตัวโต๊ดหัว X3X6 (รางวัลที่1)</option>
-          <option value="3 ตัวโต๊ดท้าย X3X6 (รางวัลที่1)">3 ตัวโต๊ดท้าย X3X6 (รางวัลที่1)</option>
-        </select>
-        <input type="text" placeholder="เลข" required>
-        <input type="number" placeholder="จำนวนเงิน" required>
-        <button class="btn-delete" onclick="removeItem(this)">ลบ</button>
-      `;
-      container.appendChild(itemDiv);
-    }
+            // Checks if both user image and frame are loaded to enable download button
+            function checkDownloadAvailability() {
+                downloadBtn.disabled = !(userImageLoaded && selectedFrame && frameImageLoaded);
+            }
 
-    function removeItem(btn) {
-      btn.parentElement.remove();
-    }
+            // Checks if both user image and frame are loaded to enable share button
+            function checkShareAvailability() {
+                shareBtn.disabled = !(userImageLoaded && selectedFrame && frameImageLoaded);
+            }
 
-    // ตรวจสอบว่าเลขซ้ำหรือไม่
-    function isDuplicated(number) {
-      return new Set(number).size !== number.length;
-    }
+            // Applies transform styles to the user image in the preview
+            function updateImagePosition() {
+                if (!userImageLoaded) return;
 
-    // ปรับรูปแบบเลขโต๊ด
-    function formatNumberWithMultiplier(type, number, amount) {
-      if (!type.includes("โต๊ด")) return number;
+                // Get values directly from sliders (they represent percentages)
+                const scale = parseFloat(scaleSlider.value) / 100;
+                const xPos = parseFloat(xPosSlider.value);
+                const yPos = parseFloat(yPosSlider.value);
 
-      const duplicated = isDuplicated(number);
-      const multiplier = duplicated ? 3 : 6;
-      const pricePerUnit = (amount / multiplier).toFixed(0);
+                // Update current state
+                currentScale = scale;
+                initialTranslateX = xPos;
+                initialTranslateY = yPos;
 
-      return `${number} 
-        <span style="color: blue;">x${multiplier}</span> 
-        <span style="color: red;">(ตัวละ ${pricePerUnit} บาท)</span>`;
-    }
+                // Apply transform using percentage translation for responsiveness
+                userImagePreview.style.transform = `translate(${initialTranslateX}%, ${initialTranslateY}%) scale(${currentScale})`;
+            }
 
-    async function submitAll() {
-      const dateInput = document.getElementById("lotteryDate").value;
-      const buyerName = document.getElementById("buyerName").value;
+            // --- Event Listeners ---
 
-      if (!dateInput || !buyerName) {
-        alert("กรุณากรอกข้อมูลให้ครบถ้วน");
-        return;
-      }
+            // Simulate click on hidden file input when upload button is clicked
+            uploadBtn.addEventListener('click', function() {
+                imageUpload.click();
+            });
 
-      const thaiDate = new Date(dateInput).toLocaleDateString('th-TH', {year: 'numeric', month: 'long', day: 'numeric'});
-      const rows = document.querySelectorAll(".item-row");
+            // Handle user image file upload
+            imageUpload.addEventListener('change', function(event) {
+                if (event.target.files && event.target.files[0]) {
+                    const file = event.target.files[0];
+                    // Validate file type (simple check, can be more robust)
+                    if (!file.type.startsWith('image/')) {
+                        alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+                        resetImageUpload();
+                        return;
+                    }
 
-      let totalAmount = 0;
-      let receiptHTML = '';
-      let dataToSave = [];
+                    selectedFileName.textContent = file.name;
 
-      try {
-        rows.forEach(row => {
-          const inputs = row.querySelectorAll("input, select");
-          const type = inputs[0].value;
-          const number = inputs[1].value.trim();
-          const amount = parseFloat(inputs[2].value.trim());
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = new Image();
+                        img.onload = function() {
+                            userImagePreview.src = img.src; // Set source to actual image data
+                            placeholderText.classList.add('hidden');
+                            userImagePreview.classList.remove('hidden');
+                            userImageLoaded = true;
+                            // Reset sliders and transform when a new image is loaded
+                            scaleSlider.value = 100;
+                            xPosSlider.value = 0;
+                            yPosSlider.value = 0;
+                            updateImagePosition(); // Apply default positions
+                            checkDownloadAvailability();
+                            checkShareAvailability(); // Update share button
+                        };
+                        img.onerror = function() {
+                            alert('เกิดข้อผิดพลาดในการโหลดรูปภาพของคุณ กรุณาลองใหม่ (ไฟล์อาจเสียหายหรือไม่ใช่รูปภาพ)');
+                            resetImageUpload();
+                        };
+                        img.src = e.target.result; // Start loading the image data
+                    };
+                    reader.onerror = function() {
+                        alert('เกิดข้อผิดพลาดในการอ่านไฟล์รูปภาพ กรุณาลองใหม่');
+                        resetImageUpload();
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    // No file selected or file selection cancelled
+                    resetImageUpload();
+                }
+            });
 
-          if (!type || !number || isNaN(amount)) {
-            throw new Error("กรุณากรอกข้อมูลในทุกช่องให้ครบถ้วน");
-          }
+            function resetImageUpload() {
+                selectedFileName.textContent = '';
+                userImagePreview.classList.add('hidden');
+                userImagePreview.src = ''; // Clear image source
+                placeholderText.classList.remove('hidden');
+                userImageLoaded = false;
+                checkDownloadAvailability();
+                checkShareAvailability(); // Update share button
+            }
 
-          totalAmount += amount;
 
-          const formattedNumber = formatNumberWithMultiplier(type, number, amount);
-          receiptHTML += `<p><strong>${type}</strong></p>`;
-          receiptHTML += `<p>เลข ${formattedNumber}</p>`;
-          receiptHTML += `<p>จำนวน ${amount} บาท</p>`;
-          receiptHTML += `<hr>`;
-          dataToSave.push({
-            date: thaiDate,
-            name: buyerName,
-            type,
-            number,
-            amount
-          });
+            // Handle frame selection
+            frameOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const frameId = this.dataset.frame; // Get frame ID from data-frame attribute
+
+                    // Remove 'selected' class from all other options
+                    frameOptions.forEach(opt => opt.classList.remove('selected'));
+                    // Add 'selected' class to the clicked option
+                    this.classList.add('selected');
+
+                    selectedFrame = frameId; // Store selected frame ID
+
+                    // Load frame image for the main preview area
+                    frameImagePreview.onload = function() {
+                        frameImagePreview.classList.remove('hidden');
+                        frameImageLoaded = true;
+                        checkDownloadAvailability();
+                        checkShareAvailability(); // Update share button
+                    };
+                    frameImagePreview.onerror = function() {
+                        console.error('Failed to load frame image:', frameUrls[frameId]);
+                        alert('เกิดข้อผิดพลาดในการโหลดกรอบรูป กรุณาตรวจสอบลิงก์รูปภาพกรอบอีกครั้ง หรือรูปภาพอาจถูกลบไปแล้ว');
+                        frameImageLoaded = false;
+                        checkDownloadAvailability();
+                        checkShareAvailability(); // Update share button
+                    };
+                    frameImagePreview.src = frameUrls[frameId]; // Set the source of the frame image
+                });
+            });
+
+            // Event listeners for sliders to update image position
+            scaleSlider.addEventListener('input', updateImagePosition);
+            xPosSlider.addEventListener('input', updateImagePosition);
+            yPosSlider.addEventListener('input', updateImagePosition);
+
+            // --- Download Functionality ---
+            downloadBtn.addEventListener('click', function() {
+                if (!userImageLoaded || !selectedFrame || !frameImageLoaded) {
+                    alert('โปรดอัปโหลดรูปภาพและเลือกกรอบก่อนดาวน์โหลด');
+                    return;
+                }
+
+                loadingOverlay.classList.remove('hidden'); // Show loading overlay
+
+                // Create a temporary div to render the full-resolution image
+                const tempRenderDiv = document.createElement('div');
+                tempRenderDiv.style.width = '1920px'; // Desired output resolution (e.g., for square profile pic)
+                tempRenderDiv.style.height = '1920px';
+                tempRenderDiv.style.position = 'absolute';
+                tempRenderDiv.style.left = '-9999px'; // Hide it off-screen
+                tempRenderDiv.style.top = '-9999px';
+                tempRenderDiv.style.overflow = 'hidden';
+                tempRenderDiv.style.backgroundColor = 'transparent';
+                tempRenderDiv.style.display = 'flex';
+                tempRenderDiv.style.alignItems = 'center';
+                tempRenderDiv.style.justifyContent = 'center';
+                document.body.appendChild(tempRenderDiv);
+
+                // Create new image elements for the high-res render
+                const hiResUserImage = new Image();
+                const hiResFrameImage = new Image();
+
+                hiResUserImage.src = userImagePreview.src;
+                hiResFrameImage.src = frameImagePreview.src;
+
+                hiResUserImage.style.transform = `translate(${initialTranslateX}%, ${initialTranslateY}%) scale(${currentScale})`;
+                hiResUserImage.style.transformOrigin = 'center center';
+                hiResUserImage.style.objectFit = 'cover';
+                hiResUserImage.style.width = '100%';
+                hiResUserImage.style.height = '100%';
+                hiResUserImage.style.position = 'absolute';
+                hiResUserImage.style.zIndex = '5';
+                hiResUserImage.style.display = 'block';
+
+                hiResFrameImage.style.width = '100%';
+                hiResFrameImage.style.height = '100%';
+                hiResFrameImage.style.position = 'absolute';
+                hiResFrameImage.style.zIndex = '10';
+                hiResFrameImage.style.objectFit = 'contain';
+                hiResFrameImage.style.display = 'block';
+
+                tempRenderDiv.appendChild(hiResUserImage);
+                tempRenderDiv.appendChild(hiResFrameImage);
+
+                Promise.all([
+                    new Promise(resolve => {
+                        if (hiResUserImage.complete && hiResUserImage.naturalWidth > 0) {
+                            resolve();
+                        } else {
+                            hiResUserImage.onload = resolve;
+                            hiResUserImage.onerror = () => {
+                                console.error('High-res user image failed to load or is invalid.');
+                                resolve();
+                            };
+                        }
+                    }),
+                    new Promise(resolve => {
+                        if (hiResFrameImage.complete && hiResFrameImage.naturalWidth > 0) {
+                            resolve();
+                        } else {
+                            hiResFrameImage.onload = resolve;
+                            hiResFrameImage.onerror = () => {
+                                console.error('High-res frame image failed to load. Check CORS or URL.');
+                                resolve();
+                            };
+                        }
+                    })
+                ]).then(() => {
+                    // Wait a short moment to ensure images are rendered in the temp div
+                    setTimeout(() => {
+                        html2canvas(tempRenderDiv, {
+                            width: 1920,
+                            height: 1920,
+                            scale: 1,
+                            backgroundColor: null,
+                            useCORS: true,
+                            allowTaint: false,
+                            logging: true,
+                            imageTimeout: 15000
+                        }).then(canvas => {
+                            document.body.removeChild(tempRenderDiv);
+
+                            try {
+                                const link = document.createElement('a');
+                                link.download = `profile-${selectedFrame}-gama-awards.png`;
+                                link.href = canvas.toDataURL('image/png');
+                                link.click();
+                            } catch (e) {
+                                console.error('Error creating data URL or download link:', e);
+                                alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหาภายในหรือรูปภาพต้นฉบับเสียหาย หรือปัญหา CORS)');
+                            }
+                            loadingOverlay.classList.add('hidden');
+                        }).catch(err => {
+                            console.error('Error generating image with html2canvas:', err);
+                            alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ กรุณาลองใหม่อีกครั้ง');
+                            document.body.removeChild(tempRenderDiv);
+                            loadingOverlay.classList.add('hidden');
+                        });
+                    }, 100); // Small delay to allow rendering
+                }).catch(err => {
+                    console.error('Error waiting for high-res images to load before html2canvas:', err);
+                    alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อดาวน์โหลด กรุณาลองใหม่อีกครั้ง');
+                    document.body.removeChild(tempRenderDiv);
+                    loadingOverlay.classList.add('hidden');
+                });
+            });
+
+            // --- Share Functionality ---
+            shareBtn.addEventListener('click', async function() { // Make it async
+                if (!userImageLoaded || !selectedFrame || !frameImageLoaded) {
+                    alert('โปรดอัปโหลดรูปภาพและเลือกกรอบก่อนแชร์');
+                    return;
+                }
+
+                loadingOverlay.classList.remove('hidden'); // Show loading overlay
+
+                // Reuse the same logic for high-res rendering as download
+                const tempRenderDiv = document.createElement('div');
+                tempRenderDiv.style.width = '1920px';
+                tempRenderDiv.style.height = '1920px';
+                tempRenderDiv.style.position = 'absolute';
+                tempRenderDiv.style.left = '-9999px';
+                tempRenderDiv.style.top = '-9999px';
+                tempRenderDiv.style.overflow = 'hidden';
+                tempRenderDiv.style.backgroundColor = 'transparent';
+                tempRenderDiv.style.display = 'flex';
+                tempRenderDiv.style.alignItems = 'center';
+                tempRenderDiv.style.justifyContent = 'center';
+                document.body.appendChild(tempRenderDiv);
+
+                const hiResUserImage = new Image();
+                const hiResFrameImage = new Image();
+
+                hiResUserImage.src = userImagePreview.src;
+                hiResFrameImage.src = frameImagePreview.src;
+
+                hiResUserImage.style.transform = `translate(${initialTranslateX}%, ${initialTranslateY}%) scale(${currentScale})`;
+                hiResUserImage.style.transformOrigin = 'center center';
+                hiResUserImage.style.objectFit = 'cover';
+                hiResUserImage.style.width = '100%';
+                hiResUserImage.style.height = '100%';
+                hiResUserImage.style.position = 'absolute';
+                hiResUserImage.style.zIndex = '5';
+                hiResUserImage.style.display = 'block';
+
+                hiResFrameImage.style.width = '100%';
+                hiResFrameImage.style.height = '100%';
+                hiResFrameImage.style.position = 'absolute';
+                hiResFrameImage.style.zIndex = '10';
+                hiResFrameImage.style.objectFit = 'contain';
+                hiResFrameImage.style.display = 'block';
+
+                tempRenderDiv.appendChild(hiResUserImage);
+                tempRenderDiv.appendChild(hiResFrameImage);
+
+                try {
+                    await Promise.all([
+                        new Promise(resolve => {
+                            if (hiResUserImage.complete && hiResUserImage.naturalWidth > 0) resolve();
+                            else { hiResUserImage.onload = resolve; hiResUserImage.onerror = resolve; }
+                        }),
+                        new Promise(resolve => {
+                            if (hiResFrameImage.complete && hiResFrameImage.naturalWidth > 0) resolve();
+                            else { hiResFrameImage.onload = resolve; hiResFrameImage.onerror = resolve; }
+                        })
+                    ]);
+
+                    await new Promise(r => setTimeout(r, 100)); // Small delay for rendering
+
+                    const canvas = await html2canvas(tempRenderDiv, {
+                        width: 1920,
+                        height: 1920,
+                        scale: 1,
+                        backgroundColor: null,
+                        useCORS: true,
+                        allowTaint: false,
+                        logging: true,
+                        imageTimeout: 15000
+                    });
+
+                    document.body.removeChild(tempRenderDiv); // Clean up temp div
+
+                    canvas.toBlob(async blob => {
+                        const file = new File([blob], `profile-${selectedFrame}-gama-awards.png`, {type: "image/png"});
+
+                        // Try to use Web Share API first
+                        if (navigator.share && navigator.canShare({ files: [file] })) {
+                            try {
+                                await navigator.share({
+                                    files: [file],
+                                    title: 'รูปโปรไฟล์ GAMA Awards',
+                                    text: `สร้างรูปโปรไฟล์ GAMA Awards ของฉันด้วยกรอบ ${selectedFrame}!`
+                                });
+                                console.log('รูปถูกแชร์แล้วผ่าน Web Share API');
+                            } catch (error) {
+                                console.error('Error sharing via Web Share API:', error);
+                                // Fallback to clipboard if share fails (e.g., user cancels)
+                                tryClipboardShare(file);
+                            }
+                        } else if (navigator.clipboard && navigator.clipboard.write) {
+                            // Fallback to clipboard if Web Share API is not available
+                            tryClipboardShare(file);
+                        } else {
+                            alert("อุปกรณ์ของคุณไม่รองรับการแชร์รูปภาพโดยตรง กรุณาดาวน์โหลดแล้วแชร์ด้วยตนเอง");
+                        }
+                    }, 'image/png'); // Specify MIME type for toBlob
+
+                } catch (err) {
+                    console.error('Error during share process:', err);
+                    alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อแชร์ กรุณาลองใหม่อีกครั้ง');
+                    if (tempRenderDiv.parentNode) { // Check if it's still in DOM before removing
+                        document.body.removeChild(tempRenderDiv);
+                    }
+                } finally {
+                    loadingOverlay.classList.add('hidden'); // Hide loading overlay
+                }
+            });
+
+            // Helper function for clipboard sharing fallback
+            async function tryClipboardShare(file) {
+                const item = [new ClipboardItem({[file.type]: file})];
+                try {
+                    await navigator.clipboard.write(item);
+                    alert("คัดลอกรูปภาพแล้ว! คุณสามารถเปิด Line/Messenger และวาง (Ctrl+V หรือแตะค้าง -> วาง) ได้เลย");
+                    console.log('รูปถูกคัดลอกไปยัง Clipboard แล้ว');
+                } catch (error) {
+                    console.error('Error copying to clipboard:', error);
+                    alert("ไม่สามารถคัดลอกรูปภาพได้ กรุณาใช้ปุ่มดาวน์โหลดแล้วแชร์ด้วยตนเอง");
+                }
+            }
+
+            // --- Initial Setup ---
+            updateImagePosition(); // Set initial position based on slider defaults
+            checkDownloadAvailability(); // Check initial state for download button
+            checkShareAvailability(); // Check initial state for share button
         });
-
-        // สร้าง HTML ใบเสร็จ
-        const iconStyle = `
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          background-color: #2ecc71;
-          color: white;
-          font-size: 30px;
-          margin: 0 auto 15px auto;
-        `;
-
-        const headerHTML = `
-          <div style="text-align:center;">
-            <div style="${iconStyle}">✓</div>
-            <h3 style="margin-top:10px;">บันทึกการสั่งซื้อ!</h3>
-          </div>
-          <hr style="border-top: 1px dashed #ccc; margin: 20px 0;">
-        `;
-
-        const footerHTML = `
-          <p style="font-weight:bold; color:#e67e22; text-align:center;">รวมทั้งหมด <span>${totalAmount}</span> บาท</p>
-          <p style="text-align:center; font-weight:normal; font-style: italic;">ผู้ซื้อ <span style="font-weight: normal; font-style: normal;">${buyerName}</span></p>
-          <p style="color:#2ecc71; font-weight:bold; text-align:center;">ขอให้โชคดี 🌟✨</p>
-        `;
-
-        const fullReceiptHTML = `
-          ${headerHTML}
-          <p style="text-align:center;"><strong>งวดประจำวันที่</strong> ${thaiDate}</p>
-          <hr style="border-top: 1px dashed #ccc; margin: 15px 0;">
-          ${receiptHTML}
-          ${footerHTML}
-        `;
-
-        const receiptDiv = document.getElementById("receipt");
-        receiptDiv.innerHTML = fullReceiptHTML;
-
-        // ส่งไป Google Sheets
-        fetch("https://script.google.com/macros/s/AKfycbzw0nSTYw2BJOpznxLD8DNyEZDZC_b5VsuTvSz-jG3Xv-GTO8nMVCAONX1n9LFqGvlW/exec", {
-          method: "POST",
-          mode: "no-cors",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(dataToSave)
-        }).then(() => {
-          showPopup();
-        }).catch(err => {
-          console.error("Error:", err);
-          alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
-        });
-
-      } catch (err) {
-        alert(err.message);
-      }
-    }
-
-    function showPopup() {
-      document.getElementById("popup").style.display = "block";
-    }
-
-    function closeReceipt() {
-      document.getElementById("popup").style.display = "none";
-      document.getElementById("lotteryDate").value = "";
-      document.getElementById("buyerName").value = "";
-      document.getElementById("items-container").innerHTML = "";
-    }
-
-    async function downloadReceipt() {
-      const receiptDiv = document.getElementById("receipt");
-
-      const canvas = await html2canvas(receiptDiv, {
-        backgroundColor: "#fff",
-        scale: 2
-      });
-
-      const link = document.createElement("a");
-      link.download = "ใบเสร็จรับเงิน.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    }
-
-    function shareReceipt() {
-      html2canvas(document.getElementById("receipt"), {
-        backgroundColor: "#fff",
-        scale: 2
-      }).then(canvas => {
-        canvas.toBlob(blob => {
-          const file = new File([blob], "ใบเสร็จรับเงิน.png", {type: "image/png"});
-          const item = [new ClipboardItem({[file.type]: file})];
-
-          navigator.clipboard.write(item).then(() => {
-            alert("คัดลอกใบเสร็จแล้ว คุณสามารถกด Ctrl+V หรือแชร์ได้เลย!");
-          }).catch(() => {
-            alert("ไม่สามารถคัดลอกใบเสร็จได้ กรุณาใช้ปุ่มดาวน์โหลดแทน");
-          });
+    </script>
+</body>
+</html>
