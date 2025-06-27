@@ -80,6 +80,14 @@
 
     .modal-content {
       animation: fadeIn 0.2s ease;
+      background: white; /* Modal background is white */
+      padding: 2rem;
+      border-radius: 16px;
+      max-width: 550px; /* Increased max-width for wider popup */
+      width: 90%;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      font-family: 'Prompt', sans-serif;
+      position: relative; /* Added for absolute positioning of close button and logo */
     }
 
     .close-button {
@@ -133,9 +141,7 @@
   </div>
 
   <div id="resultModal" class="modal" onclick="closeModal(event)">
-    <div class="modal-content" id="resultContent">
-      </div>
-  </div>
+    </div>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwcAq-tg2JwP7tsnRY5AMWc1NjDJVwhodgS9KMffS50OI9o1GNo84JR_qcUqyjaHUCa/exec";
@@ -154,8 +160,8 @@
       // Show loader
       loader.style.display = "block";
 
-      // Simulate a 1.5-second delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Simulate a 1-second delay
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Changed to 1000ms (1 second)
 
       try {
         const res = await axios.get(API_URL + `?q=${encodeURIComponent(q)}`);
@@ -163,26 +169,27 @@
 
         if (!data || !data.name) {
           showModal(`
-            <div style="background: white; padding: 2rem; border-radius: 16px; max-width: 420px; width: 90%; text-align: center; position: relative;">
+            <div class="modal-content">
               <span class="close-button" onclick="closeModal(event)">&times;</span>
               <h2 style="color:#6a11cb;">ขออภัยในความผิดพลาด</h2>
               <p>ระบบไม่พบข้อมูลของท่าน<br>กรุณาติดต่อเจ้าหน้าที่ฯ</p>
             </div>
           `);
         } else {
+          // Display actual data from the 'data' object
           showModal(`
-            <div style="position: relative; background: white; padding: 2rem; border-radius: 16px; max-width: 420px; width: 90%; box-shadow: 0 4px 16px rgba(0,0,0,0.1); font-family: 'Prompt', sans-serif;">
+            <div class="modal-content">
               <span onclick="closeModal(event)" class="close-button">&times;</span>
               <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" style="position: absolute; top: 20px; right: 20px; height: 36px;" alt="logo" />
               
               <h2 style="color:#6a11cb; font-size: 1.3rem; font-weight: bold; margin-bottom: 1.5rem;">ข้อมูลผู้รับรางวัล</h2>
 
               <div style="text-align: left; font-size: 1rem;">
-                <p><span style="color: #555;">ID</span><br><strong>${data.id}</strong></p>
-                <p><span style="color: #555;">ชื่อ–นามสกุล</span><br><strong>${data.name}</strong></p>
-                <p><span style="color: #555;">สังกัด</span><br><strong>${data.organization}</strong></p>
-                <p><span style="color: #555;">ประเภทรางวัล</span><br><strong>${data.awardType}</strong></p>
-                <p><span style="color: #555;">ระดับ</span><br><strong>${data.level}</strong></p>
+                <p><span style="color: #555;">ID</span><br><strong>${data.id || '-'}</strong></p>
+                <p><span style="color: #555;">ชื่อ–นามสกุล</span><br><strong>${data.name || '-'}</strong></p>
+                <p><span style="color: #555;">สังกัด</span><br><strong>${data.organization || '-'}</strong></p>
+                <p><span style="color: #555;">ประเภทรางวัล</span><br><strong>${data.awardType || '-'}</strong></p>
+                <p><span style="color: #555;">ระดับ</span><br><strong>${data.level || '-'}</strong></p>
               </div>
 
               <div style="margin-top: 1.5rem; text-align: center;">
@@ -191,9 +198,12 @@
             </div>
           `);
 
+          // Generate QR code after modal content is in DOM
           setTimeout(() => {
-            QRCode.toCanvas(document.getElementById("qrcode"), data.id, { width: 120 });
-          }, 100);
+            if (document.getElementById("qrcode")) {
+              QRCode.toCanvas(document.getElementById("qrcode"), data.id || 'N/A', { width: 120 });
+            }
+          }, 100); // Small delay to ensure canvas is rendered
         }
       } catch (e) {
         errBox.textContent = "เกิดข้อผิดพลาดในการค้นหา กรุณาลองใหม่";
@@ -205,7 +215,7 @@
     }
 
     function showModal(contentHTML) {
-      document.getElementById("resultContent").innerHTML = contentHTML;
+      document.getElementById("resultModal").innerHTML = contentHTML; // Assign content to the modal directly
       document.getElementById("resultModal").style.display = "flex";
     }
 
