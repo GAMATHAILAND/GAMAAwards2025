@@ -229,7 +229,7 @@
         }
 
         .logo-header img {
-            width: 150px; /* Adjusted size for clarity */
+            width: 97.5px; /* Adjusted logo size (150px * 0.65) */
             height: auto;
         }
 
@@ -243,7 +243,7 @@
 
     <div class="container">
         <div class="logo-header">
-            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo">
+            <img src="./assets/logo-gama-awards.png" alt="GAMA Awards Logo">
         </div>
         <h1>GAMA Awards Frame</h1>
         <p style="text-align: center; color: #666; margin-bottom: 30px;">
@@ -291,7 +291,7 @@
                     <span>บน</span>
                     <input type="range" id="verticalSlider" min="-0.5" max="0.5" step="0.01" value="0">
                     <span>ล่าง</span>
-                </div>
+                (</div>
             </div>
         </div>
 
@@ -326,18 +326,17 @@
         let selectedFrame = null;
         let frameImages = {}; // To store loaded frame images
 
-        // --- IMPORTANT: Update these URLs if you host the images on your own server/GitHub Pages ---
-        // For best results and to avoid CORS issues, download these images and place them
-        // in the same directory as your HTML file, or in a subfolder like './photo/'.
-        // If in './photo/', change 'url: './FILENAME.png'' to 'url: './photo/FILENAME.png''.
+        // IMPORTANT: Update these URLs to relative paths if you host the images on your own server/GitHub Pages.
+        // E.g., if images are in './assets/' folder, change to './assets/FILENAME.png'
+        // This is crucial to avoid CORS issues.
         const frames = [
-            { id: 'MAA', name: 'Master Multiline Award', url: 'https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png' },
-            { id: 'MFA', name: 'Master Firm Award', url: 'https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png' },
-            { id: 'MMA', name: 'Master Agency Award', url: 'https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png' },
-            { id: 'IMA', name: 'International Management Award', url: 'https://hugmediacreation.com/photo/International%20Management%20Award.png' },
-            { id: 'FLA', name: 'Frontline Leader Award', url: 'https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png' },
-            { id: 'ERA', name: 'Excellence Recruitment Awards', url: 'https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png' },
-            { id: 'COE', name: 'Circle of Excellence Award', url: 'https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png' }
+            { id: 'MAA', name: 'Master Multiline Award', url: './assets/MASTER%20MULTILINE%20Award.png' },
+            { id: 'MFA', name: 'Master Firm Award', url: './assets/MASTER%20FIRM%20Award.png' },
+            { id: 'MMA', name: 'Master Agency Award', url: './assets/MASTER%20AGENCY%20Award.png' },
+            { id: 'IMA', name: 'International Management Award', url: './assets/International%20Management%20Award.png' },
+            { id: 'FLA', name: 'Frontline Leader Award', url: './assets/Frontline%20Leader%20Awards.png' },
+            { id: 'ERA', name: 'Excellence Recruitment Awards', url: './assets/Excellence%20Recruitment%20Award.png' },
+            { id: 'COE', name: 'Circle of Excellence Award', url: './assets/Circle%20of%20Excellence%20Award.png' }
         ];
 
         // Set preview canvas dimensions
@@ -355,19 +354,23 @@
             for (const frame of frames) {
                 const img = new Image();
                 img.src = frame.url;
-                img.crossOrigin = "anonymous"; // Essential for loading cross-origin images to canvas
+                // crossOrigin is good practice, but if hosted on same domain, not strictly required for CORS.
+                // It helps if you later use a CDN that *does* set CORS headers correctly.
+                img.crossOrigin = "anonymous"; 
                 await new Promise(resolve => {
                     img.onload = () => {
                         frameImages[frame.id] = img; // Store with frame.id as key
                         resolve();
                     };
                     img.onerror = () => {
-                        console.error(`Failed to load frame image: ${frame.url}. This is likely a CORS issue. Please host images on the same domain as your HTML or use a CORS-enabled server.`);
+                        console.error(`Failed to load frame image: ${frame.url}. This is likely a CORS issue or incorrect path. Please ensure the image is accessible and hosted on the same domain or a CORS-enabled server.`);
                         resolve(); // Still resolve to continue with other images even if one fails
                     };
                 });
             }
             renderThumbnails();
+            // After loading frames, if a user image is already loaded, draw the initial canvas
+            drawCanvasPreview();
         }
 
         // Function to render frame thumbnails
@@ -391,10 +394,12 @@
                 label.textContent = frame.id; // Using ID for brevity below thumbnail
 
                 thumbnail.addEventListener('click', () => {
+                    // Remove 'selected' class from all thumbnails
                     document.querySelectorAll('.frame-thumbnail').forEach(t => t.classList.remove('selected'));
+                    // Add 'selected' class to the clicked thumbnail
                     thumbnail.classList.add('selected');
-                    selectedFrame = frame.id;
-                    drawCanvas(ctxPreview, previewCanvasSize); // Draw on preview canvas
+                    selectedFrame = frame.id; // Update selectedFrame
+                    drawCanvasPreview(); // Redraw preview with new frame
                 });
 
                 thumbnailWrapper.appendChild(thumbnail);
@@ -471,6 +476,7 @@
             }
 
             // Draw selected frame on top of the user image
+            // This is the correct way to layer the frame on top.
             if (selectedFrame && frameImages[selectedFrame]) {
                 ctx.drawImage(frameImages[selectedFrame], 0, 0, canvasSize, canvasSize);
             }
@@ -545,7 +551,7 @@
             }
         });
 
-        // Initialize by loading frame images
+        // Initialize by loading frame images when the page loads
         loadFrameImages();
     </script>
 </body>
