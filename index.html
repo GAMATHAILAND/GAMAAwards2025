@@ -278,8 +278,8 @@
             <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="h-24">
         </div>
 
-        <h1 class="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4">GAMA Awards Frame Creator</h1>
-        <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
+        <h1 class="text-3xl md:text-4xl font-bold text-center text-white mb-4">GAMA Awards Frame Creator</h1>
+        <p class="text-center text-white mb-8 max-w-2xl mx-auto">
             เปลี่ยนรูปโปรไฟล์ของคุณให้โดดเด่นด้วยกรอบรูปภาพพิเศษจาก GAMA Awards อัพโหลดรูปภาพของคุณ เลือกกรอบที่ชอบ และดาวน์โหลดเพื่อใช้เป็นรูปโปรไฟล์ใหม่ของคุณ
         </p>
 
@@ -288,9 +288,6 @@
                 <label class="block text-lg font-medium mb-3 text-gray-700">อัพโหลดรูปโปรไฟล์ของคุณ:</label>
                 <div class="file-upload">
                     <button id="uploadBtn" class="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 0 003 3h10a3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-                        </svg>
                         เลือกรูปภาพจากเครื่อง
                     </button>
                     <input type="file" id="imageUpload" accept="image/*">
@@ -300,7 +297,7 @@
         </div>
 
         <div class="mb-8">
-            <h2 class="text-xl font-medium mb-4 text-center text-gray-700">เลือกกรอบรูปภาพ</h2>
+            <h2 class="text-xl font-medium mb-4 text-center text-white">เลือกกรอบรูปภาพ</h2>
             <div class="flex flex-wrap justify-center gap-3">
                 <div class="frame-option rounded-lg" data-frame="MAA">
                     <img src="https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png" alt="MAA" class="mx-auto">
@@ -380,9 +377,6 @@
                 </div>
 
                 <button id="downloadBtn" class="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn disabled:opacity-50 disabled:cursor-not-allowed mb-3" disabled>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 0 003 3h10a3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-                    </svg>
                     ดาวน์โหลดรูปโปรไฟล์
                 </button>
 
@@ -471,14 +465,23 @@
             });
 
             // Handle user image file upload
-            imageUpload.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    const file = this.files[0];
+            imageUpload.addEventListener('change', function(event) {
+                if (event.target.files && event.target.files[0]) {
+                    const file = event.target.files[0];
+                    // Validate file type (simple check, can be more robust)
+                    if (!file.type.startsWith('image/')) {
+                        alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+                        resetImageUpload();
+                        return;
+                    }
+
                     selectedFileName.textContent = file.name;
 
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        userImagePreview.onload = function() {
+                        const img = new Image();
+                        img.onload = function() {
+                            userImagePreview.src = img.src; // Set source to actual image data
                             placeholderText.classList.add('hidden');
                             userImagePreview.classList.remove('hidden');
                             userImageLoaded = true;
@@ -489,23 +492,32 @@
                             updateImagePosition(); // Apply default positions
                             checkDownloadAvailability();
                         };
-                        userImagePreview.onerror = function() {
-                            alert('เกิดข้อผิดพลาดในการโหลดรูปภาพของคุณ กรุณาลองใหม่');
-                            userImageLoaded = false;
-                            checkDownloadAvailability();
+                        img.onerror = function() {
+                            alert('เกิดข้อผิดพลาดในการโหลดรูปภาพของคุณ กรุณาลองใหม่ (ไฟล์อาจเสียหายหรือไม่ใช่รูปภาพ)');
+                            resetImageUpload();
                         };
-                        userImagePreview.src = e.target.result;
+                        img.src = e.target.result; // Start loading the image data
+                    };
+                    reader.onerror = function() {
+                        alert('เกิดข้อผิดพลาดในการอ่านไฟล์รูปภาพ กรุณาลองใหม่');
+                        resetImageUpload();
                     };
                     reader.readAsDataURL(file);
                 } else {
-                    // No file selected
-                    selectedFileName.textContent = '';
-                    userImagePreview.classList.add('hidden');
-                    placeholderText.classList.remove('hidden');
-                    userImageLoaded = false;
-                    checkDownloadAvailability();
+                    // No file selected or file selection cancelled
+                    resetImageUpload();
                 }
             });
+
+            function resetImageUpload() {
+                selectedFileName.textContent = '';
+                userImagePreview.classList.add('hidden');
+                userImagePreview.src = ''; // Clear image source
+                placeholderText.classList.remove('hidden');
+                userImageLoaded = false;
+                checkDownloadAvailability();
+            }
+
 
             // Handle frame selection
             frameOptions.forEach(option => {
@@ -562,12 +574,6 @@
                 const deltaY = e.clientY - startPointerY;
 
                 // Calculate new percentage based on drag distance relative to container size
-                // Factor of 200 (100 / 0.5) because slider range is -100 to 100, which covers 200% movement
-                // If container is 300px wide, 100% translate is 300px. Slider 100 means move 300px.
-                // 100% of container width in CSS `translate` equals `100` on slider.
-                // So, 1 unit on slider corresponds to 1% of container width.
-                // To move 1% of container width, we need to drag `containerWidth / 100` pixels.
-                // So, deltaX pixels corresponds to `deltaX / (containerWidth / 100)` percentage.
                 const newXPos = initialTranslateX + (deltaX / previewContainer.offsetWidth) * 100;
                 const newYPos = initialTranslateY + (deltaY / previewContainer.offsetHeight) * 100;
 
@@ -652,8 +658,6 @@
                 hiResFrameImage.src = frameImagePreview.src; // Use the same source as preview
 
                 // Apply current transformations to the high-res user image
-                // The values from sliders (initialTranslateX, initialTranslateY, currentScale) are already correct
-                // for direct application, as they are percentage-based or absolute scale.
                 hiResUserImage.style.transform = `translate(${initialTranslateX}%, ${initialTranslateY}%) scale(${currentScale})`;
                 hiResUserImage.style.transformOrigin = 'center center';
                 hiResUserImage.style.objectFit = 'cover';
@@ -674,18 +678,18 @@
                 // Wait for both high-resolution images to load in the temporary div
                 Promise.all([
                     new Promise(resolve => {
-                        if (hiResUserImage.complete) {
+                        if (hiResUserImage.complete && hiResUserImage.naturalWidth > 0) { // Check naturalWidth for success
                             resolve();
                         } else {
                             hiResUserImage.onload = resolve;
                             hiResUserImage.onerror = () => {
-                                console.error('High-res user image failed to load.');
-                                resolve(); // Allow continuation even if one image fails to load
+                                console.error('High-res user image failed to load or is invalid.');
+                                resolve(); 
                             };
                         }
                     }),
                     new Promise(resolve => {
-                        if (hiResFrameImage.complete) {
+                        if (hiResFrameImage.complete && hiResFrameImage.naturalWidth > 0) { // Check naturalWidth for success
                             resolve();
                         } else {
                             hiResFrameImage.onload = resolve;
@@ -700,27 +704,25 @@
                     html2canvas(tempRenderDiv, {
                         width: 1920,
                         height: 1920,
-                        scale: 1, // Render at 1:1 pixel ratio for the 1920x1920 div
-                        backgroundColor: null, // Keeps background transparent if it's not explicitly set
-                        useCORS: true, // Crucial for external images to be rendered
-                        allowTaint: false, // Prevents issues with tainted canvas
-                        logging: true, // Enable logging for debugging
-                        imageTimeout: 15000 // Timeout for image loading
+                        scale: 1, 
+                        backgroundColor: null, 
+                        useCORS: true, 
+                        allowTaint: false, 
+                        logging: true, 
+                        imageTimeout: 15000 
                     }).then(canvas => {
-                        // Remove the temporary div after capture
-                        document.body.removeChild(tempRenderDiv);
+                        document.body.removeChild(tempRenderDiv); // Remove the temporary div after capture
 
                         try {
-                            // Create a download link and trigger click
                             const link = document.createElement('a');
                             link.download = `profile-${selectedFrame}-gama-awards.png`;
-                            link.href = canvas.toDataURL('image/png'); // Get image data as PNG
+                            link.href = canvas.toDataURL('image/png'); 
                             link.click();
                         } catch (e) {
                             console.error('Error creating data URL or download link:', e);
                             alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหาภายในหรือรูปภาพต้นฉบับเสียหาย หรือปัญหา CORS)');
                         }
-                        loadingOverlay.classList.add('hidden'); // Hide loading overlay
+                        loadingOverlay.classList.add('hidden'); 
                     }).catch(err => {
                         console.error('Error generating image with html2canvas:', err);
                         alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ กรุณาลองใหม่อีกครั้ง');
