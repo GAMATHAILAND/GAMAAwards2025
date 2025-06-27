@@ -168,6 +168,7 @@
         const data = res.data;
 
         if (!data || !data.name) {
+          // Case: Data not found
           showModal(`
             <div class="modal-content">
               <span class="close-button" onclick="closeModal(event)">&times;</span>
@@ -176,7 +177,7 @@
             </div>
           `);
         } else {
-          // Display actual data from the 'data' object
+          // Case: Data found - Populate the modal with actual data
           showModal(`
             <div class="modal-content">
               <span onclick="closeModal(event)" class="close-button">&times;</span>
