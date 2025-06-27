@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GAMA Awards Frame Creator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-purple: #8A2BE2; /* Amethyst */
@@ -18,580 +20,664 @@
 
         body {
             font-family: 'Prompt', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
             min-height: 100vh;
+            color: var(--dark-gray);
+            /* Background gradient from purple (bottom) to dark pink (top) */
             background: linear-gradient(to top, var(--primary-purple), var(--dark-pink));
-            color: var(--dark-gray);
-            overflow-x: hidden;
-        }
-
-        .container {
-            background-color: var(--white);
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-            padding: 2.5rem;
-            margin: 2rem;
-            width: 100%;
-            max-width: 900px;
-            box-sizing: border-box;
-            text-align: center;
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        h1 {
-            color: var(--dark-gray);
-            font-size: 2.2em;
-            margin-bottom: 1.5rem;
-            font-weight: 700;
-        }
-
-        .logo {
-            margin-bottom: 2rem;
-        }
-
-        .logo img {
-            max-width: 250px;
-            height: auto;
-            border-radius: 8px; /* Slightly rounded corners for the logo */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .section-title {
-            font-size: 1.5em;
-            color: var(--dark-gray);
-            margin-top: 2.5rem;
-            margin-bottom: 1.5rem;
-            font-weight: 500;
-        }
-
-        input[type="file"] {
-            display: none; /* Hide default file input */
-        }
-
-        .upload-btn-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-            margin-bottom: 2rem;
-        }
-
-        .btn {
-            background-color: var(--primary-purple);
-            color: var(--white);
-            padding: 15px 30px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.1em;
-            font-weight: 500;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn:hover {
-            background-color: var(--dark-pink);
-            transform: translateY(-2px);
-        }
-
-        .frame-selection {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 2.5rem;
         }
 
         .frame-option {
-            background-color: var(--light-gray);
-            padding: 12px 20px;
-            border-radius: 8px;
+            transition: all 0.3s ease;
             cursor: pointer;
-            font-size: 1em;
-            font-weight: 400;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            border: 2px solid transparent;
-            color: var(--dark-gray);
+            background-color: var(--white);
+            border: 1px solid #e5e7eb;
+            display: flex; /* Flexbox for centering content */
+            flex-direction: column; /* Stack image and text */
+            align-items: center; /* Center horizontally */
+            justify-content: center; /* Center vertically */
+            padding: 8px; /* Reduced padding */
         }
 
         .frame-option:hover {
-            background-color: #e0e0e0;
-            transform: translateY(-2px);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         .frame-option.selected {
-            background-color: var(--dark-pink);
-            color: var(--white);
-            border-color: var(--primary-purple);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border: 3px solid var(--primary-purple); /* Stronger border for selected */
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow */
+        }
+        
+        .frame-option img {
+            width: 60px; /* Smaller preview images for frames */
+            height: 60px;
         }
 
-        .image-editor {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2rem;
-        }
-
-        .canvas-wrapper {
+        /* Adjusted image-container for responsiveness */
+        .image-container {
             position: relative;
-            width: 350px; /* Base size for responsiveness */
-            height: 350px;
-            border: 2px solid var(--primary-purple);
-            border-radius: 8px;
-            overflow: hidden;
-            background-color: var(--light-gray);
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1.5rem;
-        }
-
-        canvas {
-            display: block;
             width: 100%;
-            height: 100%;
+            padding-top: 100%; /* 1:1 Aspect Ratio (height equals width) */
+            overflow: hidden;
+            margin: 0 auto;
+            background-color: var(--light-gray); /* Match earlier minimal design */
+            border: 2px dashed var(--primary-purple); /* Border to match overall theme */
+            border-radius: 8px;
             cursor: grab; /* Indicates draggable */
         }
-
-        canvas:active {
+        .image-container:active {
             cursor: grabbing;
         }
 
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 20px;
+        .image-container > img {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 600px;
-            margin-bottom: 2rem;
+            height: 100%;
+            object-fit: contain; /* Use contain to show entire image initially */
+            pointer-events: none; /* Allows dragging through to the user image */
         }
 
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+        /* user-image and frame-image styles */
+        .user-image {
+            transform-origin: center;
+            object-fit: cover; /* Ensures the image covers the area *before* transform */
+            /* Initial transform will be applied via JS */
+            will-change: transform; /* Hint for browser performance */
         }
 
-        .control-group label {
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--dark-gray);
+        .frame-image {
+            pointer-events: none; /* Allows clicks to pass through */
+            z-index: 10; /* Ensures frame is on top of user image */
         }
 
-        input[type="range"] {
-            width: 100%;
+        .slider {
             -webkit-appearance: none;
             height: 8px;
+            border-radius: 4px;
             background: var(--light-gray);
-            border-radius: 5px;
             outline: none;
-            transition: opacity 0.2s;
         }
 
-        input[type="range"]::-webkit-slider-thumb {
+        .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
             width: 20px;
             height: 20px;
-            background: var(--primary-purple);
             border-radius: 50%;
+            background: var(--primary-purple); /* Match primary theme color */
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
 
-        input[type="range"]::-webkit-slider-thumb:hover {
+        .slider::-webkit-slider-thumb:hover {
             background-color: var(--dark-pink);
         }
 
-        .download-btn {
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-purple);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .slider::-moz-range-thumb:hover {
             background-color: var(--dark-pink);
-            margin-top: 1.5rem;
         }
 
-        .download-btn:hover {
-            background-color: var(--primary-purple);
+        .btn {
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            font-size: 24px;
+        }
+
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        .card {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload input[type=file] {
+            position: absolute;
+            top: 0;
+            right: 0;
+            min-width: 100%;
+            min-height: 100%;
+            font-size: 100px;
+            text-align: right;
+            filter: alpha(opacity=0);
+            opacity: 0;
+            outline: none;
+            cursor: pointer;
+            display: block;
         }
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .container {
-                padding: 1.5rem;
-                margin: 1rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
             }
-
-            h1 {
-                font-size: 1.8em;
+            .h-24 {
+                height: 5rem; /* Smaller logo on mobile */
             }
-
-            .logo img {
-                max-width: 200px;
+            .text-3xl {
+                font-size: 2rem;
             }
-
-            .section-title {
-                font-size: 1.3em;
+            .text-xl {
+                font-size: 1.5rem;
             }
-
-            .btn {
-                padding: 12px 25px;
-                font-size: 1em;
+            .frame-option img {
+                width: 48px;
+                height: 48px;
             }
-
-            .canvas-wrapper {
-                width: 300px;
-                height: 300px;
+            .frame-option p {
+                font-size: 0.8em;
             }
-
-            .controls {
-                grid-template-columns: 1fr; /* Stack controls on small screens */
+            .grid-cols-1 .lg\:col-span-2 {
+                grid-column: span 1 / span 1;
             }
-        }
-
-        @media (max-width: 480px) {
-            .container {
+            .card {
                 padding: 1rem;
-                margin: 0.5rem;
-            }
-
-            h1 {
-                font-size: 1.5em;
-            }
-
-            .logo img {
-                max-width: 150px;
-            }
-
-            .btn {
-                padding: 10px 20px;
-                font-size: 0.9em;
-            }
-
-            .canvas-wrapper {
-                width: 250px;
-                height: 250px;
-            }
-
-            .frame-option {
-                font-size: 0.9em;
-                padding: 10px 15px;
             }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="logo">
-            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo">
+<body class="min-h-screen">
+    <div class="header-gradient" style="background: linear-gradient(to right, var(--primary-purple), var(--dark-pink)); height: 8px;"></div>
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-center mb-6">
+            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="h-24">
         </div>
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">GAMA Awards Frame</h1>
+        <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">เปลี่ยนรูปโปรไฟล์ของคุณให้โดดเด่นด้วยกรอบรูปภาพพิเศษจาก GAMA Awards อัพโหลดรูปภาพของคุณ เลือกกรอบที่ชอบ และดาวน์โหลดเพื่อใช้เป็นรูปโปรไฟล์ใหม่ของคุณ</p>
 
-        <h1>สร้างรูปภาพโปรไฟล์ GAMA Awards ของคุณ</h1>
-
-        <hr>
-
-        <h2 class="section-title">1. เลือกรูปภาพของคุณ</h2>
-        <div class="upload-btn-wrapper">
-            <button class="btn">เลือกรูปภาพจากเครื่อง</button>
-            <input type="file" id="imageUpload" accept="image/*">
-        </div>
-
-        <hr>
-
-        <h2 class="section-title">2. เลือกกรอบรูปภาพ</h2>
-        <div class="frame-selection" id="frameSelection">
-            <div class="frame-option" data-frame-url="https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png" data-frame-name="MAA">MAA</div>
-            <div class="frame-option" data-frame-url="https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png" data-frame-name="MFA">MFA</div>
-            <div class="frame-option" data-frame-url="https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png" data-frame-name="MMA">MMA</div>
-            <div class="frame-option" data-frame-url="https://hugmediacreation.com/photo/International%20Management%20Award.png" data-frame-name="IMA">IMA</div>
-            <div class="frame-option" data-frame-url="https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png" data-frame-name="FLA">FLA</div>
-            <div class="frame-option" data-frame-url="https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png" data-frame-name="ERA">ERA</div>
-            <div class="frame-option" data-frame-url="https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png" data-frame-name="COE">COE</div>
-        </div>
-
-        <hr>
-
-        <h2 class="section-title">3. ปรับแต่งรูปภาพ</h2>
-        <div class="image-editor" style="display: none;">
-            <div class="canvas-wrapper">
-                <canvas id="imageCanvas"></canvas>
+        <div class="mb-8 max-w-xl mx-auto">
+            <div class="card p-6">
+                <label class="block text-lg font-medium mb-3 text-gray-700">อัพโหลดรูปโปรไฟล์ของคุณ:</label>
+                <div class="file-upload">
+                    <button id="uploadBtn" class="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 0 003 3h10a3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                        </svg>
+                        เลือกรูปภาพจากเครื่อง
+                    </button>
+                    <input type="file" id="imageUpload" accept="image/*">
+                </div>
+                <p id="selectedFileName" class="mt-2 text-center text-sm text-gray-500"></p>
             </div>
-            <div class="controls">
-                <div class="control-group">
-                    <label for="zoomSlider">ขยาย/ย่อ:</label>
-                    <input type="range" id="zoomSlider" min="0.5" max="2.0" value="1.0" step="0.01">
+        </div>
+
+        <div class="mb-8">
+            <h2 class="text-xl font-medium mb-4 text-center text-gray-700">เลือกกรอบรูปภาพ</h2>
+            <div class="flex flex-wrap justify-center gap-3">
+                <div class="frame-option rounded-lg text-center" data-frame="MAA">
+                    <img src="https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png" alt="MAA" class="object-contain mx-auto">
+                    <p class="text-sm font-medium mt-1 text-gray-800">MAA</p>
                 </div>
-                <div class="control-group">
-                    <label for="posXSlider">ตำแหน่งแนวนอน:</label>
-                    <input type="range" id="posXSlider" min="-100" max="100" value="0" step="1">
+                <div class="frame-option rounded-lg text-center" data-frame="MFA">
+                    <img src="https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png" alt="MFA" class="object-contain mx-auto">
+                    <p class="text-sm font-medium mt-1 text-gray-800">MFA</p>
                 </div>
-                <div class="control-group">
-                    <label for="posYSlider">ตำแหน่งแนวตั้ง:</label>
-                    <input type="range" id="posYSlider" min="-100" max="100" value="0" step="1">
+                <div class="frame-option rounded-lg text-center" data-frame="MMA">
+                    <img src="https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png" alt="MMA" class="object-contain mx-auto">
+                    <p class="text-sm font-medium mt-1 text-gray-800">MMA</p>
                 </div>
-                <div class="control-group">
-                    <label for="rotateSlider">หมุน:</label>
-                    <input type="range" id="rotateSlider" min="0" max="360" value="0" step="1">
+                <div class="frame-option rounded-lg text-center" data-frame="IMA">
+                    <img src="https://hugmediacreation.com/photo/International%20Management%20Award.png" alt="IMA" class="object-contain mx-auto">
+                    <p class="text-sm font-medium mt-1 text-gray-800">IMA</p>
+                </div>
+                <div class="frame-option rounded-lg text-center" data-frame="FLA">
+                    <img src="https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png" alt="FLA" class="object-contain mx-auto">
+                    <p class="text-sm font-medium mt-1 text-gray-800">FLA</p>
+                </div>
+                <div class="frame-option rounded-lg text-center" data-frame="ERA">
+                    <img src="https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png" alt="ERA" class="object-contain mx-auto">
+                    <p class="text-sm font-medium mt-1 text-gray-800">ERA</p>
+                </div>
+                <div class="frame-option rounded-lg text-center" data-frame="COE">
+                    <img src="https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png" alt="COE" class="object-contain mx-auto">
+                    <p class="text-sm font-medium mt-1 text-gray-800">COE</p>
                 </div>
             </div>
-            <button class="btn download-btn" id="downloadImageBtn">ดาวน์โหลดรูปภาพของคุณ</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="lg:col-span-2">
+                <div class="card p-4">
+                    <div id="preview" class="image-container flex items-center justify-center">
+                        <div id="placeholderText" class="text-center p-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p class="text-gray-500">โปรดอัพโหลดรูปภาพและเลือกกรอบ</p>
+                        </div>
+                        <img id="userImage" class="user-image absolute hidden" src="" alt="User uploaded image" style="top: 0; left: 0; width: 100%; height: 100%;">
+                        <img id="frameImage" class="frame-image absolute hidden" src="" alt="Selected frame" style="top: 0; left: 0; width: 100%; height: 100%;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6">
+                <h3 class="text-lg font-medium mb-4 text-gray-700">ปรับแต่งรูปภาพ</h3>
+
+                <div class="mb-4">
+                    <label for="scaleSlider" class="block text-sm font-medium mb-1 text-gray-600">ขนาด:</label>
+                    <input type="range" id="scaleSlider" class="slider w-full" min="50" max="300" value="100">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>เล็ก</span>
+                        <span>ใหญ่</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="xPosSlider" class="block text-sm font-medium mb-1 text-gray-600">ตำแหน่งแนวนอน:</label>
+                    <input type="range" id="xPosSlider" class="slider w-full" min="-100" max="100" value="0">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>ซ้าย</span>
+                        <span>ขวา</span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label for="yPosSlider" class="block text-sm font-medium mb-1 text-gray-600">ตำแหน่งแนวตั้ง:</label>
+                    <input type="range" id="yPosSlider" class="slider w-full" min="-100" max="100" value="0">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>บน</span>
+                        <span>ล่าง</span>
+                    </div>
+                </div>
+
+                <button id="downloadBtn" class="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn disabled:opacity-50 disabled:cursor-not-allowed mb-3" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 0 003 3h10a3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                    </svg>
+                    ดาวน์โหลดรูปโปรไฟล์
+                </button>
+
+                <p class="mt-4 text-sm text-gray-500 text-center">ดาวน์โหลดและใช้เป็นรูปโปรไฟล์ของคุณบนโซเชียลมีเดีย</p>
+            </div>
+        </div>
+
+        <div class="text-center text-sm text-gray-500 mb-8">
+            © GAMA Awards 2025 - ระบบใส่กรอบรูปภาพ
         </div>
     </div>
 
+    <div id="loadingOverlay" class="loading hidden">
+        <div class="spinner"></div>
+        <span>กำลังประมวลผล...</span>
+    </div>
+
     <script>
-        const imageUpload = document.getElementById('imageUpload');
-        const frameSelection = document.getElementById('frameSelection');
-        const imageCanvas = document.getElementById('imageCanvas');
-        const ctx = imageCanvas.getContext('2d');
-        const imageEditor = document.querySelector('.image-editor');
-        const zoomSlider = document.getElementById('zoomSlider');
-        const posXSlider = document.getElementById('posXSlider');
-        const posYSlider = document.getElementById('posYSlider');
-        const rotateSlider = document.getElementById('rotateSlider');
-        const downloadImageBtn = document.getElementById('downloadImageBtn');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const imageUpload = document.getElementById('imageUpload');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const selectedFileName = document.getElementById('selectedFileName');
+            const frameOptions = document.querySelectorAll('.frame-option');
+            const userImagePreview = document.getElementById('userImage');
+            const frameImagePreview = document.getElementById('frameImage');
+            const placeholderText = document.getElementById('placeholderText');
+            const scaleSlider = document.getElementById('scaleSlider');
+            const xPosSlider = document.getElementById('xPosSlider');
+            const yPosSlider = document.getElementById('yPosSlider');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const previewContainer = document.getElementById('preview'); // The image-container div
 
-        let userImage = new Image();
-        let frameImage = new Image();
-        let currentFrameUrl = '';
+            // Frame URLs (UPDATED TO EXTERNAL URLs)
+            const frameUrls = {
+                'MAA': 'https://hugmediacreation.com/photo/MASTER%20MULTILINE%20Award.png',
+                'MFA': 'https://hugmediacreation.com/photo/MASTER%20FIRM%20Award.png',
+                'MMA': 'https://hugmediacreation.com/photo/MASTER%20AGENCY%20Award.png',
+                'IMA': 'https://hugmediacreation.com/photo/International%20Management%20Award.png',
+                'FLA': 'https://hugmediacreation.com/photo/Frontline%20Leader%20Awards.png',
+                'ERA': 'https://hugmediacreation.com/photo/Excellence%20Recruitment%20Award.png',
+                'COE': 'https://hugmediacreation.com/photo/Circle%20of%20Excellence%20Award.png'
+            };
 
-        const CANVAS_SIZE = 500; // Render size for better quality before final download
-        imageCanvas.width = CANVAS_SIZE;
-        imageCanvas.height = CANVAS_SIZE;
+            // State
+            let selectedFrame = null;
+            let userImageLoaded = false;
+            let frameImageLoaded = false;
+            let isDragging = false;
+            let startX, startY;
+            let currentTranslateX = 0;
+            let currentTranslateY = 0;
+            let currentScale = 1;
 
-        let imgScale = 1.0;
-        let imgX = 0;
-        let imgY = 0;
-        let imgRotation = 0;
+            // Function to check if both images are loaded for download enablement
+            function checkDownloadAvailability() {
+                downloadBtn.disabled = !(userImageLoaded && selectedFrame && frameImageLoaded);
+            }
 
-        let isDragging = false;
-        let startX, startY;
+            // --- Event Listeners ---
 
-        // --- Event Listeners ---
+            // Trigger file input when the upload button is clicked
+            uploadBtn.addEventListener('click', function() {
+                imageUpload.click();
+            });
 
-        imageUpload.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    userImage.onload = () => {
-                        resetImageTransform();
-                        drawImage();
-                        imageEditor.style.display = 'flex'; // Show editor once image is loaded
+            // Handle file upload
+            imageUpload.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    selectedFileName.textContent = file.name;
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        userImagePreview.onload = function() {
+                            placeholderText.classList.add('hidden');
+                            userImagePreview.classList.remove('hidden');
+                            userImageLoaded = true;
+                            // Reset sliders and transform when a new image is loaded
+                            scaleSlider.value = 100;
+                            xPosSlider.value = 0;
+                            yPosSlider.value = 0;
+                            currentTranslateX = 0;
+                            currentTranslateY = 0;
+                            currentScale = 1;
+                            updateImagePosition(); // Apply default positions for preview
+                            checkDownloadAvailability();
+                        };
+                        userImagePreview.onerror = function() {
+                            alert('เกิดข้อผิดพลาดในการโหลดรูปภาพของคุณ กรุณาลองใหม่');
+                            userImageLoaded = false;
+                            checkDownloadAvailability();
+                        };
+                        userImagePreview.src = e.target.result;
                     };
-                    userImage.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+                    reader.readAsDataURL(file);
+                } else {
+                    selectedFileName.textContent = '';
+                    userImagePreview.classList.add('hidden');
+                    placeholderText.classList.remove('hidden');
+                    userImageLoaded = false;
+                    checkDownloadAvailability();
+                }
+            });
 
-        frameSelection.addEventListener('click', (event) => {
-            const target = event.target;
-            if (target.classList.contains('frame-option')) {
-                // Remove 'selected' class from all options
-                document.querySelectorAll('.frame-option').forEach(option => {
-                    option.classList.remove('selected');
+            // Select frame
+            frameOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const frameId = this.dataset.frame;
+
+                    frameOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+
+                    selectedFrame = frameId;
+
+                    // Load frame image for preview and set frameImageLoaded flag
+                    frameImagePreview.onload = function() {
+                        frameImagePreview.classList.remove('hidden');
+                        frameImageLoaded = true;
+                        checkDownloadAvailability();
+                    };
+                    frameImagePreview.onerror = function() {
+                        console.error('Failed to load frame image:', frameUrls[frameId]);
+                        alert('เกิดข้อผิดพลาดในการโหลดกรอบรูป กรุณาตรวจสอบลิงก์รูปภาพกรอบอีกครั้ง');
+                        frameImageLoaded = false;
+                        checkDownloadAvailability();
+                    };
+                    frameImagePreview.src = frameUrls[frameId];
                 });
+            });
 
-                // Add 'selected' class to the clicked option
-                target.classList.add('selected');
-                currentFrameUrl = target.dataset.frameUrl;
+            // Update image position and scale for the PREVIEW
+            function updateImagePosition() {
+                if (!userImageLoaded) return;
+
+                const scale = parseFloat(scaleSlider.value) / 100;
+                currentScale = scale; // Update currentScale from slider
                 
-                frameImage.onload = () => {
-                    drawImage();
-                };
-                frameImage.src = currentFrameUrl;
+                // Translate values are now directly used for preview
+                currentTranslateX = parseFloat(xPosSlider.value);
+                currentTranslateY = parseFloat(yPosSlider.value);
+
+                userImagePreview.style.transform = `translate(${currentTranslateX}%, ${currentTranslateY}%) scale(${currentScale})`;
             }
-        });
 
-        zoomSlider.addEventListener('input', () => {
-            imgScale = parseFloat(zoomSlider.value);
-            drawImage();
-        });
+            // Event listeners for sliders
+            scaleSlider.addEventListener('input', updateImagePosition);
+            xPosSlider.addEventListener('input', updateImagePosition);
+            yPosSlider.addEventListener('input', updateImagePosition);
 
-        posXSlider.addEventListener('input', () => {
-            imgX = parseFloat(posXSlider.value);
-            drawImage();
-        });
+            // --- Dragging functionality ---
+            previewContainer.addEventListener('mousedown', (e) => {
+                if (userImageLoaded && selectedFrame) {
+                    isDragging = true;
+                    // Prevent image from being dragged as a ghost image
+                    e.preventDefault();
+                    // Calculate click position relative to the image's current transformed position
+                    const rect = userImagePreview.getBoundingClientRect();
+                    startX = e.clientX - rect.left - (rect.width / 2);
+                    startY = e.clientY - rect.top - (rect.height / 2);
+                    
+                    // Store the initial slider values at the start of the drag
+                    // These will be modified relative to their initial values
+                    startXPos = parseFloat(xPosSlider.value);
+                    startYPos = parseFloat(yPosSlider.value);
+                    previewContainer.style.cursor = 'grabbing';
+                }
+            });
 
-        posYSlider.addEventListener('input', () => {
-            imgY = parseFloat(posYSlider.value);
-            drawImage();
-        });
+            previewContainer.addEventListener('mousemove', (e) => {
+                if (!isDragging || !userImageLoaded) return;
+                
+                const rect = userImagePreview.getBoundingClientRect();
+                const deltaX = e.clientX - (rect.left + rect.width / 2) - startX;
+                const deltaY = e.clientY - (rect.top + rect.height / 2) - startY;
+                
+                // Calculate new slider values based on drag distance
+                // The factor 200 below converts pixels to percentage for slider range -100 to 100
+                const newXPos = startXPos + (deltaX / previewContainer.offsetWidth) * 200;
+                const newYPos = startYPos + (deltaY / previewContainer.offsetHeight) * 200;
 
-        rotateSlider.addEventListener('input', () => {
-            imgRotation = parseFloat(rotateSlider.value);
-            drawImage();
-        });
+                xPosSlider.value = Math.max(-100, Math.min(100, newXPos));
+                yPosSlider.value = Math.max(-100, Math.min(100, newYPos));
+                updateImagePosition();
+            });
 
-        downloadImageBtn.addEventListener('click', () => {
-            downloadImage();
-        });
+            previewContainer.addEventListener('mouseup', () => {
+                isDragging = false;
+                previewContainer.style.cursor = 'grab';
+            });
 
-        // Mouse/Touch Dragging for Image Position
-        imageCanvas.addEventListener('mousedown', (e) => {
-            if (userImage.src && currentFrameUrl) {
-                isDragging = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                const rect = imageCanvas.getBoundingClientRect();
-                // Store initial image offset relative to canvas center for correct dragging
-                const currentCanvasImgX = (imgX / 100) * (imageCanvas.width / 2);
-                const currentCanvasImgY = (imgY / 100) * (imageCanvas.height / 2);
-                startX -= rect.left + imageCanvas.width / 2 + currentCanvasImgX;
-                startY -= rect.top + imageCanvas.height / 2 + currentCanvasImgY;
-            }
-        });
+            previewContainer.addEventListener('mouseleave', () => {
+                isDragging = false;
+                previewContainer.style.cursor = 'grab';
+            });
+            
+            // Touch events for mobile dragging
+            previewContainer.addEventListener('touchstart', (e) => {
+                if (userImageLoaded && selectedFrame && e.touches.length === 1) {
+                    isDragging = true;
+                    e.preventDefault(); // Prevent scrolling
+                    const touch = e.touches[0];
+                    const rect = userImagePreview.getBoundingClientRect();
+                    startX = touch.clientX - rect.left - (rect.width / 2);
+                    startY = touch.clientY - rect.top - (rect.height / 2);
 
-        imageCanvas.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const rect = imageCanvas.getBoundingClientRect();
-            const currentX = e.clientX - rect.left;
-            const currentY = e.clientY - rect.top;
+                    startXPos = parseFloat(xPosSlider.value);
+                    startYPos = parseFloat(yPosSlider.value);
+                    previewContainer.style.cursor = 'grabbing';
+                }
+            }, { passive: false }); // Use passive: false to allow preventDefault
 
-            // Calculate new image offset based on drag
-            const newImgX = ((currentX - imageCanvas.width / 2 - startX) / (imageCanvas.width / 2)) * 100;
-            const newImgY = ((currentY - imageCanvas.height / 2 - startY) / (imageCanvas.height / 2)) * 100;
-
-            imgX = newImgX;
-            imgY = newImgY;
-
-            posXSlider.value = imgX;
-            posYSlider.value = imgY;
-            drawImage();
-        });
-
-        imageCanvas.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
-
-        imageCanvas.addEventListener('mouseleave', () => {
-            isDragging = false;
-        });
-
-        imageCanvas.addEventListener('touchstart', (e) => {
-            if (userImage.src && currentFrameUrl && e.touches.length === 1) {
-                isDragging = true;
+            previewContainer.addEventListener('touchmove', (e) => {
+                if (!isDragging || !userImageLoaded || e.touches.length !== 1) return;
+                
                 const touch = e.touches[0];
-                startX = touch.clientX;
-                startY = touch.clientY;
-                const rect = imageCanvas.getBoundingClientRect();
-                const currentCanvasImgX = (imgX / 100) * (imageCanvas.width / 2);
-                const currentCanvasImgY = (imgY / 100) * (imageCanvas.height / 2);
-                startX -= rect.left + imageCanvas.width / 2 + currentCanvasImgX;
-                startY -= rect.top + imageCanvas.height / 2 + currentCanvasImgY;
-            }
-        }, { passive: true });
+                const rect = userImagePreview.getBoundingClientRect();
+                const deltaX = touch.clientX - (rect.left + rect.width / 2) - startX;
+                const deltaY = touch.clientY - (rect.top + rect.height / 2) - startY;
 
-        imageCanvas.addEventListener('touchmove', (e) => {
-            if (!isDragging || e.touches.length !== 1) return;
-            const touch = e.touches[0];
-            const rect = imageCanvas.getBoundingClientRect();
-            const currentX = touch.clientX - rect.left;
-            const currentY = touch.clientY - rect.top;
+                const newXPos = startXPos + (deltaX / previewContainer.offsetWidth) * 200;
+                const newYPos = startYPos + (deltaY / previewContainer.offsetHeight) * 200;
 
-            const newImgX = ((currentX - imageCanvas.width / 2 - startX) / (imageCanvas.width / 2)) * 100;
-            const newImgY = ((currentY - imageCanvas.height / 2 - startY) / (imageCanvas.height / 2)) * 100;
+                xPosSlider.value = Math.max(-100, Math.min(100, newXPos));
+                yPosSlider.value = Math.max(-100, Math.min(100, newYPos));
+                updateImagePosition();
+            }, { passive: false });
 
-            imgX = newImgX;
-            imgY = newImgY;
+            previewContainer.addEventListener('touchend', () => {
+                isDragging = false;
+                previewContainer.style.cursor = 'grab';
+            });
 
-            posXSlider.value = imgX;
-            posYSlider.value = imgY;
-            drawImage();
-        }, { passive: true });
 
-        imageCanvas.addEventListener('touchend', () => {
-            isDragging = false;
+            // Download functionality using html2canvas
+            downloadBtn.addEventListener('click', function() {
+                if (!userImageLoaded || !selectedFrame || !frameImageLoaded) {
+                    alert('โปรดอัปโหลดรูปภาพและเลือกกรอบก่อนดาวน์โหลด');
+                    return;
+                }
+
+                loadingOverlay.classList.remove('hidden');
+
+                // Create a temporary div to render the full-resolution image
+                const tempRenderDiv = document.createElement('div');
+                tempRenderDiv.style.width = '1920px'; // Desired output resolution
+                tempRenderDiv.style.height = '1920px'; // Desired output resolution
+                tempRenderDiv.style.position = 'absolute';
+                tempRenderDiv.style.left = '-9999px'; // Hide it off-screen
+                tempRenderDiv.style.top = '-9999px';
+                tempRenderDiv.style.overflow = 'hidden';
+                tempRenderDiv.style.backgroundColor = 'transparent';
+                tempRenderDiv.style.display = 'flex'; // Use flex to layer images
+                tempRenderDiv.style.alignItems = 'center';
+                tempRenderDiv.style.justifyContent = 'center';
+                document.body.appendChild(tempRenderDiv);
+
+                // Create new image elements for the high-res render
+                const hiResUserImage = new Image();
+                const hiResFrameImage = new Image();
+
+                hiResUserImage.src = userImagePreview.src;
+                hiResFrameImage.src = frameImagePreview.src;
+
+                // Apply transformations based on original slider values for the 1920px canvas
+                hiResUserImage.style.transform = `translate(${currentTranslateX}%, ${currentTranslateY}%) scale(${currentScale})`;
+                hiResUserImage.style.transformOrigin = 'center center';
+                hiResUserImage.style.objectFit = 'cover';
+                hiResUserImage.style.width = '100%';
+                hiResUserImage.style.height = '100%';
+                hiResUserImage.style.position = 'absolute'; // Position relative to tempRenderDiv
+                hiResUserImage.style.display = 'block';
+
+                hiResFrameImage.style.width = '100%';
+                hiResFrameImage.style.height = '100%';
+                hiResFrameImage.style.position = 'absolute'; // Position relative to tempRenderDiv
+                hiResFrameImage.style.zIndex = '10';
+                hiResFrameImage.style.display = 'block';
+
+                tempRenderDiv.appendChild(hiResUserImage);
+                tempRenderDiv.appendChild(hiResFrameImage);
+
+                // Wait for images to load in the temporary div
+                Promise.all([
+                    new Promise(resolve => {
+                        if (hiResUserImage.complete) {
+                            resolve();
+                        } else {
+                            hiResUserImage.onload = resolve;
+                            hiResUserImage.onerror = () => {
+                                console.error('High-res user image load error.');
+                                resolve(); // Resolve even on error to avoid blocking
+                            };
+                        }
+                    }),
+                    new Promise(resolve => {
+                        if (hiResFrameImage.complete) {
+                            resolve();
+                        } else {
+                            hiResFrameImage.onload = resolve;
+                            hiResFrameImage.onerror = () => {
+                                console.error('High-res frame image load error.');
+                                resolve();
+                            };
+                        }
+                    })
+                ]).then(() => {
+                    html2canvas(tempRenderDiv, {
+                        width: 1920,
+                        height: 1920,
+                        scale: 1, // Render at 1:1 pixel ratio for the 1920x1920 div
+                        backgroundColor: null, // Transparent background if not fully covered
+                        useCORS: true, // Necessary if images are from different origin
+                        allowTaint: false, // Prevents tainted canvas issues, requires useCORS
+                        logging: true,
+                        imageTimeout: 15000
+                    }).then(canvas => {
+                        document.body.removeChild(tempRenderDiv);
+
+                        try {
+                            const link = document.createElement('a');
+                            link.download = `profile-${selectedFrame}-gama-awards.png`;
+                            link.href = canvas.toDataURL('image/png');
+                            link.click();
+                        } catch (e) {
+                            console.error('Error creating data URL or download link:', e);
+                            alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหาภายในหรือรูปภาพต้นฉบับเสียหาย)');
+                        }
+
+                        loadingOverlay.classList.add('hidden');
+                    }).catch(err => {
+                        console.error('Error generating image with html2canvas:', err);
+                        alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ กรุณาลองใหม่อีกครั้ง');
+                        document.body.removeChild(tempRenderDiv);
+                        loadingOverlay.classList.add('hidden');
+                    });
+                }).catch(err => {
+                    console.error('Error waiting for high-res images to load:', err);
+                    alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อดาวน์โหลด กรุณาลองใหม่อีกครั้ง');
+                    document.body.removeChild(tempRenderDiv);
+                    loadingOverlay.classList.add('hidden');
+                });
+            });
+
+            // Initialize position on load
+            updateImagePosition();
         });
-
-        // --- Functions ---
-
-        function drawImage() {
-            ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
-
-            if (!userImage.src) {
-                return; // Don't draw if no user image
-            }
-
-            ctx.save();
-            ctx.translate(imageCanvas.width / 2, imageCanvas.height / 2);
-            ctx.rotate(imgRotation * Math.PI / 180);
-
-            // Calculate scaled image dimensions
-            const imgWidth = userImage.width * imgScale;
-            const imgHeight = userImage.height * imgScale;
-
-            // Calculate image position based on sliders (percentage of canvas width/height)
-            // imgX and imgY are percentages. Convert them to pixels relative to canvas center.
-            const drawX = (imgX / 100) * (imageCanvas.width / 2) - (imgWidth / 2);
-            const drawY = (imgY / 100) * (imageCanvas.height / 2) - (imgHeight / 2);
-
-            ctx.drawImage(userImage, drawX, drawY, imgWidth, imgHeight);
-            ctx.restore();
-
-            if (frameImage.src) {
-                ctx.drawImage(frameImage, 0, 0, imageCanvas.width, imageCanvas.height);
-            }
-        }
-
-        function resetImageTransform() {
-            imgScale = 1.0;
-            imgX = 0;
-            imgY = 0;
-            imgRotation = 0;
-
-            zoomSlider.value = 1.0;
-            posXSlider.value = 0;
-            posYSlider.value = 0;
-            rotateSlider.value = 0;
-        }
-
-        function downloadImage() {
-            if (!userImage.src || !frameImage.src) {
-                alert('กรุณาอัปโหลดรูปภาพและเลือกกรอบก่อนดาวน์โหลด');
-                return;
-            }
-
-            // Create a new canvas for final download with specified resolution
-            const finalCanvas = document.createElement('canvas');
-            const FINAL_RESOLUTION = 1920;
-            finalCanvas.width = FINAL_RESOLUTION;
-            finalCanvas.height = FINAL_RESOLUTION;
-            const finalCtx = finalCanvas.getContext('2d');
-
-            finalCtx.save();
-            finalCtx.translate(finalCanvas.width / 2, finalCanvas.height / 2);
-            finalCtx.rotate(imgRotation * Math.PI / 180);
-
-            const imgWidthFinal = userImage.width * imgScale * (FINAL_RESOLUTION / CANVAS_SIZE);
-            const imgHeightFinal = userImage.height * imgScale * (FINAL_RESOLUTION / CANVAS_SIZE);
-
-            const drawXFinal = (imgX / 100) * (finalCanvas.width / 2) - (imgWidthFinal / 2);
-            const drawYFinal = (imgY / 100) * (finalCanvas.height / 2) - (imgHeightFinal / 2);
-
-            finalCtx.drawImage(userImage, drawXFinal, drawYFinal, imgWidthFinal, imgHeightFinal);
-            finalCtx.restore();
-
-            finalCtx.drawImage(frameImage, 0, 0, finalCanvas.width, finalCanvas.height);
-
-            // Create a temporary link and trigger download
-            const link = document.createElement('a');
-            link.download = 'GAMA_Awards_Profile.png';
-            link.href = finalCanvas.toDataURL('image/png');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        // Initial draw (empty canvas)
-        drawImage();
-
     </script>
 </body>
 </html>
