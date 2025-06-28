@@ -1,4 +1,5 @@
-ใหม่ อีก<!DOCTYPE html>
+รองรับแอรนดอย์ ทดสอบ 1
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
@@ -162,7 +163,7 @@
     // Apply transformations from sliders to the preview
     ['scaleSlider', 'xSlider', 'ySlider', 'rotateSlider'].forEach(id => {
       document.getElementById(id).addEventListener('input', () => {
-        scale = document.getElementById(id === 'scaleSlider' ? id : 'scaleSlider').value / 100;
+        scale = document.getElementById('scaleSlider').value / 100;
         x = document.getElementById('xSlider').value;
         y = document.getElementById('ySlider').value;
         rotation = document.getElementById('rotateSlider').value;
