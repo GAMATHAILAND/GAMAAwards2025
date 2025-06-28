@@ -225,23 +225,42 @@
     }
 
     downloadBtn.addEventListener('click', async () => {
-      const canvas = await renderCanvas();
-      const link = document.createElement('a');
-      link.download = `gama-frame-${currentFrame}.png`;
-      link.href = canvas.toDataURL('image/png'); // Use PNG for transparency
-      link.click();
+      try {
+        const canvas = await renderCanvas();
+        const link = document.createElement('a');
+        link.download = `gama-frame-${currentFrame}.png`;
+        link.href = canvas.toDataURL('image/png'); // Use PNG for transparency
+        link.click();
+      } catch (error) {
+        console.error("Error during download:", error);
+        alert('เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ กรุณาลองใหม่อีกครั้ง');
+      }
     });
 
     shareBtn.addEventListener('click', async () => {
-      const canvas = await renderCanvas();
-      canvas.toBlob(blob => {
-        const file = new File([blob], 'gama-frame.png', { type: 'image/png' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: 'GAMA Awards Frame' });
-        } else {
-          alert('อุปกรณ์ไม่รองรับการแชร์โดยตรง กรุณาใช้ปุ่มดาวน์โหลด');
-        }
-      }, 'image/png'); // Use PNG for transparency
+      try {
+        const canvas = await renderCanvas();
+        canvas.toBlob(blob => {
+          const file = new File([blob], 'gama-frame.png', { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: 'GAMA Awards Frame' })
+              .catch(error => {
+                // Catch errors if share is cancelled by user or fails for other reasons
+                console.error("Error sharing:", error);
+                if (error.name === "AbortError") {
+                  // User cancelled the share, no need to alert
+                } else {
+                  alert('ไม่สามารถแชร์รูปภาพได้โดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
+                }
+              });
+          } else {
+            alert('อุปกรณ์ไม่รองรับการแชร์รูปภาพโดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
+          }
+        }, 'image/png'); // Use PNG for transparency
+      } catch (error) {
+        console.error("Error during share preparation:", error);
+        alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อแชร์ กรุณาลองใหม่อีกครั้ง หรือใช้ปุ่ม "ดาวน์โหลด"');
+      }
     });
   </script>
 </body>
