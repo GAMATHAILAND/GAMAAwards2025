@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>สร้างกรอบรูปภาพ GAMA Awards</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Prompt', sans-serif; background: #fff; }
@@ -163,65 +162,91 @@
       shareBtn.disabled = !ready;
     }
 
+    // *** ฟังก์ชัน renderCanvas ใหม่ ใช้ Canvas API โดยตรง ***
     async function renderCanvas() {
-      // Create a temporary container for rendering the high-res image
-      const container = document.createElement('div');
-      container.style.width = '1920px'; // Target width
-      container.style.height = '1920px'; // Target height (square)
-      container.style.position = 'absolute';
-      container.style.left = '-9999px'; // Move off-screen
-      container.style.top = '-9999px';
-      container.style.overflow = 'hidden'; // Crucial for cropping effect
-      container.style.background = 'transparent'; // Ensure transparent background
-      container.style.display = 'flex'; // Use flex to center if needed, though html2canvas handles content directly
-      container.style.alignItems = 'center';
-      container.style.justifyContent = 'center';
+        const canvas = document.createElement('canvas');
+        canvas.width = 1920;
+        canvas.height = 1920;
+        const ctx = canvas.getContext('2d');
 
-      // Load original high-res user image
-      const hiResUser = new Image();
-      hiResUser.src = originalUserImageSrc;
-      hiResUser.crossOrigin = 'anonymous'; // Important for cross-origin images
-      await new Promise(resolve => hiResUser.onload = resolve); // Wait for image to load
+        // ตั้งค่าพื้นหลังเป็นโปร่งใส
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Apply transformations to the high-res user image for rendering
-      // The image fills the 1920x1920 container and then is transformed
-      Object.assign(hiResUser.style, {
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover', // This ensures the image covers the 1920x1920 square
-        transform: `translate(${x}%, ${y}%) scale(${scale}) rotate(${rotation}deg)`,
-        transformOrigin: 'center center',
-        position: 'absolute',
-        zIndex: '5'
-      });
+        // โหลดรูปภาพผู้ใช้
+        const hiResUser = new Image();
+        hiResUser.src = originalUserImageSrc;
+        await new Promise((resolve, reject) => {
+            hiResUser.onload = resolve;
+            hiResUser.onerror = () => reject(new Error('Failed to load user image for high-res render.'));
+        });
 
-      // Load high-res frame image
-      const hiResFrame = new Image();
-      hiResFrame.src = frameImage.src;
-      hiResFrame.crossOrigin = 'anonymous';
-      await new Promise(resolve => hiResFrame.onload = resolve); // Wait for image to load
-      Object.assign(hiResFrame.style, {
-        width: '100%',
-        height: '100%',
-        objectFit: 'contain', // Frame should be contained within the square
-        position: 'absolute',
-        zIndex: '10'
-      });
+        // โหลดรูปภาพกรอบ
+        const hiResFrame = new Image();
+        hiResFrame.src = frameImage.src;
+        // สำคัญมาก: ถ้ารูปภาพกรอบมาจากโดเมนอื่น ต้องมี CORS header ที่ถูกต้องจากเซิร์ฟเวอร์นั้น
+        hiResFrame.crossOrigin = 'anonymous'; 
+        await new Promise((resolve, reject) => {
+            hiResFrame.onload = resolve;
+            hiResFrame.onerror = () => reject(new Error('Failed to load frame image for high-res render.'));
+        });
 
-      container.appendChild(hiResUser);
-      container.appendChild(hiResFrame);
-      document.body.appendChild(container); // Append to body for html2canvas to see it
+        // --- วาดรูปภาพผู้ใช้พร้อมแปลงรูป (เลียนแบบ object-fit: cover และ CSS transforms) ---
+        ctx.save(); // บันทึกสถานะปัจจุบันของ Canvas context
 
-      // Render the container to a canvas
-      const canvas = await html2canvas(container, {
-        width: 1920,
-        height: 1920,
-        backgroundColor: null, // Transparent background
-        useCORS: true,
-        scale: 1 // Render at the exact dimensions of the container (1920x1920)
-      });
-      document.body.removeChild(container); // Clean up the temporary container
-      return canvas;
+        // ย้ายจุดหมุนและจุดศูนย์กลางการขยายไปที่กึ่งกลางของ Canvas
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+
+        // หมุนรูปภาพ (Rotation applied around the center)
+        ctx.rotate(rotation * Math.PI / 180);
+
+        // ขยาย/ย่อรูปภาพ (Scale applied from the center)
+        ctx.scale(scale, scale);
+
+        // เลื่อนตำแหน่งรูปภาพตาม Slider (x, y เป็น % เทียบกับครึ่งหนึ่งของ Canvas)
+        // เช่น ถ้า x = 100 จะเลื่อนไปทางขวาครึ่งหนึ่งของ Canvas width
+        // การเลื่อนนี้จะเกิดขึ้นหลังจาก Scale และ Rotate เพื่อให้ตรงกับพฤติกรรมของ CSS transform
+        ctx.translate(
+            (x / 100) * (canvas.width / 2),
+            (y / 100) * (canvas.height / 2)
+        );
+
+        // คำนวณตำแหน่งและขนาดสำหรับการวาดรูปภาพแบบ object-fit: cover
+        const imgAspect = hiResUser.width / hiResUser.height;
+        const canvasAspect = canvas.width / canvas.height; // ควรเป็น 1 (1920x1920)
+
+        let sx, sy, sWidth, sHeight; // Source rectangle (ส่วนที่ตัดจากรูปต้นฉบับ)
+        let dx, dy, dWidth, dHeight; // Destination rectangle (ส่วนที่จะวางบน Canvas)
+
+        dWidth = canvas.width;
+        dHeight = canvas.height;
+        // วางตำแหน่งที่ -ครึ่งหนึ่งของ Canvas width/height เพื่อให้อยู่ตรงกลางหลังจาก ctx.translate()
+        dx = -canvas.width / 2; 
+        dy = -canvas.height / 2; 
+
+        if (imgAspect > canvasAspect) {
+            // รูปต้นฉบับกว้างกว่าพื้นที่เป้าหมาย (1920x1920), ต้องตัดส่วนแนวนอนออก
+            sHeight = hiResUser.height;
+            sWidth = hiResUser.height * canvasAspect; 
+            sx = (hiResUser.width - sWidth) / 2;
+            sy = 0;
+        } else {
+            // รูปต้นฉบับสูงกว่าพื้นที่เป้าหมาย, ต้องตัดส่วนแนวตั้งออก
+            sWidth = hiResUser.width;
+            sHeight = hiResUser.width / canvasAspect;
+            sx = 0;
+            sy = (hiResUser.height - sHeight) / 2;
+        }
+
+        // วาดรูปภาพผู้ใช้
+        ctx.drawImage(hiResUser, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+
+        ctx.restore(); // กู้คืนสถานะ Canvas context กลับสู่สถานะก่อนการแปลงทั้งหมด
+
+        // --- วาดรูปภาพกรอบ (จะอยู่ด้านบนสุดและครอบคลุมทั้ง Canvas) ---
+        // รูปภาพกรอบควรมีพื้นหลังโปร่งใสและถูกออกแบบมาให้พอดีกับสี่เหลี่ยมจตุรัส 1920x1920
+        ctx.drawImage(hiResFrame, 0, 0, canvas.width, canvas.height);
+
+        return canvas;
     }
 
     downloadBtn.addEventListener('click', async () => {
@@ -229,11 +254,11 @@
         const canvas = await renderCanvas();
         const link = document.createElement('a');
         link.download = `gama-frame-${currentFrame}.png`;
-        link.href = canvas.toDataURL('image/png'); // Use PNG for transparency
+        link.href = canvas.toDataURL('image/png'); // ใช้ PNG เพื่อรองรับพื้นหลังโปร่งใส
         link.click();
       } catch (error) {
         console.error("Error during download:", error);
-        alert('เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ กรุณาลองใหม่อีกครั้ง');
+        alert('เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ กรุณาลองใหม่อีกครั้ง: ' + error.message + '\nโปรดตรวจสอบ Console เพื่อดูรายละเอียดเพิ่มเติม');
       }
     });
 
@@ -245,10 +270,9 @@
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({ files: [file], title: 'GAMA Awards Frame' })
               .catch(error => {
-                // Catch errors if share is cancelled by user or fails for other reasons
                 console.error("Error sharing:", error);
                 if (error.name === "AbortError") {
-                  // User cancelled the share, no need to alert
+                  // ผู้ใช้ยกเลิกการแชร์ ไม่ต้องแจ้งเตือน
                 } else {
                   alert('ไม่สามารถแชร์รูปภาพได้โดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
                 }
@@ -256,10 +280,10 @@
           } else {
             alert('อุปกรณ์ไม่รองรับการแชร์รูปภาพโดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
           }
-        }, 'image/png'); // Use PNG for transparency
+        }, 'image/png'); // ใช้ PNG เพื่อรองรับพื้นหลังโปร่งใส
       } catch (error) {
         console.error("Error during share preparation:", error);
-        alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อแชร์ กรุณาลองใหม่อีกครั้ง หรือใช้ปุ่ม "ดาวน์โหลด"');
+        alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อแชร์ กรุณาลองใหม่อีกครั้ง หรือใช้ปุ่ม "ดาวน์โหลด": ' + error.message);
       }
     });
   </script>
