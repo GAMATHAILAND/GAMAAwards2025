@@ -1,5 +1,4 @@
-ใหม่
-<!DOCTYPE html>
+ใหม่ อีก<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
@@ -19,22 +18,32 @@
       background: #f3f4f6;
       overflow: hidden; /* Ensures anything outside the square is hidden */
     }
-    .preview-container img {
+    /* Adjusted to avoid applying direct transform to img for proper scaling context */
+    .preview-container .user-img-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden; /* Important for object-fit: cover behavior */
+    }
+    .preview-container .user-img {
+        display: block; /* To prevent extra space below image */
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* User image will cover its parent div */
+        /* Transformations will be applied directly to this img */
+        transform-origin: center center; /* Ensures transformations are from the center */
+    }
+    .preview-container .frame-img {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      object-fit: contain; /* Changed to 'contain' initially for uploaded image */
-    }
-    .preview-container .frame-img {
       z-index: 10;
       pointer-events: none;
       object-fit: contain;
-    }
-    .preview-container .user-img {
-        z-index: 5;
-        object-fit: cover; /* User image will cover its parent div, then transformations apply */
     }
     #downloadBtn:disabled, #shareBtn:disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
@@ -58,7 +67,9 @@
 
     <div class="mb-6">
       <div class="preview-container rounded mx-auto" id="preview">
-        <img id="userImage" class="user-img hidden" alt="User Uploaded Image" />
+        <div class="user-img-wrapper">
+            <img id="userImage" class="user-img hidden" alt="User Uploaded Image" />
+        </div>
         <img id="frameImage" class="frame-img hidden" alt="Selected Frame" />
       </div>
     </div>
@@ -72,7 +83,7 @@
       <label for="ySlider" class="block mb-1">ตำแหน่งแนวตั้ง</label>
       <input type="range" id="ySlider" min="-100" max="100" value="0" class="w-full mb-2">
       <label for="rotateSlider" class="block mb-1">หมุน</label>
-      <input type="range" id="rotateSlider" min="-180" max="-180" value="0" class="w-full mb-2">
+      <input type="range" id="rotateSlider" min="-180" max="180" value="0" class="w-full mb-2">
     </div>
 
     <div class="mb-4">
@@ -143,13 +154,15 @@
 
     function applyTransform() {
       // These transformations directly apply to the preview image's style
-      userImage.style.transform = `translate(${x}%, ${y}%) scale(${scale}) rotate(${rotation}deg)`;
+      // Ensure scale is always positive for CSS transform preview
+      const currentScale = Math.max(0.1, scale); // Prevent scale from being zero or negative for CSS preview
+      userImage.style.transform = `translate(${x}%, ${y}%) scale(${currentScale}) rotate(${rotation}deg)`;
     }
 
     // Apply transformations from sliders to the preview
     ['scaleSlider', 'xSlider', 'ySlider', 'rotateSlider'].forEach(id => {
       document.getElementById(id).addEventListener('input', () => {
-        scale = document.getElementById('scaleSlider').value / 100;
+        scale = document.getElementById(id === 'scaleSlider' ? id : 'scaleSlider').value / 100;
         x = document.getElementById('xSlider').value;
         y = document.getElementById('ySlider').value;
         rotation = document.getElementById('rotateSlider').value;
@@ -163,7 +176,7 @@
       shareBtn.disabled = !ready;
     }
 
-    // *** ฟังก์ชัน renderCanvas ใหม่ ใช้ Canvas API โดยตรง ***
+    // *** ฟังก์ชัน renderCanvas ใช้ Canvas API โดยตรง ***
     async function renderCanvas() {
         const canvas = document.createElement('canvas');
         canvas.width = 1920;
@@ -201,10 +214,10 @@
         ctx.rotate(rotation * Math.PI / 180);
 
         // ขยาย/ย่อรูปภาพ (Scale applied from the center)
-        ctx.scale(scale, scale);
+        // ใช้ Math.abs เพื่อให้แน่ใจว่า scale เป็นค่าบวกเสมอเวลาวาดลง Canvas
+        ctx.scale(Math.abs(scale), Math.abs(scale));
 
         // เลื่อนตำแหน่งรูปภาพตาม Slider (x, y เป็น % เทียบกับครึ่งหนึ่งของ Canvas)
-        // เช่น ถ้า x = 100 จะเลื่อนไปทางขวาครึ่งหนึ่งของ Canvas width
         // การเลื่อนนี้จะเกิดขึ้นหลังจาก Scale และ Rotate เพื่อให้ตรงกับพฤติกรรมของ CSS transform
         ctx.translate(
             (x / 100) * (canvas.width / 2),
@@ -254,8 +267,9 @@
       try {
         const canvas = await renderCanvas();
         const link = document.createElement('a');
-        link.download = `gama-frame-${currentFrame}.png`;
-        link.href = canvas.toDataURL('image/png'); // ใช้ PNG เพื่อรองรับพื้นหลังโปร่งใส
+        // เปลี่ยนจาก image/png เป็น image/jpeg และเพิ่ม quality (0.9 คือ 90% quality)
+        link.download = `gama-frame-${currentFrame}.jpg`; // เปลี่ยนนามสกุลไฟล์
+        link.href = canvas.toDataURL('image/jpeg', 0.9); // สร้างเป็น JPEG
         link.click();
       } catch (error) {
         console.error("Error during download:", error);
@@ -266,8 +280,10 @@
     shareBtn.addEventListener('click', async () => {
       try {
         const canvas = await renderCanvas();
+        // เปลี่ยนจาก image/png เป็น image/jpeg และเพิ่ม quality
         canvas.toBlob(blob => {
-          const file = new File([blob], 'gama-frame.png', { type: 'image/png' });
+          // กำหนดประเภทไฟล์เป็น image/jpeg
+          const file = new File([blob], 'gama-frame.jpg', { type: 'image/jpeg' }); 
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({ files: [file], title: 'GAMA Awards Frame' })
               .catch(error => {
@@ -281,7 +297,7 @@
           } else {
             alert('อุปกรณ์ไม่รองรับการแชร์รูปภาพโดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
           }
-        }, 'image/png'); // ใช้ PNG เพื่อรองรับพื้นหลังโปร่งใส
+        }, 'image/jpeg', 0.9); // สร้างเป็น JPEG ด้วย quality 0.9
       } catch (error) {
         console.error("Error during share preparation:", error);
         alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อแชร์ กรุณาลองใหม่อีกครั้ง หรือใช้ปุ่ม "ดาวน์โหลด": ' + error.message);
