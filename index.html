@@ -26,7 +26,6 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s ease-in-out;
-            pointer-events: auto; /* Re-enable interaction for thumbnails */
         }
         .frame-thumbnail:hover {
             border-color: #a78bfa; /* purple-400 */
@@ -58,7 +57,6 @@
             overflow: hidden;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-            pointer-events: auto; /* Re-enable interaction for preview area */
         }
         .preview-container .user-img-wrapper {
             position: absolute;
@@ -86,54 +84,43 @@
             pointer-events: none;
             object-fit: contain;
         }
-        #downloadBtn:disabled, #shareBtn:disabled {
+        #downloadBtn:disabled, #shareBtn:disabled, #openCropperBtn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             filter: grayscale(100%);
-            pointer-events: none; /* Disable clicks on disabled buttons */
-        }
-        #downloadBtn, #shareBtn {
-            pointer-events: auto; /* Enable clicks on active buttons */
-        }
-        /* Sliders should always be interactive unless modal is open */
-        input[type="range"] {
-            pointer-events: auto;
         }
 
-
-        /* Cropper Modal Styles - Optimized for strong visual separation */
+        /* Cropper Modal Styles */
         .cropper-modal {
-            display: none; /* Controlled by JS */
+            display: none; /* Hidden by default */
             position: fixed;
             z-index: 10000; /* Very high to ensure it's on top */
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto; /* In case content is too large for screen */
+            overflow: auto;
             background-color: rgba(0,0,0,0.9); /* More opaque, very dark overlay */
             display: flex; /* Use flexbox for centering */
             justify-content: center; /* Center horizontally */
             align-items: center; /* Center vertically */
-            padding: 15px; /* Slightly reduced for tighter feel on small screens */
-            box-sizing: border-box; /* Include padding in width/height calculations */
-            pointer-events: auto; /* Modal itself is interactive */
+            padding: 15px;
+            box-sizing: border-box;
         }
         .cropper-content {
             background-color: #ffffff;
-            margin: auto; /* Fallback centering */
+            margin: auto;
             padding: 35px;
             border-radius: 16px;
-            width: 95%; /* Wider on small screens */
-            max-width: 800px; /* Increased max-width for more image space */
-            max-height: 95vh; /* Limit height to viewport height */
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4); /* Stronger, deeper shadow */
+            width: 95%;
+            max-width: 800px;
+            max-height: 95vh;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
             position: relative;
-            display: flex; /* Use flex for internal layout */
-            flex-direction: column; /* Stack content vertically */
-            align-items: center; /* Center content within the modal */
-            animation: fadeInScale 0.3s ease-out forwards; /* Keep final state */
-            pointer-events: auto; /* Content inside modal is interactive */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeInScale 0.3s ease-out forwards;
         }
         @keyframes fadeInScale {
             from { opacity: 0; transform: scale(0.9); }
@@ -141,25 +128,23 @@
         }
         .cropper-container-wrapper {
             width: 100%;
-            /* Adjust height based on available space, ensuring it's square for 1:1 cropper */
-            flex-grow: 1; /* Allows it to take available space */
+            flex-grow: 1;
             max-height: calc(95vh - 180px); /* Approx. vh - (header + button height + padding) */
-            aspect-ratio: 1 / 1; /* Maintain square aspect ratio for the cropper area */
-            margin-bottom: 25px; /* Spacing */
+            aspect-ratio: 1 / 1;
+            margin-bottom: 25px;
             border: 1px solid #e0e0e0;
             background-color: #fcfcfc;
-            overflow: hidden; /* Cropper.js handles its own overflow, but good to have */
-            display: flex; /* For centering the internal cropper elements if needed */
+            overflow: hidden;
+            display: flex;
             justify-content: center;
             align-items: center;
         }
         .cropper-container-wrapper img {
             display: block;
             max-width: 100%;
-            /* Cropper.js manages this image's size directly */
         }
         .cropper-content h2 {
-            font-size: 2rem; /* Even larger heading */
+            font-size: 2rem;
             font-weight: 700;
             color: #6d28d9;
             margin-bottom: 1.8rem;
@@ -169,39 +154,39 @@
             display: flex;
             justify-content: center;
             gap: 1.5rem;
-            width: 100%; /* Take full width of modal content */
-            max-width: 450px; /* Limit button group width */
-            margin-top: 1rem; /* Adjusted margin */
+            width: 100%;
+            max-width: 450px;
+            margin-top: 1rem;
         }
         .cropper-content button {
             flex-grow: 1;
-            padding: 15px 30px; /* More generous padding */
-            font-size: 1.2rem; /* Larger font size */
-            font-weight: 700; /* Bolder text */
-            border-radius: 12px; /* Even more rounded buttons */
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 12px;
             transition: background-color 0.2s ease-in-out, transform 0.1s ease-out, box-shadow 0.2s ease-in-out;
             cursor: pointer;
-            border: none; /* Remove default button border */
+            border: none;
         }
         .cropper-content button:hover {
-            transform: translateY(-2px); /* More pronounced lift on hover */
+            transform: translateY(-2px);
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         .cropper-content #cancelCropBtn {
-            background-color: #f3f4f6; /* gray-100 */
-            color: #4b5563; /* gray-700 */
-            border: 1px solid #d1d5db; /* gray-300 */
+            background-color: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid #d1d5db;
         }
         .cropper-content #cancelCropBtn:hover {
-            background-color: #e5e7eb; /* gray-200 */
+            background-color: #e5e7eb;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         .cropper-content #cropAndApplyBtn {
-            background-color: #22c55e; /* green-500 */
+            background-color: #22c55e;
             color: white;
         }
         .cropper-content #cropAndApplyBtn:hover {
-            background-color: #16a34a; /* green-600 */
+            background-color: #16a34a;
             box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
         }
     </style>
@@ -216,13 +201,24 @@
         <div class="mb-6">
             <h2 class="text-xl font-semibold text-purple-800 mb-2">1 อัปโหลดรูปภาพของคุณ</h2>
             <label for="uploadInput" class="block mb-1 text-sm text-gray-600">
-                กรุณาอัปโหลดภาพที่จะใช้สร้างกรอบ ภาพที่เหมาะสมคือภาพที่มีอัตราส่วน 1:1 หรือสี่เหลี่ยมจตุรัส เพื่อผลลัพธ์ที่ดีที่สุด. หากภาพไม่ใช่ 1:1 ท่านจะสามารถครอปภาพได้ในขั้นตอนถัดไป.
+                กรุณาอัปโหลดภาพที่จะใช้สร้างกรอบ ภาพที่เหมาะสมคือภาพที่มีอัตราส่วน 1:1 หรือสี่เหลี่ยมจตุรัส เพื่อผลลัพธ์ที่ดีที่สุด.
             </label>
             <input type="file" id="uploadInput" accept="image/*" class="block w-full border-2 border-dashed border-purple-300 rounded p-4 text-center cursor-pointer" />
         </div>
 
         <div class="mb-6">
-            <h2 class="text-xl font-semibold text-purple-800 mb-2">2 เลือกกรอบ</h2>
+            <h2 class="text-xl font-semibold text-purple-800 mb-2">2 ปรับขนาดและครอปรูปภาพ</h2>
+            <p class="mb-3 text-sm text-gray-600">
+                คลิกปุ่มด้านล่างเพื่อเปิดเครื่องมือปรับขนาดและครอปภาพของคุณให้เป็นสี่เหลี่ยมจตุรัส.
+            </p>
+            <button id="openCropperBtn" disabled class="w-full bg-blue-600 text-white py-3 rounded text-lg font-semibold hover:bg-blue-700 transition duration-300">
+                ปรับขนาดและครอปภาพ
+            </button>
+        </div>
+
+
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold text-purple-800 mb-2">3 เลือกกรอบ</h2>
             <div id="frameList" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-4"></div>
         </div>
 
@@ -236,7 +232,7 @@
         </div>
 
         <div class="mb-6">
-            <h2 class="text-xl font-semibold text-purple-800 mb-2">3 ปรับแต่งรูปภาพ</h2>
+            <h2 class="text-xl font-semibold text-purple-800 mb-2">4 ปรับแต่งรูปภาพ</h2>
             <label for="scaleSlider" class="block mb-1">ขยาย/ย่อ</label>
             <input type="range" id="scaleSlider" min="50" max="200" value="100" class="w-full mb-2">
             <label for="xSlider" class="block mb-1">ตำแหน่งแนวนอน</label>
@@ -248,7 +244,7 @@
         </div>
 
         <div class="mb-4">
-            <h2 class="text-xl font-semibold text-purple-800 mb-2">4 ดาวน์โหลดรูปภาพของคุณ</h2>
+            <h2 class="text-xl font-semibold text-purple-800 mb-2">5 ดาวน์โหลดรูปภาพของคุณ</h2>
             <button id="downloadBtn" disabled class="w-full bg-purple-600 text-white py-3 rounded text-lg font-semibold hover:bg-purple-700 transition duration-300">Android/คอมพิวเตอร์</button>
             <button id="shareBtn" disabled class="w-full mt-3 bg-blue-500 text-white py-3 rounded text-lg font-semibold hover:bg-blue-600 transition duration-300">iOS(บันทึกภาพ)</button>
         </div>
@@ -285,7 +281,8 @@
         const downloadBtn = document.getElementById('downloadBtn');
         const shareBtn = document.getElementById('shareBtn');
         const uploadInput = document.getElementById('uploadInput');
-        const bodyElement = document.body; // Reference to the body element
+        const openCropperBtn = document.getElementById('openCropperBtn'); // New button
+        const bodyElement = document.body;
 
         // Cropper elements
         const cropperModal = document.getElementById('cropperModal');
@@ -294,6 +291,7 @@
         const cancelCropBtn = document.getElementById('cancelCropBtn');
 
         let currentFrame = null, scale = 1, x = 0, y = 0, rotation = 0;
+        let originalUserImageSrc = null; // Store the original uploaded image DataURL
         let croppedUserImageSrc = ''; // To store the cropped image data URL
         let cropper; // Cropper.js instance
 
@@ -313,81 +311,101 @@
             frameList.appendChild(btn);
         }
 
-        // Handle image upload - show cropper modal FIRST
+        // Handle image upload: load to originalUserImageSrc and enable crop button
         uploadInput.addEventListener('change', e => {
             const file = e.target.files[0];
-            if (!file) return;
+            if (!file) {
+                originalUserImageSrc = null;
+                userImage.classList.add('hidden');
+                openCropperBtn.disabled = true; // Disable crop button if no file
+                return;
+            }
 
             const reader = new FileReader();
             reader.onload = ev => {
-                cropperImage.src = ev.target.result;
-                cropperModal.style.display = 'flex'; // Show the modal
-                bodyElement.classList.add('modal-open'); // Add class to body to disable interaction
-
-                // Destroy previous instance if it exists to prevent issues
-                if (cropper) {
-                    cropper.destroy();
-                }
-                // Initialize Cropper.js
-                cropper = new Cropper(cropperImage, {
-                    aspectRatio: 1 / 1, // Force 1:1 aspect ratio
-                    viewMode: 1, // Restrict the crop box to not exceed the canvas
-                    autoCropArea: 0.8, // Automatically crop 80% of the image area
-                    dragMode: 'move', // Allows dragging the image instead of the crop box
-                    background: false, // Hide the grid background of cropper for cleaner look
-                    // responsive: true, // Cropper.js is responsive by default
-                    // scalable: true,
-                    // zoomable: true,
-                    // movable: true,
-                });
+                originalUserImageSrc = ev.target.result; // Store original
+                userImage.src = originalUserImageSrc; // Display original in preview initially
+                userImage.classList.remove('hidden');
+                openCropperBtn.disabled = false; // Enable crop button
+                checkReady(); // Update download/share buttons
             };
             reader.readAsDataURL(file);
         });
 
-        // Crop and Apply button click
+        // Event listener for the new "Adjust & Crop Image" button
+        openCropperBtn.addEventListener('click', () => {
+            if (!originalUserImageSrc) {
+                alert('กรุณาอัปโหลดรูปภาพก่อน');
+                return;
+            }
+            cropperImage.src = originalUserImageSrc; // Load original image into cropper modal
+            cropperModal.style.display = 'flex'; // Show the modal
+            bodyElement.classList.add('modal-open'); // Add class to body to disable interaction
+
+            // Destroy previous instance if it exists to prevent issues
+            if (cropper) {
+                cropper.destroy();
+            }
+            // Initialize Cropper.js
+            cropper = new Cropper(cropperImage, {
+                aspectRatio: 1 / 1,
+                viewMode: 1,
+                autoCropArea: 0.8,
+                dragMode: 'move',
+                background: false,
+            });
+        });
+
+
+        // Crop and Apply button click (within the modal)
         cropAndApplyBtn.addEventListener('click', () => {
             if (cropper) {
-                // Get the cropped canvas data URL (e.g., as JPEG)
                 croppedUserImageSrc = cropper.getCroppedCanvas({
-                    width: 1920, // Desired output width for the cropped image
-                    height: 1920, // Desired output height for the cropped image
-                }).toDataURL('image/jpeg', 0.9); // Get JPEG data URL with 90% quality
+                    width: 1920,
+                    height: 1920,
+                }).toDataURL('image/jpeg', 0.9);
 
-                userImage.src = croppedUserImageSrc;
-                userImage.classList.remove('hidden');
+                userImage.src = croppedUserImageSrc; // Update preview with cropped image
+                userImage.classList.remove('hidden'); // Ensure it's visible
 
-                // Reset transformations for new cropped image (as it's a new "base" image)
+                // Reset transformations for new cropped image
                 scale = 1; x = 0; y = 0; rotation = 0;
                 document.getElementById('scaleSlider').value = 100;
                 document.getElementById('xSlider').value = 0;
                 document.getElementById('ySlider').value = 0;
                 document.getElementById('rotateSlider').value = 0;
-                applyTransform(); // Apply default (reset) transform
-                checkReady(); // Check if download/share buttons can be enabled
+                applyTransform();
+                checkReady();
 
                 cropperModal.style.display = 'none'; // Hide the modal
-                bodyElement.classList.remove('modal-open'); // Remove class from body to re-enable interaction
-                cropper.destroy(); // Destroy cropper instance to free up resources
+                bodyElement.classList.remove('modal-open'); // Re-enable interaction
+                cropper.destroy();
             }
         });
 
-        // Cancel Crop button click
+        // Cancel Crop button click (within the modal)
         cancelCropBtn.addEventListener('click', () => {
             cropperModal.style.display = 'none'; // Hide the modal
-            bodyElement.classList.remove('modal-open'); // Remove class from body to re-enable interaction
+            bodyElement.classList.remove('modal-open'); // Re-enable interaction
             if (cropper) {
-                cropper.destroy(); // Destroy cropper instance
+                cropper.destroy();
             }
-            uploadInput.value = ''; // Clear the input so user can re-upload if they want
-            // Clear and hide the preview image if the user cancels cropping
-            userImage.classList.add('hidden');
-            croppedUserImageSrc = '';
-            checkReady(); // Update button states (will likely disable them)
+            // If user cancels cropping, the preview goes back to the original image (if loaded)
+            // or stays hidden if no original image was loaded.
+            userImage.src = originalUserImageSrc || ''; // Revert to original if available
+            if (!originalUserImageSrc) {
+                userImage.classList.add('hidden'); // Hide if no original
+            } else {
+                 userImage.classList.remove('hidden'); // Ensure it's visible if original exists
+            }
+            // Clear cropped source, so download/share requires re-cropping or new upload
+            croppedUserImageSrc = ''; 
+            checkReady();
         });
 
-        // Function to apply transformations to the preview image (after cropping)
+        // Function to apply transformations to the preview image (after cropping or just displaying original)
         function applyTransform() {
-            const currentScale = Math.max(0.1, scale); // Prevent scale from being zero or negative for CSS preview
+            const currentScale = Math.max(0.1, scale);
             userImage.style.transform = `translate(${x}%, ${y}%) scale(${currentScale}) rotate(${rotation}deg)`;
         }
 
@@ -404,9 +422,11 @@
 
         // Function to check if download/share buttons should be enabled
         function checkReady() {
-            const ready = croppedUserImageSrc && currentFrame; // Requires a cropped image AND a selected frame
+            // Now, download/share requires a *cropped* image AND a selected frame
+            const ready = croppedUserImageSrc && currentFrame;
             downloadBtn.disabled = !ready;
             shareBtn.disabled = !ready;
+            // The openCropperBtn state is managed by uploadInput.
         }
 
         // *** Function to render the final image onto a canvas for download/share ***
@@ -418,7 +438,7 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Set background to transparent
 
-            // Load the cropped user image
+            // Load the *cropped* user image
             const hiResUser = new Image();
             hiResUser.src = croppedUserImageSrc; 
             await new Promise((resolve, reject) => {
@@ -429,40 +449,25 @@
             // Load the frame image
             const hiResFrame = new Image();
             hiResFrame.src = frameImage.src;
-            hiResFrame.crossOrigin = 'anonymous'; // Essential for cross-origin images to prevent "tainted canvas" error
+            hiResFrame.crossOrigin = 'anonymous'; 
             await new Promise((resolve, reject) => {
                 hiResFrame.onload = resolve;
                 hiResFrame.onerror = () => reject(new Error('Failed to load frame image for high-res render.'));
             });
 
             // --- Draw user image with transformations ---
-            ctx.save(); // Save the current state of the canvas context
-
-            // Move the origin to the center of the canvas for accurate rotation and scaling
+            ctx.save(); 
             ctx.translate(canvas.width / 2, canvas.height / 2);
-
-            // Apply rotation around the new origin
             ctx.rotate(rotation * Math.PI / 180);
-
-            // Apply scaling from the new origin
-            ctx.scale(Math.abs(scale), Math.abs(scale)); // Use Math.abs for scale to prevent issues if scale ever went negative
-
-            // Apply translation after scale and rotate, relative to the canvas dimensions
-            // x and y are in percentage, so convert to pixels based on half canvas size
+            ctx.scale(Math.abs(scale), Math.abs(scale));
             ctx.translate(
                 (x / 100) * (canvas.width / 2),
                 (y / 100) * (canvas.height / 2)
             );
-            
-            // Draw the already 1:1 cropped user image.
-            // It's drawn starting from -canvas.width/2, -canvas.height/2 to center it
-            // after the translate() operation, effectively filling the entire canvas area
-            // within the transformed coordinate space.
             ctx.drawImage(hiResUser, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+            ctx.restore();
 
-            ctx.restore(); // Restore the canvas context to its state before all transformations
-
-            // --- Draw frame image (on top, always fills the entire canvas) ---
+            // --- Draw frame image (on top) ---
             ctx.drawImage(hiResFrame, 0, 0, canvas.width, canvas.height);
 
             return canvas;
@@ -477,8 +482,8 @@
             try {
                 const canvas = await renderCanvas();
                 const link = document.createElement('a');
-                link.download = `gama-frame-${currentFrame}.jpg`; // Dynamic filename
-                link.href = canvas.toDataURL('image/jpeg', 0.9); // Generate JPEG with 90% quality
+                link.download = `gama-frame-${currentFrame}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
                 link.click();
             } catch (error) {
                 console.error("Error during download:", error);
@@ -494,10 +499,8 @@
             }
             try {
                 const canvas = await renderCanvas();
-                // Convert canvas to Blob for sharing
                 canvas.toBlob(blob => {
                     const file = new File([blob], 'gama-frame.jpg', { type: 'image/jpeg' });
-                    // Check if Web Share API is supported and can share files
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         navigator.share({ files: [file], title: 'GAMA Awards Frame', text: 'Check out my GAMA Awards 2025 framed photo!' })
                             .catch(error => {
@@ -509,15 +512,17 @@
                                 }
                             });
                     } else {
-                        // Fallback for unsupported browsers/devices
                         alert('อุปกรณ์ไม่รองรับการแชร์รูปภาพโดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
                     }
-                }, 'image/jpeg', 0.9); // Generate JPEG Blob with 90% quality
+                }, 'image/jpeg', 0.9);
             } catch (error) {
                 console.error("Error during share preparation:", error);
                 alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อแชร์ กรุณาลองใหม่อีกครั้ง หรือใช้ปุ่ม "ดาวน์โหลด": ' + error.message);
             }
         });
+        
+        // Initial check on page load
+        checkReady();
     </script>
 </body>
 </html>
