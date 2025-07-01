@@ -13,7 +13,6 @@
         /* Prevent scrolling and interaction when modal is open */
         body.modal-open {
             overflow: hidden;
-            /* pointer-events: none; - Removed this here, handle within modal for finer control */
         }
 
         .frame-thumbnail {
@@ -92,24 +91,26 @@
 
         /* Cropper Modal Styles */
         .cropper-modal {
-            /* IMPORTANT: Set display to none by default in CSS */
-            display: none; 
+            display: none;
             position: fixed;
-            z-index: 10000; /* Very high to ensure it's on top */
+            z-index: 10000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.9); /* More opaque, very dark overlay */
-            /* These properties will be applied by JS when display is 'flex' */
-            justify-content: center; 
-            align-items: center; 
+            /* Make the overlay darker and less transparent for better separation */
+            background-color: rgba(0,0,0,0.95); /* Increased opacity to 0.95 */
+            justify-content: center;
+            align-items: center;
             padding: 15px;
             box-sizing: border-box;
+            /* Ensure interaction with elements *behind* the modal is blocked */
+            pointer-events: auto; /* The modal itself is interactive */
         }
         .cropper-content {
-            background-color: #ffffff;
+            /* Ensure this background is completely solid white */
+            background-color: #ffffff; /* Solid white, no transparency */
             margin: auto;
             padding: 35px;
             border-radius: 16px;
@@ -122,7 +123,7 @@
             flex-direction: column;
             align-items: center;
             animation: fadeInScale 0.3s ease-out forwards;
-            pointer-events: auto; /* Ensure content inside modal is clickable */
+            pointer-events: auto; /* Content inside modal is interactive */
         }
         @keyframes fadeInScale {
             from { opacity: 0; transform: scale(0.9); }
@@ -131,7 +132,7 @@
         .cropper-container-wrapper {
             width: 100%;
             flex-grow: 1;
-            max-height: calc(95vh - 180px); /* Approx. vh - (header + button height + padding) */
+            max-height: calc(95vh - 180px);
             aspect-ratio: 1 / 1;
             margin-bottom: 25px;
             border: 1px solid #e0e0e0;
@@ -345,8 +346,14 @@
             }
             cropperImage.src = originalUserImageSrc; // Load original image into cropper modal
             cropperModal.style.display = 'flex'; // Show the modal
-            bodyElement.classList.add('modal-open'); // Add class to body to disable interaction
+            bodyElement.classList.add('modal-open'); // Add class to body to disable interaction (only overflow for now)
 
+            // To truly block interaction with underlying elements, we'll temporarily add pointer-events: none
+            // to the main content area, but ensure cropper modal is still interactive.
+            // A more robust solution might involve adding a class to the main content div,
+            // or setting pointer-events: none on body and then pointer-events: auto on the modal.
+            // For this specific issue, ensuring the modal covers and is opaque might be enough.
+            
             // Destroy previous instance if it exists to prevent issues
             if (cropper) {
                 cropper.destroy();
@@ -383,7 +390,7 @@
                 checkReady();
 
                 cropperModal.style.display = 'none'; // Hide the modal
-                bodyElement.classList.remove('modal-open'); // Re-enable interaction
+                bodyElement.classList.remove('modal-open'); // Re-enable interaction (remove overflow)
                 cropper.destroy();
             }
         });
@@ -391,7 +398,7 @@
         // Cancel Crop button click (within the modal)
         cancelCropBtn.addEventListener('click', () => {
             cropperModal.style.display = 'none'; // Hide the modal
-            bodyElement.classList.remove('modal-open'); // Re-enable interaction
+            bodyElement.classList.remove('modal-open'); // Re-enable interaction (remove overflow)
             if (cropper) {
                 cropper.destroy();
             }
@@ -433,7 +440,7 @@
             shareBtn.disabled = !ready;
             // The openCropperBtn state is managed by uploadInput.
         }
-
+        
         // *** Function to render the final image onto a canvas for download/share ***
         async function renderCanvas() {
             const canvas = document.createElement('canvas');
