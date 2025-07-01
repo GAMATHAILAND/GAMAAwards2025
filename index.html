@@ -9,596 +9,371 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <style>
-        body { 
-            font-family: 'Prompt', sans-serif; 
-            background: #f0f2f5; /* Light gray background for the page */
-            overflow-y: auto; 
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: #fff;
+            overflow-y: auto;
         }
         body.modal-open {
             overflow-y: hidden;
         }
-
-        /* Card-like styling for sections */
-        .card-section {
-            background-color: #ffffff;
-            padding: 1.5rem; /* 24px */
-            border-radius: 0.75rem; /* 12px */
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            margin-bottom: 1.5rem; /* 24px */
-        }
-
-        .section-title {
-            font-size: 1.75rem; /* 28px */
-            font-weight: 700; /* bold */
-            color: #6d28d9; /* purple-700 */
-            margin-bottom: 1rem; /* 16px */
-            display: flex;
-            align-items: center;
-            gap: 0.75rem; /* 12px */
-        }
-        .section-title span {
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            width: 32px;
-            height: 32px;
-            background-color: #6d28d9;
-            color: white;
-            border-radius: 50%;
-            font-size: 1.25rem; /* 20px */
-            font-weight: 700;
-        }
-
-        /* Frame thumbnail adjustments */
         .frame-thumbnail {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 0.75rem; /* 12px */
-            border: 2px solid #e0e0e0; /* Light gray border */
-            border-radius: 0.75rem; /* 12px */
+            padding: 8px;
+            border: 2px solid transparent;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.25s ease-in-out;
-            background-color: #fcfcfc;
+            transition: all 0.2s ease-in-out;
         }
         .frame-thumbnail:hover {
-            border-color: #a78bfa; /* purple-400 */
-            transform: translateY(-3px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            border-color: #a78bfa;
+            transform: translateY(-2px);
         }
         .frame-thumbnail img {
             width: 80px;
             height: 80px;
             object-fit: contain;
-            display: block;
-            margin-bottom: 0.5rem;
         }
         .frame-thumbnail.selected {
-            border: 3px solid #9333ea; /* purple-700 */
-            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.4), 0 4px 15px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
+            border: 3px solid #9333ea;
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.3);
         }
-        .frame-thumbnail .text-sm {
-            font-size: 0.875rem; /* 14px */
-            color: #4b5563; /* gray-700 */
-            text-align: center;
-            font-weight: 600;
-        }
-
-        /* Slider styling for better appearance */
-        input[type="range"] {
-            -webkit-appearance: none;
+        .preview-container {
+            position: relative;
             width: 100%;
-            height: 8px; /* Thicker slider track */
-            background: #e0e0e0;
-            outline: none;
-            border-radius: 5px;
-            opacity: 0.7;
-            transition: opacity .15s ease-in-out;
+            max-width: 600px;
+            aspect-ratio: 1 / 1;
+            background: #f3f4f6;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
-        input[type="range"]:hover {
-            opacity: 1;
+        .preview-container .user-img-wrapper,
+        .preview-container .frame-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px; /* Larger thumb */
-            height: 20px; /* Larger thumb */
-            background: #9333ea; /* Purple thumb */
-            cursor: pointer;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: background-color 0.2s, transform 0.1s;
+        .user-img {
+            object-fit: cover;
+            transform-origin: center;
+            transition: transform 0.05s linear;
         }
-        input[type="range"]::-webkit-slider-thumb:hover {
-            background-color: #7c2d12; /* Darker purple on hover */
-            transform: scale(1.1);
+        .frame-img {
+            z-index: 10;
+            pointer-events: none;
+            object-fit: contain;
         }
-        input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            background: #9333ea;
-            cursor: pointer;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: background-color 0.2s, transform 0.1s;
-        }
-        input[type="range"]::-moz-range-thumb:hover {
-            background-color: #7c2d12;
-            transform: scale(1.1);
-        }
-
-        /* Cropper Modal Styles - Confirmed full opacity */
         .cropper-modal {
-            display: none !important; 
+            display: none; /* Changed from !important to allow JS control */
             position: fixed;
-            z-index: 10000; 
+            z-index: 10000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
-            background-color: #000000; /* Solid black for 100% opaque overlay */
+            background-color: rgba(0,0,0,0.8); /* Darker overlay */
             justify-content: center;
             align-items: center;
             padding: 15px;
             box-sizing: border-box;
-            pointer-events: auto; 
         }
         .cropper-content {
-            background-color: #FFFFFF; /* Solid white */
-            padding: 35px;
+            background: #fff;
+            padding: 20px; /* Adjusted padding */
             border-radius: 16px;
             width: 95%;
             max-width: 800px;
             max-height: 95vh;
             box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             animation: fadeInScale 0.3s ease-out forwards;
-            pointer-events: auto; 
         }
         @keyframes fadeInScale {
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
         }
-        .cropper-container-wrapper {
-            width: 100%;
-            flex-grow: 1;
-            max-height: calc(95vh - 180px);
-            aspect-ratio: 1 / 1;
-            margin-bottom: 25px;
-            border: 1px solid #e0e0e0;
-            background-color: #fcfcfc;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .cropper-container-wrapper img {
+        /* Style for the image in the cropper modal */
+        #image-to-crop {
             display: block;
             max-width: 100%;
         }
-        .cropper-content h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #6d28d9;
-            margin-bottom: 1.8rem;
-            text-align: center;
-        }
-        .cropper-content .button-group {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            width: 100%;
-            max-width: 450px;
-            margin-top: 1rem;
-        }
-        .cropper-content button {
-            flex-grow: 1;
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            border-radius: 12px;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-out, box-shadow 0.2s ease-in-out;
-            cursor: pointer;
-            border: none;
-        }
-        .cropper-content button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .cropper-content #cancelCropBtn {
-            background-color: #f3f4f6;
-            color: #4b5563;
-            border: 1px solid #d1d5db;
-        }
-        .cropper-content #cancelCropBtn:hover {
-            background-color: #e5e7eb;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .cropper-content #cropAndApplyBtn {
-            background-color: #22c55e;
-            color: white;
-        }
-        .cropper-content #cropAndApplyBtn:hover {
-            background-color: #16a34a;
-            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
-        }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-4xl mx-auto" id="appContainer">
-        <header class="text-center mb-8 bg-white p-6 rounded-lg shadow-md">
-            <img src="https://gamathailand.github.io/GAMAAwards2025/logo-gama-awards.png" class="h-24 mx-auto mb-4" alt="GAMA Awards Logo" />
-            <h1 class="text-4xl font-extrabold text-purple-800 tracking-tight">สร้างกรอบรูปภาพ GAMA Awards 2025</h1>
-            <p class="text-gray-600 mt-2 text-lg">สร้างสรรค์ภาพของคุณด้วยกรอบ GAMA Awards เพื่อร่วมเฉลิมฉลองความสำเร็จ!</p>
-        </header>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen py-8">
+    <div class="container mx-auto p-4 bg-white rounded-lg shadow-xl w-full max-w-4xl">
+        <div class="text-center mb-6">
+            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="mx-auto h-24 mb-4" />
+            <h1 class="text-3xl font-bold text-purple-800">สร้างกรอบรูปภาพ GAMA Awards 2025</h1>
+            <p class="text-gray-600 mt-2">อัปโหลดรูปภาพของคุณและเลือกกรอบเพื่อเฉลิมฉลอง GAMA Awards 2025!</p>
+        </div>
 
-        <section id="upload-section" class="card-section">
-            <h2 class="section-title"><span>1</span> อัปโหลดรูปภาพของคุณ</h2>
-            <p class="mb-4 text-gray-700">
-                กรุณาอัปโหลดภาพที่จะใช้สร้างกรอบ ภาพที่เหมาะสมคือภาพที่มีอัตราส่วน 1:1 หรือสี่เหลี่ยมจตุรัส เพื่อผลลัพธ์ที่ดีที่สุด.
-            </p>
-            <label for="uploadInput" class="block w-full text-center py-5 border-2 border-dashed border-purple-400 rounded-lg text-purple-700 font-semibold cursor-pointer hover:border-purple-600 hover:bg-purple-50 transition duration-300">
-                คลิกเพื่อเลือกไฟล์รูปภาพ
-                <input type="file" id="uploadInput" accept="image/*" class="hidden" />
-            </label>
-        </section>
+        <div class="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50">
+            <h2 class="text-2xl font-semibold text-purple-700 mb-4">1. อัปโหลดรูปภาพของคุณ</h2>
+            <input type="file" id="imageUpload" accept="image/*" class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500" />
+            <p class="text-sm text-gray-500 mt-2">รองรับไฟล์ JPG, PNG, GIF (ไม่เกิน 5MB)</p>
+        </div>
 
-        <section id="crop-section" class="card-section">
-            <h2 class="section-title"><span>2</span> ปรับขนาดและครอปรูปภาพ</h2>
-            <p class="mb-4 text-gray-700">
-                เพื่อให้ภาพของคุณดูดีที่สุดในกรอบ ให้ปรับขนาดและครอปภาพของคุณให้เป็นสี่เหลี่ยมจตุรัส.
-            </p>
-            <button id="openCropperBtn" disabled class="w-full bg-blue-600 text-white py-3 rounded-lg text-xl font-semibold hover:bg-blue-700 transition duration-300 transform hover:scale-105">
-                <i class="fas fa-crop-alt mr-2"></i> ปรับขนาดและครอปภาพ
-            </button>
-        </section>
-
-        <section id="frame-selection-section" class="card-section">
-            <h2 class="section-title"><span>3</span> เลือกกรอบ</h2>
-            <p class="mb-4 text-gray-700">
-                เลือกกรอบ GAMA Awards ที่คุณต้องการใช้กับรูปภาพของคุณ.
-            </p>
-            <div id="frameList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <div id="cropSection" class="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50 hidden">
+            <h2 class="text-2xl font-semibold text-purple-700 mb-4">2. ครอบตัดรูปภาพของคุณ (อัตราส่วน 1:1)</h2>
+            <div class="flex flex-col items-center">
+                <div class="img-container w-full max-w-md h-80 bg-gray-200 flex items-center justify-center overflow-hidden rounded-md mb-4">
+                    <img id="cropImagePreview" src="" alt="Image to Crop" class="max-w-full max-h-full block">
                 </div>
-        </section>
-        
-        <section id="preview-adjustment-section" class="card-section">
-            <h2 class="section-title"><span>4</span> ดูตัวอย่างและปรับแต่ง</h2>
-            <p class="mb-4 text-gray-700">
-                ปรับตำแหน่ง, ขนาด, และการหมุนของรูปภาพของคุณให้เข้ากับกรอบ.
-            </p>
-            <div class="preview-container rounded-lg mx-auto mb-6 border border-gray-200">
-                <div class="user-img-wrapper">
-                    <img id="userImage" class="user-img hidden" alt="Your image" />
+                <div class="flex space-x-4 mb-4">
+                    <button id="zoomIn" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">ซูมเข้า</button>
+                    <button id="zoomOut" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">ซูมออก</button>
+                    <button id="moveLeft" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">เลื่อนซ้าย</button>
+                    <button id="moveRight" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">เลื่อนขวา</button>
+                    <button id="moveUp" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">เลื่อนขึ้น</button>
+                    <button id="moveDown" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">เลื่อนลง</button>
                 </div>
-                <img id="frameImage" class="frame-img hidden" alt="Selected Frame" />
+                <button id="applyCrop" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition duration-300">ยืนยันการครอบตัด</button>
             </div>
+        </div>
 
-            <div class="space-y-4">
-                <div>
-                    <label for="scaleSlider" class="block text-gray-700 font-medium mb-1">ขยาย/ย่อ</label>
-                    <input type="range" id="scaleSlider" min="50" max="200" value="100" class="w-full">
+        <div id="frameSelectionSection" class="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50 hidden">
+            <h2 class="text-2xl font-semibold text-purple-700 mb-4">3. เลือกกรอบรูปภาพ</h2>
+            <div id="frameThumbnails" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 </div>
-                <div>
-                    <label for="xSlider" class="block text-gray-700 font-medium mb-1">ตำแหน่งแนวนอน</label>
-                    <input type="range" id="xSlider" min="-100" max="100" value="0" class="w-full">
-                </div>
-                <div>
-                    <label for="ySlider" class="block text-gray-700 font-medium mb-1">ตำแหน่งแนวตั้ง</label>
-                    <input type="range" id="ySlider" min="-100" max="100" value="0" class="w-full">
-                </div>
-                <div>
-                    <label for="rotateSlider" class="block text-gray-700 font-medium mb-1">หมุน</label>
-                    <input type="range" id="rotateSlider" min="-180" max="180" value="0" class="w-full">
+            <button id="reCropButton" class="mt-6 px-6 py-3 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 transition duration-300">แก้ไขการครอบตัดรูปภาพ</button>
+        </div>
+
+        <div id="previewSection" class="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50 hidden">
+            <h2 class="text-2xl font-semibold text-purple-700 mb-4">4. ภาพตัวอย่างและดาวน์โหลด</h2>
+            <div class="flex justify-center mb-6">
+                <div class="preview-container">
+                    <img id="userImagePreview" class="user-img w-full h-full" src="" alt="Your Image" />
+                    <img id="selectedFramePreview" class="frame-img w-full h-full" src="" alt="Selected Frame" />
                 </div>
             </div>
-        </section>
-
-        <section id="download-share-section" class="card-section">
-            <h2 class="section-title"><span>5</span> ดาวน์โหลดและแชร์</h2>
-            <p class="mb-4 text-gray-700">
-                เมื่อพอใจแล้ว คุณสามารถดาวน์โหลดรูปภาพหรือแชร์ไปยังเพื่อนๆ ได้เลย!
-            </p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button id="downloadBtn" disabled class="w-full bg-purple-600 text-white py-3 rounded-lg text-lg font-semibold hover:bg-purple-700 transition duration-300 transform hover:scale-105">
-                    <i class="fas fa-download mr-2"></i> ดาวน์โหลด (Android/PC)
+            <div class="flex justify-center space-x-4">
+                <button id="downloadBtn" class="px-8 py-4 bg-purple-600 text-white font-bold text-lg rounded-full shadow-lg hover:bg-purple-700 transform hover:scale-105 transition duration-300">
+                    <svg class="w-6 h-6 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H5a2 2 0 01-2-2v-3a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2z"></path></svg>
+                    ดาวน์โหลดภาพ
                 </button>
-                <button id="shareBtn" disabled class="w-full bg-blue-500 text-white py-3 rounded-lg text-lg font-semibold hover:bg-blue-600 transition duration-300 transform hover:scale-105">
-                    <i class="fas fa-share-alt mr-2"></i> แชร์ (iOS/อื่นๆ)
-                </button>
-            </div>
-        </section>
-    </div>
-
-    <div id="cropperModal" class="cropper-modal">
-        <div class="cropper-content">
-            <h2 class="text-3xl font-bold text-purple-800 mb-6">ปรับขนาดและครอปรูปภาพ</h2>
-            <div class="cropper-container-wrapper">
-                <img id="cropperImage" src="" alt="Image to crop">
-            </div>
-            <div class="button-group">
-                <button id="cancelCropBtn">ยกเลิก</button>
-                <button id="cropAndApplyBtn">ครอปและใช้รูปภาพ</button>
             </div>
         </div>
     </div>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script>
-        const frameUrls = {
-            MMA: 'https://gamathailand.github.io/GAMAAwards2025/MASTER%20MULTILINE%20Award.png',
-            MFA: 'https://gamathailand.github.io/GAMAAwards2025/MASTER%20FIRM%20Award.png',
-            MAA: 'https://gamathailand.github.io/GAMAAwards2025/MASTER%20AGENCY%20Award.png',
-            IMA: 'https://gamathailand.github.io/GAMAAwards2025/International%20Management%20Award.png',
-            FLA: 'https://gamathailand.github.io/GAMAAwards2025/Frontline%20Leader%20Awards.png',
-            ERA: 'https://gamathailand.github.io/GAMAAwards2025/Excellence%20Recruitment%20Award.png',
-            COE: 'https://gamathailand.github.io/GAMAAwards2025/Circle%20of%20Excellence%20Award.png'
-        };
+        const imageUpload = document.getElementById('imageUpload');
+        const cropSection = document.getElementById('cropSection');
+        const cropImagePreview = document.getElementById('cropImagePreview');
+        const applyCropButton = document.getElementById('applyCrop');
+        const zoomInBtn = document.getElementById('zoomIn');
+        const zoomOutBtn = document.getElementById('zoomOut');
+        const moveLeftBtn = document.getElementById('moveLeft');
+        const moveRightBtn = document.getElementById('moveRight');
+        const moveUpBtn = document.getElementById('moveUp');
+        const moveDownBtn = document.getElementById('moveDown');
 
-        const frameList = document.getElementById('frameList');
-        const userImage = document.getElementById('userImage');
-        const frameImage = document.getElementById('frameImage');
+        const frameSelectionSection = document.getElementById('frameSelectionSection');
+        const frameThumbnailsContainer = document.getElementById('frameThumbnails');
+        const reCropButton = document.getElementById('reCropButton');
+
+        const previewSection = document.getElementById('previewSection');
+        const userImagePreview = document.getElementById('userImagePreview');
+        const selectedFramePreview = document.getElementById('selectedFramePreview');
         const downloadBtn = document.getElementById('downloadBtn');
-        const shareBtn = document.getElementById('shareBtn');
-        const uploadInput = document.getElementById('uploadInput');
-        const openCropperBtn = document.getElementById('openCropperBtn');
-        const bodyElement = document.body;
-        const appContainer = document.getElementById('appContainer'); // อ้างอิงถึง div หลักของเนื้อหา
 
-        const cropperModal = document.getElementById('cropperModal');
-        const cropperImage = document.getElementById('cropperImage');
-        const cropAndApplyBtn = document.getElementById('cropAndApplyBtn');
-        const cancelCropBtn = document.getElementById('cancelCropBtn');
-
-        let currentFrame = null, scale = 1, x = 0, y = 0, rotation = 0;
-        let originalUserImageSrc = null;
-        let croppedUserImageSrc = '';
         let cropper;
+        let originalImageBlob = null; // Store the original uploaded image as a Blob
+        let croppedImageBlob = null; // Store the cropped image as a Blob
+        let selectedFrameUrl = '';
 
-        // Populate frame list
-        for (let key in frameUrls) {
-            const btn = document.createElement('div');
-            btn.className = 'frame-thumbnail';
-            btn.innerHTML = `<img src="${frameUrls[key]}" alt="${key}"><div class='text-sm'>${key}</div>`;
-            btn.onclick = () => {
-                document.querySelectorAll('.frame-thumbnail').forEach(el => el.classList.remove('selected'));
-                btn.classList.add('selected');
-                frameImage.src = frameUrls[key];
-                frameImage.classList.remove('hidden');
-                currentFrame = key;
-                checkReady();
-            };
-            frameList.appendChild(btn);
+        // Preload frame URLs (replace with your actual frame URLs)
+        const frameUrls = [
+            'https://hugmediacreation.com/wp-content/uploads/2025/06/frame-gama-awards-1.png',
+            'https://hugmediacreation.com/wp-content/uploads/2025/06/frame-gama-awards-2.png',
+            'https://hugmediacreation.com/wp-content/uploads/2025/06/frame-gama-awards-3.png',
+            'https://hugmediacreation.com/wp-content/uploads/2025/06/frame-gama-awards-4.png',
+            'https://hugmediacreation.com/wp-content/uploads/2025/06/frame-gama-awards-5.png'
+        ];
+
+        // Function to load frame thumbnails
+        function loadFrameThumbnails() {
+            frameThumbnailsContainer.innerHTML = ''; // Clear existing thumbnails
+            frameUrls.forEach((url, index) => {
+                const div = document.createElement('div');
+                div.className = 'frame-thumbnail';
+                div.innerHTML = `<img src="${url}" alt="Frame ${index + 1}" class="w-full h-full object-contain" />`;
+                div.addEventListener('click', () => {
+                    selectFrame(url, div);
+                });
+                frameThumbnailsContainer.appendChild(div);
+            });
         }
 
-        // Handle image upload: load to originalUserImageSrc and enable crop button
-        uploadInput.addEventListener('change', e => {
-            const file = e.target.files[0];
-            if (!file) {
-                originalUserImageSrc = null;
-                userImage.classList.add('hidden');
-                openCropperBtn.disabled = true;
-                croppedUserImageSrc = '';
-                checkReady();
-                return;
-            }
+        // Initialize frame thumbnails on page load
+        loadFrameThumbnails();
 
-            const reader = new FileReader();
-            reader.onload = ev => {
-                originalUserImageSrc = ev.target.result;
-                userImage.src = originalUserImageSrc;
-                userImage.classList.remove('hidden');
-                openCropperBtn.disabled = false;
-                croppedUserImageSrc = ''; // Clear cropped source on new upload
-                checkReady();
-            };
-            reader.readAsDataURL(file);
-        });
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    originalImageBlob = file; // Store the original file as a Blob
+                    cropImagePreview.src = e.target.result;
 
-        // Event listener for the "Adjust & Crop Image" button
-        openCropperBtn.addEventListener('click', () => {
-            if (!originalUserImageSrc) {
-                alert('กรุณาอัปโหลดรูปภาพก่อน');
-                return;
-            }
-            cropperImage.src = originalUserImageSrc;
-            cropperModal.style.display = 'flex'; // Show the modal
-            bodyElement.classList.add('modal-open'); // Add class to body to control body overflow
-            
-            // **จุดแก้ไข:** ป้องกันการคลิกที่เนื้อหาหลักเมื่อ modal เปิด
-            appContainer.style.pointerEvents = 'none'; 
-
-            // Destroy previous instance if it exists to prevent issues
-            if (cropper) {
-                cropper.destroy();
-            }
-            // Initialize Cropper.js
-            cropper = new Cropper(cropperImage, {
-                aspectRatio: 1 / 1,
-                viewMode: 1,
-                autoCropArea: 0.8,
-                dragMode: 'move',
-                background: false,
-            });
-        });
-
-        // Crop and Apply button click (within the modal)
-        cropAndApplyBtn.addEventListener('click', () => {
-            if (cropper) {
-                croppedUserImageSrc = cropper.getCroppedCanvas({
-                    width: 1920,
-                    height: 1920,
-                }).toDataURL('image/jpeg', 0.9);
-
-                userImage.src = croppedUserImageSrc;
-                userImage.classList.remove('hidden');
-
-                // Reset transformations for new cropped image
-                scale = 1; x = 0; y = 0; rotation = 0;
-                document.getElementById('scaleSlider').value = 100;
-                document.getElementById('xSlider').value = 0;
-                document.getElementById('ySlider').value = 0;
-                document.getElementById('rotateSlider').value = 0;
-                applyTransform();
-                checkReady();
-
-                cropperModal.style.display = 'none'; // Hide the modal
-                bodyElement.classList.remove('modal-open'); // Remove class from body
-                
-                // **จุดแก้ไข:** คืนค่า pointer-events ให้เนื้อหาหลัก
-                appContainer.style.pointerEvents = 'auto'; 
-
-                cropper.destroy(); // ทำลาย Cropper instance
-            }
-        });
-
-        // Cancel Crop button click (within the modal)
-        cancelCropBtn.addEventListener('click', () => {
-            cropperModal.style.display = 'none'; // Hide the modal
-            bodyElement.classList.remove('modal-open'); // Remove class from body
-
-            // **จุดแก้ไข:** คืนค่า pointer-events ให้เนื้อหาหลัก
-            appContainer.style.pointerEvents = 'auto'; 
-
-            if (cropper) {
-                cropper.destroy(); // ทำลาย Cropper instance
-            }
-            // If user cancels cropping, the preview goes back to the original image (if loaded)
-            userImage.src = originalUserImageSrc || '';
-            if (!originalUserImageSrc) {
-                userImage.classList.add('hidden');
-            } else {
-                 userImage.classList.remove('hidden');
-            }
-            croppedUserImageSrc = ''; // Clear cropped source
-            checkReady();
-        });
-
-        // Function to apply transformations to the preview image
-        function applyTransform() {
-            const currentScale = Math.max(0.1, scale);
-            userImage.style.transform = `translate(${x}%, ${y}%) scale(${currentScale}) rotate(${rotation}deg)`;
-        }
-
-        // Event listeners for transformation sliders
-        ['scaleSlider', 'xSlider', 'ySlider', 'rotateSlider'].forEach(id => {
-            document.getElementById(id).addEventListener('input', () => {
-                scale = document.getElementById('scaleSlider').value / 100;
-                x = document.getElementById('xSlider').value;
-                y = document.getElementById('ySlider').value;
-                rotation = document.getElementById('rotateSlider').value;
-                applyTransform();
-            });
-        });
-
-        // Function to check if download/share buttons should be enabled
-        function checkReady() {
-            const ready = croppedUserImageSrc && currentFrame;
-            downloadBtn.disabled = !ready;
-            shareBtn.disabled = !ready;
-        }
-
-        // Function to render the final image onto a canvas for download/share
-        async function renderCanvas() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 1920;
-            canvas.height = 1920;
-            const ctx = canvas.getContext('2d');
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Set background to transparent
-
-            // Load the *cropped* user image
-            const hiResUser = new Image();
-            hiResUser.src = croppedUserImageSrc;
-            await new Promise((resolve, reject) => {
-                hiResUser.onload = resolve;
-                hiResUser.onerror = () => reject(new Error('Failed to load cropped user image for high-res render.'));
-            });
-
-            // Load the frame image
-            const hiResFrame = new Image();
-            hiResFrame.src = frameImage.src;
-            hiResFrame.crossOrigin = 'anonymous'; 
-            await new Promise((resolve, reject) => {
-                hiResFrame.onload = resolve;
-                hiResFrame.onerror = () => reject(new Error('Failed to load frame image for high-res render.'));
-            });
-
-            // --- Draw user image with transformations ---
-            ctx.save(); 
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(rotation * Math.PI / 180);
-            ctx.scale(Math.abs(scale), Math.abs(scale));
-            ctx.translate(
-                (x / 100) * (canvas.width / 2),
-                (y / 100) * (canvas.height / 2)
-            );
-            ctx.drawImage(hiResUser, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
-            ctx.restore();
-
-            // --- Draw frame image (on top) ---
-            ctx.drawImage(hiResFrame, 0, 0, canvas.width, canvas.height);
-
-            return canvas;
-        }
-
-        // Event listener for download button
-        downloadBtn.addEventListener('click', async () => {
-            if (!croppedUserImageSrc || !currentFrame) {
-                alert('กรุณาอัปโหลดรูปภาพและเลือกกรอบก่อนดาวน์โหลด');
-                return;
-            }
-            try {
-                const canvas = await renderCanvas();
-                const link = document.createElement('a');
-                link.download = `gama-frame-${currentFrame}.jpg`;
-                link.href = canvas.toDataURL('image/jpeg', 0.9);
-                link.click();
-            } catch (error) {
-                console.error("Error during download:", error);
-                alert('เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ กรุณาลองใหม่อีกครั้ง: ' + error.message + '\nโปรดตรวจสอบ Console เพื่อดูรายละเอียดเพิ่มเติม');
-            }
-        });
-
-        // Event listener for share button (Web Share API)
-        shareBtn.addEventListener('click', async () => {
-            if (!croppedUserImageSrc || !currentFrame) {
-                alert('กรุณาอัปโหลดรูปภาพและเลือกกรอบก่อนแชร์');
-                return;
-            }
-            try {
-                const canvas = await renderCanvas();
-                canvas.toBlob(blob => {
-                    const file = new File([blob], 'gama-frame.jpg', { type: 'image/jpeg' });
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        navigator.share({ files: [file], title: 'GAMA Awards Frame', text: 'Check out my GAMA Awards 2025 framed photo!' })
-                            .catch(error => {
-                                console.error("Error sharing:", error);
-                                if (error.name === "AbortError") {
-                                    // User cancelled share, no need to alert
-                                } else {
-                                    alert('ไม่สามารถแชร์รูปภาพได้โดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
-                                }
-                            });
-                    } else {
-                        alert('อุปกรณ์ไม่รองรับการแชร์รูปภาพโดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
+                    // Destroy previous cropper instance if it exists
+                    if (cropper) {
+                        cropper.destroy();
                     }
-                }, 'image/jpeg', 0.9);
-            } catch (error) {
-                console.error("Error during share preparation:", error);
-                alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อแชร์ กรุณาลองใหม่อีกครั้ง หรือใช้ปุ่ม "ดาวน์โหลด": ' + error.message);
+
+                    // Initialize Cropper.js for 1:1 aspect ratio
+                    cropper = new Cropper(cropImagePreview, {
+                        aspectRatio: 1 / 1,
+                        viewMode: 1, // Restrict the crop box to not exceed the canvas
+                        autoCropArea: 0.8, // 80% of the image
+                        movable: true,
+                        zoomable: true,
+                        rotatable: false,
+                        scalable: false,
+                    });
+
+                    // Show the crop section and hide others
+                    cropSection.classList.remove('hidden');
+                    frameSelectionSection.classList.add('hidden');
+                    previewSection.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
             }
         });
-        
-        checkReady();
+
+        // Cropper control buttons
+        zoomInBtn.addEventListener('click', () => {
+            if (cropper) cropper.zoom(0.1);
+        });
+
+        zoomOutBtn.addEventListener('click', () => {
+            if (cropper) cropper.zoom(-0.1);
+        });
+
+        moveLeftBtn.addEventListener('click', () => {
+            if (cropper) cropper.move(-10, 0);
+        });
+
+        moveRightBtn.addEventListener('click', () => {
+            if (cropper) cropper.move(10, 0);
+        });
+
+        moveUpBtn.addEventListener('click', () => {
+            if (cropper) cropper.move(0, -10);
+        });
+
+        moveDownBtn.addEventListener('click', () => {
+            if (cropper) cropper.move(0, 10);
+        });
+
+        applyCropButton.addEventListener('click', () => {
+            if (cropper) {
+                cropper.getCroppedCanvas({
+                    width: 800, // Desired width of the cropped image
+                    height: 800, // Desired height of the cropped image (since it's 1:1)
+                    fillColor: '#fff', // Fill color for transparent areas (if any)
+                }).toBlob((blob) => {
+                    croppedImageBlob = blob; // Store the cropped image blob
+                    userImagePreview.src = URL.createObjectURL(blob); // Set preview with cropped image
+
+                    // Destroy cropper instance after cropping
+                    cropper.destroy();
+
+                    // Show frame selection and hide crop section
+                    cropSection.classList.add('hidden');
+                    frameSelectionSection.classList.remove('hidden');
+                    previewSection.classList.add('hidden'); // Keep preview hidden until frame is selected
+                }, 'image/png'); // Use PNG to preserve quality/transparency if any
+            }
+        });
+
+        function selectFrame(frameUrl, selectedDiv) {
+            // Remove 'selected' class from all thumbnails
+            document.querySelectorAll('.frame-thumbnail').forEach(thumb => {
+                thumb.classList.remove('selected');
+            });
+            // Add 'selected' class to the clicked thumbnail
+            selectedDiv.classList.add('selected');
+
+            selectedFrameUrl = frameUrl;
+            selectedFramePreview.src = frameUrl;
+            if (croppedImageBlob) {
+                // Only show preview section if an image has been cropped
+                previewSection.classList.remove('hidden');
+            }
+        }
+
+        reCropButton.addEventListener('click', () => {
+            if (originalImageBlob) {
+                cropImagePreview.src = URL.createObjectURL(originalImageBlob); // Load original image for re-cropping
+
+                // Destroy previous cropper instance if it exists
+                if (cropper) {
+                    cropper.destroy();
+                }
+
+                // Re-initialize Cropper.js
+                cropper = new Cropper(cropImagePreview, {
+                    aspectRatio: 1 / 1,
+                    viewMode: 1,
+                    autoCropArea: 0.8,
+                    movable: true,
+                    zoomable: true,
+                    rotatable: false,
+                    scalable: false,
+                });
+
+                // Show the crop section and hide others
+                cropSection.classList.remove('hidden');
+                frameSelectionSection.classList.add('hidden');
+                previewSection.classList.add('hidden');
+            } else {
+                alert('กรุณาอัปโหลดรูปภาพก่อน');
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (croppedImageBlob && selectedFrameUrl) {
+                // Create a canvas to draw the combined image
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                const userImg = new Image();
+                const frameImg = new Image();
+
+                userImg.onload = () => {
+                    frameImg.onload = () => {
+                        // Set canvas dimensions to the size of the combined image (e.g., 800x800 from cropping)
+                        canvas.width = userImg.width;
+                        canvas.height = userImg.height;
+
+                        // Draw the user image first
+                        ctx.drawImage(userImg, 0, 0, canvas.width, canvas.height);
+
+                        // Draw the frame on top of the user image
+                        ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+
+                        // Download the combined image
+                        const link = document.createElement('a');
+                        link.download = 'gama_awards_2025_framed_image.png';
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    };
+                    frameImg.src = selectedFrameUrl;
+                };
+                userImg.src = URL.createObjectURL(croppedImageBlob);
+            } else {
+                alert('กรุณาอัปโหลดและครอบตัดรูปภาพ และเลือกกรอบก่อนดาวน์โหลด');
+            }
+        });
     </script>
 </body>
 </html>
