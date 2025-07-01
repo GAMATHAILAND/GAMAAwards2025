@@ -7,6 +7,7 @@
     <link rel="icon" href="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <style>
         body { font-family: 'Prompt', sans-serif; background: #fff; }
         .frame-thumbnail img { width: 80px; height: 80px; object-fit: contain; margin: auto; }
@@ -17,24 +18,7 @@
             max-width: 600px;
             aspect-ratio: 1 / 1;
             background: #f3f4f6;
-            overflow: hidden; /* Ensures anything outside the square is hidden */
-        }
-        /* Adjusted to avoid applying direct transform to img for proper scaling context */
-        .preview-container .user-img-wrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* Important for object-fit: cover behavior */
-        }
-        .preview-container .user-img {
-            display: block; /* To prevent extra space below image */
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* User image will cover its parent div */
-            /* Transformations will be applied directly to this img */
-            transform-origin: center center; /* Ensures transformations are from the center */
+            overflow: hidden;
         }
         .preview-container .frame-img {
             position: absolute;
@@ -47,6 +31,19 @@
             object-fit: contain;
         }
         #downloadBtn:disabled, #shareBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Styles for Cropper.js container */
+        #cropContainer {
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 1 / 1;
+            background: #f3f4f6;
+            margin: 0 auto;
+            display: none; /* Hidden by default */
+        }
+        #cropContainer img {
+            max-width: 100%; /* Important for Cropper.js to work responsively */
+        }
     </style>
 </head>
 <body class="p-6 bg-gray-100">
@@ -58,43 +55,39 @@
 
         <div class="mb-6">
             <h2 class="text-xl font-semibold text-purple-800 mb-2">1 อัปโหลดรูปภาพของคุณ</h2>
-            <label for="scaleSlider" class="block mb-1">ควรใช้ภาพ 1:1 หรือสี่เหลี่ยมจตุรัส</label>
+            <label for="uploadInput" class="block mb-1">ควรใช้ภาพ 1:1 หรือสี่เหลี่ยมจตุรัส</label>
             <input type="file" id="uploadInput" accept="image/*" class="block w-full border-2 border-dashed border-purple-300 rounded p-4 text-center cursor-pointer" />
         </div>
 
         <div class="mb-6">
-            <h2 class="text-xl font-semibold text-purple-800 mb-2">2 เลือกกรอบ</h2>
+            <h2 class="text-xl font-semibold text-purple-800 mb-2">2 ครอปรูปภาพของคุณ</h2>
+            <div id="cropContainer" class="rounded">
+                <img id="imageToCrop" alt="Image to Crop" class="hidden" />
+            </div>
+            <button id="cropBtn" class="mt-4 w-full bg-green-500 text-white py-2 rounded text-lg font-semibold hover:bg-green-600 transition duration-300 hidden">ยืนยันการครอป</button>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold text-purple-800 mb-2">3 เลือกกรอบ</h2>
             <div id="frameList" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-4"></div>
         </div>
 
         <div class="mb-6">
+            <h2 class="text-xl font-semibold text-purple-800 mb-2">4 ดูตัวอย่าง</h2>
             <div class="preview-container rounded mx-auto" id="preview">
-                <div class="user-img-wrapper">
-                    <img id="userImage" class="user-img hidden" alt="" />
-                </div>
+                <img id="userImage" class="user-img hidden" alt="Cropped User Image" />
                 <img id="frameImage" class="frame-img hidden" alt="Selected Frame" />
             </div>
         </div>
 
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold text-purple-800 mb-2">3 ปรับแต่งรูปภาพ</h2>
-            <label for="scaleSlider" class="block mb-1">ขยาย/ย่อ</label>
-            <input type="range" id="scaleSlider" min="50" max="200" value="100" class="w-full mb-2">
-            <label for="xSlider" class="block mb-1">ตำแหน่งแนวนอน</label>
-            <input type="range" id="xSlider" min="-100" max="100" value="0" class="w-full mb-2">
-            <label for="ySlider" class="block mb-1">ตำแหน่งแนวตั้ง</label>
-            <input type="range" id="ySlider" min="-100" max="100" value="0" class="w-full mb-2">
-            <label for="rotateSlider" class="block mb-1">หมุน</label>
-            <input type="range" id="rotateSlider" min="-180" max="180" value="0" class="w-full mb-2">
-        </div>
-
         <div class="mb-4">
-            <h2 class="text-xl font-semibold text-purple-800 mb-2">4 ดาวน์โหลดรูปภาพของคุณ</h2>
+            <h2 class="text-xl font-semibold text-purple-800 mb-2">5 ดาวน์โหลดรูปภาพของคุณ</h2>
             <button id="downloadBtn" disabled class="w-full bg-purple-600 text-white py-3 rounded text-lg font-semibold hover:bg-purple-700 transition duration-300">Android/คอมพิวเตอร์</button>
             <button id="shareBtn" disabled class="w-full mt-3 bg-blue-500 text-white py-3 rounded text-lg font-semibold hover:bg-blue-600 transition duration-300">iOS(บันทึกภาพ)</button>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script>
         const frameUrls = {
             MMA: 'https://gamathailand.github.io/GAMAAwards2025/MASTER%20MULTILINE%20Award.png',
@@ -107,13 +100,18 @@
         };
 
         const frameList = document.getElementById('frameList');
+        const uploadInput = document.getElementById('uploadInput');
+        const imageToCrop = document.getElementById('imageToCrop');
+        const cropContainer = document.getElementById('cropContainer');
+        const cropBtn = document.getElementById('cropBtn');
         const userImage = document.getElementById('userImage');
         const frameImage = document.getElementById('frameImage');
         const downloadBtn = document.getElementById('downloadBtn');
         const shareBtn = document.getElementById('shareBtn');
 
-        let currentFrame = null, scale = 1, x = 0, y = 0, rotation = 0;
-        let originalUserImageSrc = ''; // To store the original uploaded image data URL
+        let cropper = null;
+        let currentFrame = null;
+        let croppedImageDataUrl = null; // Stores the data URL of the cropped image
 
         // Populate frame list
         for (let key in frameUrls) {
@@ -131,134 +129,101 @@
             frameList.appendChild(btn);
         }
 
-        // Handle image upload - store original and display in preview
-        document.getElementById('uploadInput').addEventListener('change', e => {
+        // Handle image upload
+        uploadInput.addEventListener('change', e => {
             const file = e.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
             reader.onload = ev => {
-                originalUserImageSrc = ev.target.result; // Store the original image
-                userImage.src = originalUserImageSrc;
-                userImage.classList.remove('hidden');
-                // Reset transformations for new image
-                scale = 1; x = 0; y = 0; rotation = 0;
-                document.getElementById('scaleSlider').value = 100;
-                document.getElementById('xSlider').value = 0;
-                document.getElementById('ySlider').value = 0;
-                document.getElementById('rotateSlider').value = 0;
-                applyTransform(); // Apply default (reset) transform
+                imageToCrop.src = ev.target.result;
+                imageToCrop.classList.remove('hidden');
+                cropContainer.style.display = 'block'; // Show crop container
+                cropBtn.classList.remove('hidden'); // Show crop button
+
+                // Destroy previous cropper instance if exists
+                if (cropper) {
+                    cropper.destroy();
+                }
+
+                // Initialize Cropper.js
+                cropper = new Cropper(imageToCrop, {
+                    aspectRatio: 1 / 1, // Force 1:1 aspect ratio
+                    viewMode: 1, // Restrict the crop box to not exceed the canvas
+                    autoCropArea: 0.8, // Initial crop area (80% of image)
+                    background: false, // Hide background grid
+                });
+
+                // Clear previous cropped image in preview
+                userImage.classList.add('hidden');
+                croppedImageDataUrl = null;
                 checkReady();
             };
             reader.readAsDataURL(file);
         });
 
-        function applyTransform() {
-            // These transformations directly apply to the preview image's style
-            // Ensure scale is always positive for CSS transform preview
-            const currentScale = Math.max(0.1, scale); // Prevent scale from being zero or negative for CSS preview
-            userImage.style.transform = `translate(${x}%, ${y}%) scale(${currentScale}) rotate(${rotation}deg)`;
-        }
+        // Handle crop button click
+        cropBtn.addEventListener('click', () => {
+            if (cropper) {
+                // Get cropped image data URL
+                croppedImageDataUrl = cropper.getCroppedCanvas({
+                    width: 1920, // High resolution for final output
+                    height: 1920,
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high',
+                }).toDataURL('image/png'); // Keep as PNG for transparency if frame has transparent parts initially
 
-        // Apply transformations from sliders to the preview
-        ['scaleSlider', 'xSlider', 'ySlider', 'rotateSlider'].forEach(id => {
-            document.getElementById(id).addEventListener('input', () => {
-                scale = document.getElementById('scaleSlider').value / 100;
-                x = document.getElementById('xSlider').value;
-                y = document.getElementById('ySlider').value;
-                rotation = document.getElementById('rotateSlider').value;
-                applyTransform();
-            });
+                userImage.src = croppedImageDataUrl;
+                userImage.classList.remove('hidden');
+
+                // Hide cropper and crop button
+                if (cropper) {
+                    cropper.destroy(); // Destroy cropper instance
+                    cropper = null;
+                }
+                cropContainer.style.display = 'none';
+                imageToCrop.classList.add('hidden');
+                cropBtn.classList.add('hidden');
+
+                checkReady();
+            }
         });
 
         function checkReady() {
-            const ready = originalUserImageSrc && currentFrame;
+            const ready = croppedImageDataUrl && currentFrame;
             downloadBtn.disabled = !ready;
             shareBtn.disabled = !ready;
         }
 
-        // *** ฟังก์ชัน renderCanvas ใช้ Canvas API โดยตรง ***
         async function renderCanvas() {
             const canvas = document.createElement('canvas');
             canvas.width = 1920;
             canvas.height = 1920;
             const ctx = canvas.getContext('2d');
 
-            // ตั้งค่าพื้นหลังเป็นโปร่งใส
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Transparent background
 
-            // โหลดรูปภาพผู้ใช้
+            // Load cropped user image
             const hiResUser = new Image();
-            hiResUser.src = originalUserImageSrc;
+            hiResUser.src = croppedImageDataUrl;
             await new Promise((resolve, reject) => {
                 hiResUser.onload = resolve;
-                hiResUser.onerror = () => reject(new Error('Failed to load user image for high-res render.'));
+                hiResUser.onerror = () => reject(new Error('Failed to load cropped user image for high-res render.'));
             });
 
-            // โหลดรูปภาพกรอบ
+            // Load frame image
             const hiResFrame = new Image();
             hiResFrame.src = frameImage.src;
-            // สำคัญมาก: ถ้ารูปภาพกรอบมาจากโดเมนอื่น ต้องมี CORS header ที่ถูกต้องจากเซิร์ฟเวอร์นั้น
-            hiResFrame.crossOrigin = 'anonymous'; 
+            hiResFrame.crossOrigin = 'anonymous'; // Important for cross-origin images
             await new Promise((resolve, reject) => {
                 hiResFrame.onload = resolve;
                 hiResFrame.onerror = () => reject(new Error('Failed to load frame image for high-res render.'));
             });
 
-            // --- วาดรูปภาพผู้ใช้พร้อมแปลงรูป (เลียนแบบ object-fit: cover และ CSS transforms) ---
-            ctx.save(); // บันทึกสถานะปัจจุบันของ Canvas context
+            // Draw cropped user image (it's already 1:1 and high-res due to cropper settings)
+            ctx.drawImage(hiResUser, 0, 0, canvas.width, canvas.height);
 
-            // ย้ายจุดหมุนและจุดศูนย์กลางการขยายไปที่กึ่งกลางของ Canvas
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-
-            // หมุนรูปภาพ (Rotation applied around the center)
-            ctx.rotate(rotation * Math.PI / 180);
-
-            // ขยาย/ย่อรูปภาพ (Scale applied from the center)
-            // ใช้ Math.abs เพื่อให้แน่ใจว่า scale เป็นค่าบวกเสมอเวลาวาดลง Canvas
-            ctx.scale(Math.abs(scale), Math.abs(scale));
-
-            // เลื่อนตำแหน่งรูปภาพตาม Slider (x, y เป็น % เทียบกับครึ่งหนึ่งของ Canvas)
-            // การเลื่อนนี้จะเกิดขึ้นหลังจาก Scale และ Rotate เพื่อให้ตรงกับพฤติกรรมของ CSS transform
-            ctx.translate(
-                (x / 100) * (canvas.width / 2),
-                (y / 100) * (canvas.height / 2)
-            );
-
-            // คำนวณตำแหน่งและขนาดสำหรับการวาดรูปภาพแบบ object-fit: cover
-            const imgAspect = hiResUser.width / hiResUser.height;
-            const canvasAspect = canvas.width / canvas.height; // ควรเป็น 1 (1920x1920)
-
-            let sx, sy, sWidth, sHeight; // Source rectangle (ส่วนที่ตัดจากรูปต้นฉบับ)
-            let dx, dy, dWidth, dHeight; // Destination rectangle (ส่วนที่จะวางบน Canvas)
-
-            dWidth = canvas.width;
-            dHeight = canvas.height;
-            // วางตำแหน่งที่ -ครึ่งหนึ่งของ Canvas width/height เพื่อให้อยู่ตรงกลางหลังจาก ctx.translate()
-            dx = -canvas.width / 2;    
-            dy = -canvas.height / 2;    
-
-            if (imgAspect > canvasAspect) {
-                // รูปต้นฉบับกว้างกว่าพื้นที่เป้าหมาย (1920x1920), ต้องตัดส่วนแนวนอนออก
-                sHeight = hiResUser.height;
-                sWidth = hiResUser.height * canvasAspect;  
-                sx = (hiResUser.width - sWidth) / 2;
-                sy = 0;
-            } else {
-                // รูปต้นฉบับสูงกว่าพื้นที่เป้าหมาย, ต้องตัดส่วนแนวตั้งออก
-                sWidth = hiResUser.width;
-                sHeight = hiResUser.width / canvasAspect;
-                sx = 0;
-                sy = (hiResUser.height - sHeight) / 2;
-            }
-
-            // วาดรูปภาพผู้ใช้
-            ctx.drawImage(hiResUser, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-
-            ctx.restore(); // กู้คืนสถานะ Canvas context กลับสู่สถานะก่อนการแปลงทั้งหมด
-
-            // --- วาดรูปภาพกรอบ (จะอยู่ด้านบนสุดและครอบคลุมทั้ง Canvas) ---
-            // รูปภาพกรอบควรมีพื้นหลังโปร่งใสและถูกออกแบบมาให้พอดีกับสี่เหลี่ยมจตุรัส 1920x1920
+            // Draw frame image on top
             ctx.drawImage(hiResFrame, 0, 0, canvas.width, canvas.height);
 
             return canvas;
@@ -268,9 +233,8 @@
             try {
                 const canvas = await renderCanvas();
                 const link = document.createElement('a');
-                // เปลี่ยนจาก image/png เป็น image/jpeg และเพิ่ม quality (0.9 คือ 90% quality)
-                link.download = `gama-frame-${currentFrame}.jpg`; // เปลี่ยนนามสกุลไฟล์
-                link.href = canvas.toDataURL('image/jpeg', 0.9); // สร้างเป็น JPEG
+                link.download = `gama-frame-${currentFrame}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.9); // Output as JPEG
                 link.click();
             } catch (error) {
                 console.error("Error during download:", error);
@@ -281,16 +245,14 @@
         shareBtn.addEventListener('click', async () => {
             try {
                 const canvas = await renderCanvas();
-                // เปลี่ยนจาก image/png เป็น image/jpeg และเพิ่ม quality
                 canvas.toBlob(blob => {
-                    // กำหนดประเภทไฟล์เป็น image/jpeg
                     const file = new File([blob], 'gama-frame.jpg', { type: 'image/jpeg' });
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         navigator.share({ files: [file], title: 'GAMA Awards Frame' })
                             .catch(error => {
                                 console.error("Error sharing:", error);
                                 if (error.name === "AbortError") {
-                                    // ผู้ใช้ยกเลิกการแชร์ ไม่ต้องแจ้งเตือน
+                                    // User cancelled sharing, no need to alert
                                 } else {
                                     alert('ไม่สามารถแชร์รูปภาพได้โดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
                                 }
@@ -298,7 +260,7 @@
                     } else {
                         alert('อุปกรณ์ไม่รองรับการแชร์รูปภาพโดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
                     }
-                }, 'image/jpeg', 0.9); // สร้างเป็น JPEG ด้วย quality 0.9
+                }, 'image/jpeg', 0.9); // Output as JPEG
             } catch (error) {
                 console.error("Error during share preparation:", error);
                 alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อแชร์ กรุณาลองใหม่อีกครั้ง หรือใช้ปุ่ม "ดาวน์โหลด": ' + error.message);
