@@ -12,11 +12,13 @@
         body { 
             font-family: 'Prompt', sans-serif; 
             background: #fff; 
+            /* กำหนด overflow default เพื่อให้เลื่อนได้ปกติ */
+            overflow-y: auto; /* หรือ auto */
         }
-        /* ควบคุมการเลื่อนและปฏิสัมพันธ์เมื่อ modal เปิดอยู่ */
+        /* ควบคุมการเลื่อนเมื่อ modal เปิดอยู่ */
         body.modal-open {
-            overflow: hidden; /* ป้องกันการเลื่อนของหน้าหลัก */
-            pointer-events: none; /* ป้องกันการคลิกที่องค์ประกอบด้านหลัง modal */
+            overflow-y: hidden; /* ป้องกันการเลื่อนของหน้าหลัก */
+            /* ลบ pointer-events: none; ออกจาก body โดยตรง เพราะจะไปควบคุมที่ modal แทน */
         }
 
         .frame-thumbnail {
@@ -95,29 +97,25 @@
 
         /* Styles สำหรับ Cropper Modal */
         .cropper-modal {
-            /* **จุดแก้ไขสำคัญ:** ซ่อน modal ตั้งแต่แรก และใช้ !important เพื่อให้มั่นใจว่าไม่ถูกเขียนทับ */
-            display: none !important; 
+            display: none !important; /* ซ่อน modal ตั้งแต่แรก และใช้ !important */
             position: fixed;
-            z-index: 10000; /* สูงมากเพื่อให้แสดงทับทุกอย่าง */
+            z-index: 10000; 
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             overflow: auto;
-            /* **จุดแก้ไขสำคัญ:** พื้นหลังสีดำสนิท 100% */
             background-color: #000000; /* Solid black for 100% opaque overlay */
             
-            /* กำหนด display: flex; ไว้ที่นี่เพื่อให้พร้อมใช้เมื่อ JS สั่งแสดง */
             justify-content: center;
             align-items: center;
             padding: 15px;
             box-sizing: border-box;
-            /* ทำให้ modal สามารถโต้ตอบได้ (ไม่เช่นนั้นจะคลิกอะไรไม่ได้เลย) */
+            /* **จุดแก้ไข:** modal เองสามารถรับ pointer events ได้ */
             pointer-events: auto; 
         }
         .cropper-content {
-            /* **จุดแก้ไขสำคัญ:** พื้นหลังเนื้อหา modal สีขาวสนิท 100% */
-            background-color: #FFFFFF; /* Solid white, no transparency issues */
+            background-color: #FFFFFF; /* Solid white */
             margin: auto;
             padding: 35px;
             border-radius: 16px;
@@ -202,7 +200,7 @@
     </style>
 </head>
 <body class="p-6 bg-gray-100">
-    <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+    <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow" id="mainContent">
         <div class="text-center mb-6">
             <img src="https://gamathailand.github.io/GAMAAwards2025/logo-gama-awards.png" class="h-20 mx-auto" alt="GAMA Awards Logo" />
             <h1 class="text-3xl font-bold text-purple-700 mt-4">สร้างกรอบรูปภาพ GAMA Awards 2025</h1>
@@ -293,6 +291,7 @@
         const uploadInput = document.getElementById('uploadInput');
         const openCropperBtn = document.getElementById('openCropperBtn');
         const bodyElement = document.body;
+        const mainContent = document.getElementById('mainContent'); // อ้างอิงถึง div หลักของเนื้อหา
 
         const cropperModal = document.getElementById('cropperModal');
         const cropperImage = document.getElementById('cropperImage');
@@ -351,10 +350,12 @@
                 return;
             }
             cropperImage.src = originalUserImageSrc;
-            // **จุดแก้ไขสำคัญ:** สั่งให้ display เป็น flex เพื่อแสดง modal
-            cropperModal.style.display = 'flex'; 
-            bodyElement.classList.add('modal-open'); // เพิ่ม class เพื่อควบคุม body
+            cropperModal.style.display = 'flex'; // Show the modal
+            bodyElement.classList.add('modal-open'); // เพิ่ม class เพื่อควบคุม body overflow
             
+            // **จุดแก้ไข:** ป้องกันการคลิกที่เนื้อหาหลักเมื่อ modal เปิด
+            mainContent.style.pointerEvents = 'none'; 
+
             // Destroy previous instance if it exists to prevent issues
             if (cropper) {
                 cropper.destroy();
@@ -389,20 +390,26 @@
                 applyTransform();
                 checkReady();
 
-                // **จุดแก้ไขสำคัญ:** สั่งให้ display เป็น none เพื่อซ่อน modal
-                cropperModal.style.display = 'none'; 
+                cropperModal.style.display = 'none'; // Hide the modal
                 bodyElement.classList.remove('modal-open'); // ลบ class ออกจาก body
-                cropper.destroy();
+                
+                // **จุดแก้ไข:** คืนค่า pointer-events ให้เนื้อหาหลัก
+                mainContent.style.pointerEvents = 'auto'; 
+
+                cropper.destroy(); // ทำลาย Cropper instance
             }
         });
 
         // Cancel Crop button click (within the modal)
         cancelCropBtn.addEventListener('click', () => {
-            // **จุดแก้ไขสำคัญ:** สั่งให้ display เป็น none เพื่อซ่อน modal
-            cropperModal.style.display = 'none'; 
+            cropperModal.style.display = 'none'; // Hide the modal
             bodyElement.classList.remove('modal-open'); // ลบ class ออกจาก body
+
+            // **จุดแก้ไข:** คืนค่า pointer-events ให้เนื้อหาหลัก
+            mainContent.style.pointerEvents = 'auto'; 
+
             if (cropper) {
-                cropper.destroy();
+                cropper.destroy(); // ทำลาย Cropper instance
             }
             // If user cancels cropping, the preview goes back to the original image (if loaded)
             userImage.src = originalUserImageSrc || '';
@@ -411,7 +418,7 @@
             } else {
                  userImage.classList.remove('hidden');
             }
-            croppedUserImageSrc = ''; // Clear cropped source, so download/share requires re-cropping or new upload
+            croppedUserImageSrc = ''; // Clear cropped source
             checkReady();
         });
 
