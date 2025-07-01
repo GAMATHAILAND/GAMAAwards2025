@@ -1,378 +1,608 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>สร้างกรอบรูปภาพ GAMA Awards 2025</title>
-    <link rel="icon" href="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" type="image/png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Prompt', sans-serif;
-            background: #fff;
-            overflow-y: auto;
-        }
-        body.modal-open {
-            overflow-y: hidden;
-        }
-        .frame-thumbnail {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 8px;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-        }
-        .frame-thumbnail:hover {
-            border-color: #a78bfa;
-            transform: translateY(-2px);
-        }
-        .frame-thumbnail img {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-        }
-        .frame-thumbnail.selected {
-            border: 3px solid #9333ea;
-            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.3);
-        }
-        .preview-container {
-            position: relative;
-            width: 100%;
-            max-width: 600px;
-            aspect-ratio: 1 / 1;
-            background: #f3f4f6;
-            overflow: hidden;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-        }
-        .preview-container .user-img-wrapper,
-        .preview-container .frame-img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        .user-img {
-            object-fit: cover;
-            transform-origin: center;
-            transition: transform 0.05s linear;
-        }
-        .frame-img {
-            z-index: 10;
-            pointer-events: none;
-            object-fit: contain;
-        }
-        .cropper-modal {
-            display: none;
-            position: fixed;
-            z-index: 10000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            justify-content: center;
-            align-items: center;
-            padding: 15px;
-            box-sizing: border-box;
-        }
-        .cropper-content {
-            background: #fff;
-            padding: 20px;
-            border-radius: 16px;
-            width: 95%;
-            max-width: 800px;
-            max-height: 95vh;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            animation: fadeInScale 0.3s ease-out forwards;
-        }
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        #image-to-crop {
-            display: block;
-            max-width: 100%;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GAMA Awards Frame</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: white;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .frame-option {
+      transition: all 0.3s ease;
+      cursor: pointer;
+      background-color: white;
+      border: 1px solid #e5e7eb;
+    }
+
+    .frame-option:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .frame-option.selected {
+      border: 3px solid #4500b2;
+      transform: translateY(-5px);
+    }
+
+    .image-container {
+      position: relative;
+      width: 600px; /* Base size for preview */
+      height: 600px;
+      overflow: hidden;
+      margin: 0 auto;
+      background-color: #f9fafb;
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 640px) {
+      .image-container {
+        width: 100%;
+        height: 300px;
+      }
+    }
+
+    /* user-image and frame-image styles for preview */
+    .user-image {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* This makes the image cover the area, cropping as needed */
+      left: 0;
+      top: 0;
+    }
+
+    .frame-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none; /* Allows clicks to pass through */
+      z-index: 10; /* Ensures frame is on top of user image */
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      height: 8px;
+      border-radius: 4px;
+      background: #e5e7eb;
+      outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #4500b2;
+      cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #4500b2;
+      cursor: pointer;
+    }
+
+    .btn {
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      color: white;
+      font-size: 24px;
+    }
+
+    .spinner {
+      border: 5px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 5px solid white;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .file-upload {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-upload input[type=file] {
+      position: absolute;
+      top: 0;
+      right: 0;
+      min-width: 100%;
+      min-height: 100%;
+      font-size: 100px;
+      text-align: right;
+      filter: alpha(opacity=0);
+      opacity: 0;
+      outline: none;
+      cursor: pointer;
+      display: block;
+    }
+
+    .header-gradient {
+      background: linear-gradient(to right, #4500b2, #d83361);
+      height: 8px;
+    }
+
+    /* Cropper Modal Styles */
+    .cropper-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+    }
+
+    .cropper-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      max-width: 90%;
+      max-height: 90%;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cropper-image-container {
+      width: 500px; /* Adjust as needed */
+      height: 500px; /* Adjust as needed */
+      max-width: 100%;
+      max-height: 80vh;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .cropper-image-container img {
+      display: block;
+      max-width: 100%;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen py-8">
-    <div class="container mx-auto p-4 bg-white rounded-lg shadow-xl w-full max-w-4xl">
-        <div class="text-center mb-6">
-            <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="mx-auto h-24 mb-4" />
-            <h1 class="text-3xl font-bold text-purple-800">สร้างกรอบรูปภาพ GAMA Awards 2025</h1>
-            <p class="text-gray-600 mt-2">อัปโหลดรูปภาพของคุณและเลือกกรอบเพื่อเฉลิมฉลอง GAMA Awards 2025!</p>
-        </div>
-
-        <div class="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50">
-            <h2 class="text-2xl font-semibold text-purple-700 mb-4">1. อัปโหลดรูปภาพของคุณ</h2>
-            <input type="file" id="imageUpload" accept="image/*" class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500" />
-            <p class="text-sm text-gray-500 mt-2">รองรับไฟล์ JPG, PNG, GIF (ไม่เกิน 5MB)</p>
-        </div>
-
-        <div id="cropSection" class="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50 hidden">
-            <h2 class="text-2xl font-semibold text-purple-700 mb-4">2. ครอบตัดรูปภาพของคุณ (อัตราส่วน 1:1)</h2>
-            <div class="flex flex-col items-center">
-                <div class="img-container w-full max-w-md h-80 bg-gray-200 flex items-center justify-center overflow-hidden rounded-md mb-4">
-                    <img id="cropImagePreview" src="" alt="Image to Crop" class="max-w-full max-h-full block">
-                </div>
-                <div class="flex flex-wrap justify-center gap-4 mb-4">
-                    <button id="zoomIn" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">ซูมเข้า</button>
-                    <button id="zoomOut" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">ซูมออก</button>
-                    <button id="moveLeft" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">เลื่อนซ้าย</button>
-                    <button id="moveRight" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">เลื่อนขวา</button>
-                    <button id="moveUp" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">เลื่อนขึ้น</button>
-                    <button id="moveDown" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">เลื่อนลง</button>
-                </div>
-                <button id="applyCrop" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition duration-300">ยืนยันการครอบตัด</button>
-            </div>
-        </div>
-
-        <div id="frameSelectionSection" class="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50 hidden">
-            <h2 class="text-2xl font-semibold text-purple-700 mb-4">3. เลือกกรอบรูปภาพ</h2>
-            <div id="frameThumbnails" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                </div>
-            <button id="reCropButton" class="mt-6 px-6 py-3 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 transition duration-300">แก้ไขการครอบตัดรูปภาพ</button>
-        </div>
-
-        <div id="previewSection" class="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50 hidden">
-            <h2 class="text-2xl font-semibold text-purple-700 mb-4">4. ภาพตัวอย่างและดาวน์โหลด</h2>
-            <div class="flex justify-center mb-6">
-                <div class="preview-container">
-                    <img id="userImagePreview" class="user-img w-full h-full" src="" alt="Your Image" />
-                    <img id="selectedFramePreview" class="frame-img w-full h-full" src="" alt="Selected Frame" />
-                </div>
-            </div>
-            <div class="flex justify-center space-x-4">
-                <button id="downloadBtn" class="px-8 py-4 bg-purple-600 text-white font-bold text-lg rounded-full shadow-lg hover:bg-purple-700 transform hover:scale-105 transition duration-300">
-                    <svg class="w-6 h-6 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H5a2 2 0 01-2-2v-3a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2z"></path></svg>
-                    ดาวน์โหลดภาพ
-                </button>
-            </div>
-        </div>
+<body class="min-h-screen">
+  <div class="header-gradient"></div>
+  <div class="container mx-auto px-4 py-8">
+    <div class="flex justify-center mb-6">
+      <img src="https://hugmediacreation.com/wp-content/uploads/2025/06/logo-gama-awards.png" alt="GAMA Awards Logo" class="h-24">
     </div>
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">GAMA Awards Frame</h1>
+    <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">เปลี่ยนรูปโปรไฟล์ของคุณให้โดดเด่นด้วยกรอบรูปภาพพิเศษจาก GAMA Awards อัพโหลดรูปภาพของคุณ เลือกกรอบที่ชอบ และดาวน์โหลดเพื่อใช้เป็นรูปโปรไฟล์ใหม่ของคุณ</p>
+    
+    <div class="mb-8 max-w-xl mx-auto">
+      <div class="card p-6">
+        <label class="block text-lg font-medium mb-3 text-gray-700">อัพโหลดรูปโปรไฟล์ของคุณ:</label>
+        <div class="file-upload">
+          <button id="uploadBtn" class="w-full bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 0 003 3h10a3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+              </svg>
+            เลือกรูปภาพจากเครื่อง
+          </button>
+          <input type="file" id="imageUpload" accept="image/*">
+        </div>
+        <p id="selectedFileName" class="mt-2 text-center text-sm text-gray-500"></p>
+      </div>
+    </div>
+    
+    <div class="mb-8">
+      <h2 class="text-xl font-medium mb-4 text-center text-gray-700">เลือกกรอบรูปภาพ</h2>
+      <div class="flex flex-wrap justify-center gap-3">
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="MAA">
+          <img src="./MASTER MULTILINE Award.png" alt="MAA" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1 text-gray-800">MAA</p>
+        </div>
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="MFA">
+          <img src="./MASTER FIRM Award.png" alt="MFA" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1  text-gray-800">MFA</p>
+        </div>
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="MMA">
+          <img src="./MASTER AGENCY Award.png" alt="MMA" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1 text-gray-800">MMA</p>
+        </div>
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="IMA">
+          <img src="./International Management Award.png" alt="IMA" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1 text-gray-800">IMA</p>
+        </div>
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="FLA">
+          <img src="./Frontline Leader Awards.png" alt="FLA" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1 text-gray-800">FLA</p>
+        </div>
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="ERA">
+          <img src="./Excellence Recruitment Award.png" alt="ERA" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1 text-gray-800">ERA</p>
+        </div>
+        <div class="frame-option rounded-lg p-2 text-center" data-frame="COE">
+          <img src="./Circle of Excellence Award.png" alt="COE" class="w-20 h-20 object-contain mx-auto">
+          <p class="text-sm font-medium mt-1 text-gray-800">COE</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"> <div class="lg:col-span-2">
+        <div class="card p-4">
+          <div id="preview" class="image-container flex items-center justify-center">
+            <div id="placeholderText" class="text-center p-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 0 00-2-2H6a2 0 00-2 2v12a2 0 002 2z" />
+              </svg>
+              <p class="text-gray-500">โปรดอัพโหลดรูปภาพและเลือกกรอบ</p>
+            </div>
+            <img id="userImage" class="user-image hidden" src="" alt="User uploaded image">
+            <img id="frameImage" class="frame-image hidden" src="" alt="Selected frame">
+          </div>
+        </div>
+      </div>
+      
+      <div class="card p-6 lg:col-span-2 flex justify-center"> <button id="downloadBtn" class="w-full max-w-sm bg-gradient-to-r from-purple-800 to-pink-600 hover:from-purple-700 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-medium flex items-center justify-center btn disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 0 003 3h10a3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+            </svg>
+            ดาวน์โหลดรูปโปรไฟล์
+        </button>
+      </div>
+      <p class="mt-4 text-sm text-gray-500 text-center lg:col-span-2">ดาวน์โหลดและใช้เป็นรูปโปรไฟล์ของคุณบนโซเชียลมีเดีย</p>
+    </div>
+    
+    <div class="text-center text-sm text-gray-500 mb-8">
+      © GAMA Awards 2025 - ระบบใส่กรอบรูปภาพ
+    </div>
+  </div>
+  
+  <div id="loadingOverlay" class="loading hidden">
+    <div class="spinner"></div>
+    <span>กำลังประมวลผล...</span>
+  </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-    <script>
-        const imageUpload = document.getElementById('imageUpload');
-        const cropSection = document.getElementById('cropSection');
-        const cropImagePreview = document.getElementById('cropImagePreview');
-        const applyCropButton = document.getElementById('applyCrop');
-        const zoomInBtn = document.getElementById('zoomIn');
-        const zoomOutBtn = document.getElementById('zoomOut');
-        const moveLeftBtn = document.getElementById('moveLeft');
-        const moveRightBtn = document.getElementById('moveRight');
-        const moveUpBtn = document.getElementById('moveUp');
-        const moveDownBtn = document.getElementById('moveDown');
+  <div id="cropperModal" class="cropper-modal hidden">
+    <div class="cropper-content">
+      <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">ปรับขนาดรูปภาพ (1:1)</h2>
+      <div class="cropper-image-container">
+        <img id="imageToCrop" src="" alt="Image to crop">
+      </div>
+      <div class="flex justify-center gap-4 mt-auto">
+        <button id="cropButton" class="bg-purple-800 hover:bg-purple-700 text-white py-2 px-6 rounded-lg font-medium btn">
+          ครอปรูปภาพ
+        </button>
+        <button id="cancelCropButton" class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-6 rounded-lg font-medium btn">
+          ยกเลิก
+        </button>
+      </div>
+    </div>
+  </div>
 
-        const frameSelectionSection = document.getElementById('frameSelectionSection');
-        const frameThumbnailsContainer = document.getElementById('frameThumbnails');
-        const reCropButton = document.getElementById('reCropButton');
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elements
+      const imageUpload = document.getElementById('imageUpload');
+      const uploadBtn = document.getElementById('uploadBtn');
+      const selectedFileName = document.getElementById('selectedFileName');
+      const frameOptions = document.querySelectorAll('.frame-option');
+      const userImagePreview = document.getElementById('userImage');
+      const frameImagePreview = document.getElementById('frameImage');
+      const placeholderText = document.getElementById('placeholderText');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      const cropperModal = document.getElementById('cropperModal');
+      const imageToCrop = document.getElementById('imageToCrop');
+      const cropButton = document.getElementById('cropButton');
+      const cancelCropButton = document.getElementById('cancelCropButton');
 
-        const previewSection = document.getElementById('previewSection');
-        const userImagePreview = document.getElementById('userImagePreview');
-        const selectedFramePreview = document.getElementById('selectedFramePreview');
-        const downloadBtn = document.getElementById('downloadBtn');
+      // Frame URLs
+      const frameUrls = {
+        'MAA': './MASTER MULTILINE Award.png',
+        'MFA': './MASTER FIRM Award.png',
+        'MMA': './MASTER AGENCY Award.png',
+        'IMA': './International Management Award.png',
+        'FLA': './Frontline Leader Awards.png',
+        'ERA': './Excellence Recruitment Award.png',
+        'COE': './Circle of Excellence Award.png'
+      };
+      
+      // State
+      let selectedFrame = null;
+      let userImageCropped = false; // New state to track if image has been cropped
+      let frameImageLoaded = false;
+      let cropperInstance = null; // To store the Cropper.js instance
 
-        let cropper;
-        let originalImageBlob = null; // Store the original uploaded image as a Blob
-        let croppedImageBlob = null; // Store the cropped image as a Blob
-        let selectedFrameUrl = '';
+      // Function to check if both images are loaded and cropped for download enablement
+      function checkDownloadAvailability() {
+        downloadBtn.disabled = !(userImageCropped && selectedFrame && frameImageLoaded);
+        // Disable frame options if image not yet cropped
+        frameOptions.forEach(option => {
+          if (!userImageCropped) {
+            option.style.pointerEvents = 'none';
+            option.style.opacity = '0.5';
+          } else {
+            option.style.pointerEvents = 'auto';
+            option.style.opacity = '1';
+          }
+        });
+      }
 
-        // Preload frame URLs (replace with your actual frame URLs)
-        const frameUrls = [
-            'https://hugmediacreation.com/wp-content/uploads/2025/06/frame-gama-awards-1.png',
-            'https://hugmediacreation.com/wp-content/uploads/2025/06/frame-gama-awards-2.png',
-            'https://hugmediacreation.com/wp-content/uploads/2025/06/frame-gama-awards-3.png',
-            'https://hugmediacreation.com/wp-content/uploads/2025/06/frame-gama-awards-4.png',
-            'https://hugmediacreation.com/wp-content/uploads/2025/06/frame-gama-awards-5.png'
-        ];
+      // Initial check for download availability and frame options state
+      checkDownloadAvailability();
 
-        // Function to load frame thumbnails
-        function loadFrameThumbnails() {
-            frameThumbnailsContainer.innerHTML = ''; // Clear existing thumbnails
-            frameUrls.forEach((url, index) => {
-                const div = document.createElement('div');
-                div.className = 'frame-thumbnail';
-                div.innerHTML = `<img src="${url}" alt="Frame ${index + 1}" class="w-full h-full object-contain" />`;
-                div.addEventListener('click', () => {
-                    selectFrame(url, div);
-                });
-                frameThumbnailsContainer.appendChild(div);
+      // Trigger file input when the upload button is clicked
+      uploadBtn.addEventListener('click', function() {
+        imageUpload.click();
+      });
+      
+      // Handle file upload
+      imageUpload.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          const file = this.files[0];
+          selectedFileName.textContent = file.name;
+          
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            imageToCrop.src = e.target.result;
+            cropperModal.classList.remove('hidden');
+
+            // Initialize Cropper.js
+            if (cropperInstance) {
+              cropperInstance.destroy();
+            }
+            cropperInstance = new Cropper(imageToCrop, {
+              aspectRatio: 1 / 1, // Enforce 1:1 aspect ratio
+              viewMode: 1, // Restrict the crop box to not exceed the canvas
+              autoCropArea: 0.8, // Automatically select 80% of the image
+              responsive: true,
+              movable: true,
+              zoomable: true,
+              rotatable: false,
+              scalable: false,
+              background: false,
             });
+          };
+          reader.readAsDataURL(file);
+        } else {
+          selectedFileName.textContent = '';
+          userImagePreview.classList.add('hidden');
+          placeholderText.classList.remove('hidden');
+          userImageCropped = false;
+          checkDownloadAvailability();
+        }
+      });
+
+      // Crop Button Click
+      cropButton.addEventListener('click', function() {
+        if (cropperInstance) {
+          const croppedCanvas = cropperInstance.getCroppedCanvas({
+            width: 800, // Desired width for cropped image (can be higher for better quality)
+            height: 800, // Desired height
+          });
+          const croppedImageDataURL = croppedCanvas.toDataURL('image/png');
+
+          userImagePreview.onload = function() {
+            placeholderText.classList.add('hidden');
+            userImagePreview.classList.remove('hidden');
+            userImageCropped = true;
+            checkDownloadAvailability();
+          };
+          userImagePreview.onerror = function() {
+            alert('เกิดข้อผิดพลาดในการโหลดรูปภาพที่ครอปแล้ว กรุณาลองใหม่');
+            userImageCropped = false;
+            checkDownloadAvailability();
+          };
+          userImagePreview.src = croppedImageDataURL;
+
+          cropperModal.classList.add('hidden');
+          cropperInstance.destroy();
+          cropperInstance = null;
+        }
+      });
+
+      // Cancel Crop Button Click
+      cancelCropButton.addEventListener('click', function() {
+        cropperModal.classList.add('hidden');
+        if (cropperInstance) {
+          cropperInstance.destroy();
+          cropperInstance = null;
+        }
+        imageUpload.value = ''; // Clear file input
+        selectedFileName.textContent = '';
+        if (!userImageCropped) { // If no image was successfully cropped before, revert to placeholder
+          userImagePreview.classList.add('hidden');
+          placeholderText.classList.remove('hidden');
+        }
+        userImageCropped = false; // Ensure it's false if user cancels crop and no image was set
+        checkDownloadAvailability();
+      });
+      
+      // Select frame
+      frameOptions.forEach(option => {
+        option.addEventListener('click', function() {
+          if (!userImageCropped) {
+            alert('กรุณาอัปโหลดและครอปรูปภาพของคุณให้เป็น 1:1 ก่อนเลือกกรอบ');
+            return;
+          }
+
+          const frameId = this.dataset.frame;
+          
+          frameOptions.forEach(opt => opt.classList.remove('selected'));
+          this.classList.add('selected');
+          
+          selectedFrame = frameId;
+          
+          // Load frame image for preview and set frameImageLoaded flag
+          frameImagePreview.onload = function() {
+            frameImagePreview.classList.remove('hidden');
+            frameImageLoaded = true;
+            checkDownloadAvailability();
+          };
+          frameImagePreview.onerror = function() {
+            console.error('Failed to load frame image:', frameUrls[frameId]);
+            alert('เกิดข้อผิดพลาดในการโหลดกรอบรูป กรุณาตรวจสอบว่าไฟล์รูปภาพกรอบอยู่ในโฟลเดอร์เดียวกันกับไฟล์ HTML นี้แล้ว และชื่อไฟล์ตรงกัน');
+            frameImageLoaded = false;
+            checkDownloadAvailability();
+          };
+          frameImagePreview.src = frameUrls[frameId];
+        });
+      });
+      
+      // Download functionality using html2canvas
+      downloadBtn.addEventListener('click', function() {
+        if (!userImageCropped || !selectedFrame || !frameImageLoaded) {
+          alert('โปรดอัปโหลด ครอปรูปภาพ และเลือกกรอบก่อนดาวน์โหลด');
+          return;
         }
 
-        // Initialize frame thumbnails on page load
-        loadFrameThumbnails();
+        loadingOverlay.classList.remove('hidden');
+        
+        // Use a temporary div to render the full-resolution image
+        const tempRenderDiv = document.createElement('div');
+        tempRenderDiv.style.width = '1920px';
+        tempRenderDiv.style.height = '1920px';
+        tempRenderDiv.style.position = 'absolute';
+        tempRenderDiv.style.left = '-9999px';
+        tempRenderDiv.style.top = '-9999px';
+        tempRenderDiv.style.overflow = 'hidden';
+        tempRenderDiv.style.backgroundColor = 'transparent';
+        document.body.appendChild(tempRenderDiv);
 
-        imageUpload.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    originalImageBlob = file; // Store the original file as a Blob
-                    cropImagePreview.src = e.target.result;
+        // Create new image elements for the high-res render
+        const hiResUserImage = new Image();
+        const hiResFrameImage = new Image();
 
-                    // Destroy previous cropper instance if it exists
-                    if (cropper) {
-                        cropper.destroy();
-                    }
+        // Use the cropped image from the preview
+        hiResUserImage.src = userImagePreview.src;
+        hiResFrameImage.src = frameImagePreview.src;
 
-                    // Initialize Cropper.js for 1:1 aspect ratio
-                    cropper = new Cropper(cropImagePreview, {
-                        aspectRatio: 1 / 1,
-                        viewMode: 1, // Restrict the crop box to not exceed the canvas
-                        autoCropArea: 0.8, // 80% of the image
-                        movable: true,
-                        zoomable: true,
-                        rotatable: false,
-                        scalable: false,
-                    });
+        hiResUserImage.style.width = '100%';
+        hiResUserImage.style.height = '100%';
+        hiResUserImage.style.left = '0';
+        hiResUserImage.style.top = '0';
+        hiResUserImage.style.position = 'absolute';
+        hiResUserImage.style.display = 'block';
+        hiResUserImage.style.objectFit = 'cover'; // Ensure it covers even if aspect ratio slightly off from original
 
-                    // Show the crop section and hide others
-                    cropSection.classList.remove('hidden');
-                    frameSelectionSection.classList.add('hidden');
-                    previewSection.classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
-        });
 
-        // Cropper control buttons
-        zoomInBtn.addEventListener('click', () => {
-            if (cropper) cropper.zoom(0.1);
-        });
+        hiResFrameImage.style.width = '100%';
+        hiResFrameImage.style.height = '100%';
+        hiResFrameImage.style.left = '0';
+        hiResFrameImage.style.top = '0';
+        hiResFrameImage.style.position = 'absolute';
+        hiResFrameImage.style.zIndex = '10';
+        hiResFrameImage.style.display = 'block';
 
-        zoomOutBtn.addEventListener('click', () => {
-            if (cropper) cropper.zoom(-0.1);
-        });
+        tempRenderDiv.appendChild(hiResUserImage);
+        tempRenderDiv.appendChild(hiResFrameImage);
 
-        moveLeftBtn.addEventListener('click', () => {
-            if (cropper) cropper.move(-10, 0);
-        });
-
-        moveRightBtn.addEventListener('click', () => {
-            if (cropper) cropper.move(10, 0);
-        });
-
-        moveUpBtn.addEventListener('click', () => {
-            if (cropper) cropper.move(0, -10);
-        });
-
-        moveDownBtn.addEventListener('click', () => {
-            if (cropper) cropper.move(0, 10);
-        });
-
-        applyCropButton.addEventListener('click', () => {
-            if (cropper) {
-                cropper.getCroppedCanvas({
-                    width: 800, // Desired width of the cropped image
-                    height: 800, // Desired height of the cropped image (since it's 1:1)
-                    fillColor: '#fff', // Fill color for transparent areas (if any)
-                }).toBlob((blob) => {
-                    croppedImageBlob = blob; // Store the cropped image blob
-                    userImagePreview.src = URL.createObjectURL(blob); // Set preview with cropped image
-
-                    // Destroy cropper instance after cropping
-                    cropper.destroy();
-
-                    // Show frame selection and hide crop section
-                    cropSection.classList.add('hidden');
-                    frameSelectionSection.classList.remove('hidden');
-                    previewSection.classList.add('hidden'); // Keep preview hidden until frame is selected
-                }, 'image/png'); // Use PNG to preserve quality/transparency if any
-            }
-        });
-
-        function selectFrame(frameUrl, selectedDiv) {
-            // Remove 'selected' class from all thumbnails
-            document.querySelectorAll('.frame-thumbnail').forEach(thumb => {
-                thumb.classList.remove('selected');
-            });
-            // Add 'selected' class to the clicked thumbnail
-            selectedDiv.classList.add('selected');
-
-            selectedFrameUrl = frameUrl;
-            selectedFramePreview.src = frameUrl;
-            if (croppedImageBlob) {
-                // Only show preview section if an image has been cropped
-                previewSection.classList.remove('hidden');
-            }
-        }
-
-        reCropButton.addEventListener('click', () => {
-            if (originalImageBlob) {
-                cropImagePreview.src = URL.createObjectURL(originalImageBlob); // Load original image for re-cropping
-
-                // Destroy previous cropper instance if it exists
-                if (cropper) {
-                    cropper.destroy();
-                }
-
-                // Re-initialize Cropper.js
-                cropper = new Cropper(cropImagePreview, {
-                    aspectRatio: 1 / 1,
-                    viewMode: 1,
-                    autoCropArea: 0.8,
-                    movable: true,
-                    zoomable: true,
-                    rotatable: false,
-                    scalable: false,
-                });
-
-                // Show the crop section and hide others
-                cropSection.classList.remove('hidden');
-                frameSelectionSection.classList.add('hidden');
-                previewSection.classList.add('hidden');
-            } else {
-                alert('กรุณาอัปโหลดรูปภาพก่อน');
-            }
-        });
-
-        downloadBtn.addEventListener('click', () => {
-            if (croppedImageBlob && selectedFrameUrl) {
-                // Create a canvas to draw the combined image
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-
-                const userImg = new Image();
-                const frameImg = new Image();
-
-                userImg.onload = () => {
-                    frameImg.onload = () => {
-                        // Set canvas dimensions to the size of the combined image (e.g., 800x800 from cropping)
-                        canvas.width = userImg.width;
-                        canvas.height = userImg.height;
-
-                        // Draw the user image first
-                        ctx.drawImage(userImg, 0, 0, canvas.width, canvas.height);
-
-                        // Draw the frame on top of the user image
-                        ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
-
-                        // Download the combined image
-                        const link = document.createElement('a');
-                        link.download = 'gama_awards_2025_framed_image.png';
-                        link.href = canvas.toDataURL('image/png');
-                        link.click();
+        Promise.all([
+            new Promise(resolve => {
+                if (hiResUserImage.complete && hiResUserImage.naturalWidth !== 0) { // Check naturalWidth for better loaded state
+                    resolve();
+                } else {
+                    hiResUserImage.onload = resolve;
+                    hiResUserImage.onerror = () => {
+                        console.error('High-res user image load error.');
+                        resolve(); // Resolve even on error to not block the process entirely
                     };
-                    frameImg.src = selectedFrameUrl;
-                };
-                userImg.src = URL.createObjectURL(croppedImageBlob);
-            } else {
-                alert('กรุณาอัปโหลดและครอบตัดรูปภาพ และเลือกกรอบก่อนดาวน์โหลด');
-            }
+                }
+            }),
+            new Promise(resolve => {
+                if (hiResFrameImage.complete && hiResFrameImage.naturalWidth !== 0) {
+                    resolve();
+                } else {
+                    hiResFrameImage.onload = resolve;
+                    hiResFrameImage.onerror = () => {
+                        console.error('High-res frame image load error.');
+                        resolve(); // Resolve even on error
+                    };
+                }
+            })
+        ]).then(() => {
+            html2canvas(tempRenderDiv, {
+                width: 1920,
+                height: 1920,
+                scale: 1,
+                backgroundColor: null,
+                useCORS: false,
+                allowTaint: false,
+                logging: true,
+                imageTimeout: 15000
+            }).then(canvas => {
+                document.body.removeChild(tempRenderDiv);
+                
+                try {
+                    const link = document.createElement('a');
+                    link.download = `profile-${selectedFrame}-gama-awards.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                } catch (e) {
+                    console.error('Error creating data URL or download link:', e);
+                    alert('ไม่สามารถดาวน์โหลดรูปภาพได้ (อาจเกิดจากปัญหาภายใน)');
+                }
+                
+                loadingOverlay.classList.add('hidden');
+            }).catch(err => {
+                console.error('Error generating image with html2canvas:', err);
+                alert('เกิดข้อผิดพลาดในการสร้างรูปภาพ กรุณาลองใหม่อีกครั้ง');
+                document.body.removeChild(tempRenderDiv);
+                loadingOverlay.classList.add('hidden');
+            });
+        }).catch(err => {
+            console.error('Error waiting for high-res images to load:', err);
+            alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อดาวน์โหลด กรุณาลองใหม่อีกครั้ง');
+            document.body.removeChild(tempRenderDiv);
+            loadingOverlay.classList.add('hidden');
         });
-    </script>
+      });
+    });
+  </script>
 </body>
 </html>
