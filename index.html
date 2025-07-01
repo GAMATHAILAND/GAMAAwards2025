@@ -13,11 +13,10 @@
             font-family: 'Prompt', sans-serif; 
             background: #fff; 
         }
-        /* Prevent scrolling and interaction when modal is open */
+        /* ควบคุมการเลื่อนและปฏิสัมพันธ์เมื่อ modal เปิดอยู่ */
         body.modal-open {
-            overflow: hidden;
-            /* CRITICAL FIX: Disable pointer events on the body when modal is active */
-            pointer-events: none; /* */
+            overflow: hidden; /* ป้องกันการเลื่อนของหน้าหลัก */
+            pointer-events: none; /* ป้องกันการคลิกที่องค์ประกอบด้านหลัง modal */
         }
 
         .frame-thumbnail {
@@ -39,7 +38,7 @@
             width: 80px;
             height: 80px;
             object-fit: contain;
-            display: block; /* Ensure no extra space below image */
+            display: block;
         }
         .frame-thumbnail.selected {
             border: 3px solid #9333ea; /* purple-700 */
@@ -94,28 +93,30 @@
             filter: grayscale(100%);
         }
 
-        /* Cropper Modal Styles */
+        /* Styles สำหรับ Cropper Modal */
         .cropper-modal {
-            display: none; /* Hidden by default, shown by JS */
+            /* **จุดแก้ไขสำคัญ:** ซ่อน modal ตั้งแต่แรก และใช้ !important เพื่อให้มั่นใจว่าไม่ถูกเขียนทับ */
+            display: none !important; 
             position: fixed;
-            z-index: 10000; /* Very high to ensure it's on top */
+            z-index: 10000; /* สูงมากเพื่อให้แสดงทับทุกอย่าง */
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             overflow: auto;
-            /* CRITICAL FIX: Make overlay fully opaque black */
-            background-color: #000000; /* Solid black for 100% opacity overlay */
-            display: flex; /* For centering content */
+            /* **จุดแก้ไขสำคัญ:** พื้นหลังสีดำสนิท 100% */
+            background-color: #000000; /* Solid black for 100% opaque overlay */
+            
+            /* กำหนด display: flex; ไว้ที่นี่เพื่อให้พร้อมใช้เมื่อ JS สั่งแสดง */
             justify-content: center;
             align-items: center;
             padding: 15px;
             box-sizing: border-box;
-            /* The modal itself should be interactive when displayed */
-            pointer-events: auto; /* */
+            /* ทำให้ modal สามารถโต้ตอบได้ (ไม่เช่นนั้นจะคลิกอะไรไม่ได้เลย) */
+            pointer-events: auto; 
         }
         .cropper-content {
-            /* CRITICAL FIX: Ensure content background is solid white */
+            /* **จุดแก้ไขสำคัญ:** พื้นหลังเนื้อหา modal สีขาวสนิท 100% */
             background-color: #FFFFFF; /* Solid white, no transparency issues */
             margin: auto;
             padding: 35px;
@@ -129,7 +130,7 @@
             flex-direction: column;
             align-items: center;
             animation: fadeInScale 0.3s ease-out forwards;
-            pointer-events: auto; /* Content inside modal is interactive */
+            pointer-events: auto; /* เนื้อหาภายใน modal สามารถโต้ตอบได้ */
         }
         @keyframes fadeInScale {
             from { opacity: 0; transform: scale(0.9); }
@@ -303,6 +304,7 @@
         let croppedUserImageSrc = '';
         let cropper;
 
+        // Populate frame list
         for (let key in frameUrls) {
             const btn = document.createElement('div');
             btn.className = 'frame-thumbnail p-2 border rounded cursor-pointer text-center';
@@ -318,6 +320,7 @@
             frameList.appendChild(btn);
         }
 
+        // Handle image upload: load to originalUserImageSrc and enable crop button
         uploadInput.addEventListener('change', e => {
             const file = e.target.files[0];
             if (!file) {
@@ -335,24 +338,28 @@
                 userImage.src = originalUserImageSrc;
                 userImage.classList.remove('hidden');
                 openCropperBtn.disabled = false;
-                croppedUserImageSrc = '';
+                croppedUserImageSrc = ''; // Clear cropped source on new upload
                 checkReady();
             };
             reader.readAsDataURL(file);
         });
 
+        // Event listener for the "Adjust & Crop Image" button
         openCropperBtn.addEventListener('click', () => {
             if (!originalUserImageSrc) {
                 alert('กรุณาอัปโหลดรูปภาพก่อน');
                 return;
             }
             cropperImage.src = originalUserImageSrc;
-            cropperModal.style.display = 'flex'; // Show the modal
-            bodyElement.classList.add('modal-open'); // Add class to body to control overflow and pointer-events
+            // **จุดแก้ไขสำคัญ:** สั่งให้ display เป็น flex เพื่อแสดง modal
+            cropperModal.style.display = 'flex'; 
+            bodyElement.classList.add('modal-open'); // เพิ่ม class เพื่อควบคุม body
             
+            // Destroy previous instance if it exists to prevent issues
             if (cropper) {
                 cropper.destroy();
             }
+            // Initialize Cropper.js
             cropper = new Cropper(cropperImage, {
                 aspectRatio: 1 / 1,
                 viewMode: 1,
@@ -362,6 +369,7 @@
             });
         });
 
+        // Crop and Apply button click (within the modal)
         cropAndApplyBtn.addEventListener('click', () => {
             if (cropper) {
                 croppedUserImageSrc = cropper.getCroppedCanvas({
@@ -372,6 +380,7 @@
                 userImage.src = croppedUserImageSrc;
                 userImage.classList.remove('hidden');
 
+                // Reset transformations for new cropped image
                 scale = 1; x = 0; y = 0; rotation = 0;
                 document.getElementById('scaleSlider').value = 100;
                 document.getElementById('xSlider').value = 0;
@@ -380,33 +389,39 @@
                 applyTransform();
                 checkReady();
 
-                cropperModal.style.display = 'none'; // Hide the modal
-                bodyElement.classList.remove('modal-open'); // Remove class from body
+                // **จุดแก้ไขสำคัญ:** สั่งให้ display เป็น none เพื่อซ่อน modal
+                cropperModal.style.display = 'none'; 
+                bodyElement.classList.remove('modal-open'); // ลบ class ออกจาก body
                 cropper.destroy();
             }
         });
 
+        // Cancel Crop button click (within the modal)
         cancelCropBtn.addEventListener('click', () => {
-            cropperModal.style.display = 'none'; // Hide the modal
-            bodyElement.classList.remove('modal-open'); // Remove class from body
+            // **จุดแก้ไขสำคัญ:** สั่งให้ display เป็น none เพื่อซ่อน modal
+            cropperModal.style.display = 'none'; 
+            bodyElement.classList.remove('modal-open'); // ลบ class ออกจาก body
             if (cropper) {
                 cropper.destroy();
             }
+            // If user cancels cropping, the preview goes back to the original image (if loaded)
             userImage.src = originalUserImageSrc || '';
             if (!originalUserImageSrc) {
                 userImage.classList.add('hidden');
             } else {
                  userImage.classList.remove('hidden');
             }
-            croppedUserImageSrc = '';
+            croppedUserImageSrc = ''; // Clear cropped source, so download/share requires re-cropping or new upload
             checkReady();
         });
 
+        // Function to apply transformations to the preview image
         function applyTransform() {
             const currentScale = Math.max(0.1, scale);
             userImage.style.transform = `translate(${x}%, ${y}%) scale(${currentScale}) rotate(${rotation}deg)`;
         }
 
+        // Event listeners for transformation sliders
         ['scaleSlider', 'xSlider', 'ySlider', 'rotateSlider'].forEach(id => {
             document.getElementById(id).addEventListener('input', () => {
                 scale = document.getElementById('scaleSlider').value / 100;
@@ -417,20 +432,23 @@
             });
         });
 
+        // Function to check if download/share buttons should be enabled
         function checkReady() {
             const ready = croppedUserImageSrc && currentFrame;
             downloadBtn.disabled = !ready;
             shareBtn.disabled = !ready;
         }
 
+        // Function to render the final image onto a canvas for download/share
         async function renderCanvas() {
             const canvas = document.createElement('canvas');
             canvas.width = 1920;
             canvas.height = 1920;
             const ctx = canvas.getContext('2d');
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Set background to transparent
 
+            // Load the *cropped* user image
             const hiResUser = new Image();
             hiResUser.src = croppedUserImageSrc;
             await new Promise((resolve, reject) => {
@@ -438,15 +456,17 @@
                 hiResUser.onerror = () => reject(new Error('Failed to load cropped user image for high-res render.'));
             });
 
+            // Load the frame image
             const hiResFrame = new Image();
             hiResFrame.src = frameImage.src;
-            hiResFrame.crossOrigin = 'anonymous';
+            hiResFrame.crossOrigin = 'anonymous'; 
             await new Promise((resolve, reject) => {
                 hiResFrame.onload = resolve;
                 hiResFrame.onerror = () => reject(new Error('Failed to load frame image for high-res render.'));
             });
 
-            ctx.save();
+            // --- Draw user image with transformations ---
+            ctx.save(); 
             ctx.translate(canvas.width / 2, canvas.height / 2);
             ctx.rotate(rotation * Math.PI / 180);
             ctx.scale(Math.abs(scale), Math.abs(scale));
@@ -457,11 +477,13 @@
             ctx.drawImage(hiResUser, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
             ctx.restore();
 
+            // --- Draw frame image (on top) ---
             ctx.drawImage(hiResFrame, 0, 0, canvas.width, canvas.height);
 
             return canvas;
         }
 
+        // Event listener for download button
         downloadBtn.addEventListener('click', async () => {
             if (!croppedUserImageSrc || !currentFrame) {
                 alert('กรุณาอัปโหลดรูปภาพและเลือกกรอบก่อนดาวน์โหลด');
@@ -479,6 +501,7 @@
             }
         });
 
+        // Event listener for share button (Web Share API)
         shareBtn.addEventListener('click', async () => {
             if (!croppedUserImageSrc || !currentFrame) {
                 alert('กรุณาอัปโหลดรูปภาพและเลือกกรอบก่อนแชร์');
