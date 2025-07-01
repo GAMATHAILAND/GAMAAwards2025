@@ -64,7 +64,10 @@
             <div id="cropContainer" class="rounded">
                 <img id="imageToCrop" alt="Image to Crop" class="hidden" />
             </div>
-            <button id="cropBtn" class="mt-4 w-full bg-green-500 text-white py-2 rounded text-lg font-semibold hover:bg-green-600 transition duration-300 hidden">ยืนยันการครอป</button>
+            <div class="flex justify-between gap-4 mt-4">
+                <button id="cropBtn" class="flex-1 bg-green-500 text-white py-2 rounded text-lg font-semibold hover:bg-green-600 transition duration-300 hidden">ยืนยันการครอป</button>
+                <button id="editCropBtn" class="flex-1 bg-yellow-500 text-white py-2 rounded text-lg font-semibold hover:bg-yellow-600 transition duration-300 hidden">แก้ไขการครอป</button>
+            </div>
         </div>
 
         <div class="mb-6">
@@ -104,6 +107,7 @@
         const imageToCrop = document.getElementById('imageToCrop');
         const cropContainer = document.getElementById('cropContainer');
         const cropBtn = document.getElementById('cropBtn');
+        const editCropBtn = document.getElementById('editCropBtn'); // New button
         const userImage = document.getElementById('userImage');
         const frameImage = document.getElementById('frameImage');
         const downloadBtn = document.getElementById('downloadBtn');
@@ -111,6 +115,7 @@
 
         let cropper = null;
         let currentFrame = null;
+        let originalUserImageSrc = ''; // Stores the original uploaded image data URL
         let croppedImageDataUrl = null; // Stores the data URL of the cropped image
 
         // Populate frame list
@@ -129,35 +134,41 @@
             frameList.appendChild(btn);
         }
 
-        // Handle image upload
+        // Function to initialize or show the cropper
+        function showCropper() {
+            cropContainer.style.display = 'block';
+            imageToCrop.classList.remove('hidden');
+            cropBtn.classList.remove('hidden');
+            editCropBtn.classList.add('hidden'); // Hide edit button when cropping
+
+            userImage.classList.add('hidden'); // Hide preview of cropped image
+            // frameImage.classList.add('hidden'); // Decide if frame should hide too
+
+            if (!cropper) {
+                cropper = new Cropper(imageToCrop, {
+                    aspectRatio: 1 / 1,
+                    viewMode: 1,
+                    autoCropArea: 0.8,
+                    background: false,
+                });
+            } else {
+                cropper.replace(originalUserImageSrc); // Load the original image again for re-cropping
+                cropper.enable();
+            }
+        }
+
+        // Handle image upload - store original and prepare for cropping
         uploadInput.addEventListener('change', e => {
             const file = e.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
             reader.onload = ev => {
-                imageToCrop.src = ev.target.result;
-                imageToCrop.classList.remove('hidden');
-                cropContainer.style.display = 'block'; // Show crop container
-                cropBtn.classList.remove('hidden'); // Show crop button
-
-                // Destroy previous cropper instance if exists
-                if (cropper) {
-                    cropper.destroy();
-                }
-
-                // Initialize Cropper.js
-                cropper = new Cropper(imageToCrop, {
-                    aspectRatio: 1 / 1, // Force 1:1 aspect ratio
-                    viewMode: 1, // Restrict the crop box to not exceed the canvas
-                    autoCropArea: 0.8, // Initial crop area (80% of image)
-                    background: false, // Hide background grid
-                });
-
-                // Clear previous cropped image in preview
-                userImage.classList.add('hidden');
-                croppedImageDataUrl = null;
-                checkReady();
+                originalUserImageSrc = ev.target.result; // Store the original image
+                imageToCrop.src = originalUserImageSrc; // Set image for cropper
+                croppedImageDataUrl = null; // Reset cropped image
+                checkReady(); // Update button states
+                showCropper(); // Show the cropper interface
             };
             reader.readAsDataURL(file);
         });
@@ -165,27 +176,34 @@
         // Handle crop button click
         cropBtn.addEventListener('click', () => {
             if (cropper) {
-                // Get cropped image data URL
                 croppedImageDataUrl = cropper.getCroppedCanvas({
-                    width: 1920, // High resolution for final output
+                    width: 1920,
                     height: 1920,
                     imageSmoothingEnabled: true,
                     imageSmoothingQuality: 'high',
-                }).toDataURL('image/png'); // Keep as PNG for transparency if frame has transparent parts initially
+                }).toDataURL('image/png'); // Using PNG for potential transparency
 
                 userImage.src = croppedImageDataUrl;
                 userImage.classList.remove('hidden');
 
-                // Hide cropper and crop button
-                if (cropper) {
-                    cropper.destroy(); // Destroy cropper instance
-                    cropper = null;
-                }
+                // Hide cropper and show edit button
+                cropper.disable(); // Disable cropper interactions
+                // cropper.destroy(); // Keep cropper instance to re-enable it later
                 cropContainer.style.display = 'none';
                 imageToCrop.classList.add('hidden');
                 cropBtn.classList.add('hidden');
+                editCropBtn.classList.remove('hidden'); // Show edit crop button
 
                 checkReady();
+            }
+        });
+
+        // Handle edit crop button click
+        editCropBtn.addEventListener('click', () => {
+            if (originalUserImageSrc) {
+                showCropper(); // Show the cropper with the original image
+            } else {
+                alert('โปรดอัปโหลดรูปภาพก่อน');
             }
         });
 
@@ -201,11 +219,12 @@
             canvas.height = 1920;
             const ctx = canvas.getContext('2d');
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Transparent background
+            // Set background to transparent (for PNG output flexibility)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Load cropped user image
             const hiResUser = new Image();
-            hiResUser.src = croppedImageDataUrl;
+            hiResUser.src = croppedImageDataUrl; // Use the cropped image
             await new Promise((resolve, reject) => {
                 hiResUser.onload = resolve;
                 hiResUser.onerror = () => reject(new Error('Failed to load cropped user image for high-res render.'));
@@ -214,13 +233,13 @@
             // Load frame image
             const hiResFrame = new Image();
             hiResFrame.src = frameImage.src;
-            hiResFrame.crossOrigin = 'anonymous'; // Important for cross-origin images
+            hiResFrame.crossOrigin = 'anonymous';
             await new Promise((resolve, reject) => {
                 hiResFrame.onload = resolve;
                 hiResFrame.onerror = () => reject(new Error('Failed to load frame image for high-res render.'));
             });
 
-            // Draw cropped user image (it's already 1:1 and high-res due to cropper settings)
+            // Draw cropped user image (already 1:1 and full size)
             ctx.drawImage(hiResUser, 0, 0, canvas.width, canvas.height);
 
             // Draw frame image on top
@@ -229,12 +248,13 @@
             return canvas;
         }
 
+        // Original download button logic (reverted to previous version)
         downloadBtn.addEventListener('click', async () => {
             try {
                 const canvas = await renderCanvas();
                 const link = document.createElement('a');
-                link.download = `gama-frame-${currentFrame}.jpg`;
-                link.href = canvas.toDataURL('image/jpeg', 0.9); // Output as JPEG
+                link.download = `gama-frame-${currentFrame}.jpg`; // Still save as JPEG
+                link.href = canvas.toDataURL('image/jpeg', 0.9); // Convert to JPEG
                 link.click();
             } catch (error) {
                 console.error("Error during download:", error);
@@ -260,7 +280,7 @@
                     } else {
                         alert('อุปกรณ์ไม่รองรับการแชร์รูปภาพโดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
                     }
-                }, 'image/jpeg', 0.9); // Output as JPEG
+                }, 'image/jpeg', 0.9); // Convert to JPEG
             } catch (error) {
                 console.error("Error during share preparation:", error);
                 alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อแชร์ กรุณาลองใหม่อีกครั้ง หรือใช้ปุ่ม "ดาวน์โหลด": ' + error.message);
