@@ -49,7 +49,7 @@
         }
         #downloadBtn:disabled, #shareBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Cropper Modal Styles */
+        /* Improved Cropper Modal Styles */
         .cropper-modal {
             display: none; /* Hidden by default */
             position: fixed;
@@ -59,28 +59,44 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.8);
+            background-color: rgba(0,0,0,0.8); /* Dark overlay */
             justify-content: center;
             align-items: center;
+            padding: 20px; /* Prevent content from touching edges on small screens */
         }
         .cropper-content {
             background-color: #fefefe;
-            margin: auto;
-            padding: 20px;
-            border-radius: 8px;
+            margin: 20px; /* Ensure some margin from the viewport edges */
+            padding: 30px; /* Increased padding */
+            border-radius: 12px; /* More rounded corners */
             width: 90%;
             max-width: 700px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* More noticeable shadow */
             position: relative;
         }
         .cropper-container-wrapper {
             width: 100%;
             height: 400px; /* Fixed height for cropper to render well */
-            margin-bottom: 20px;
+            margin-bottom: 30px; /* Increased margin */
+            border: 1px solid #ccc; /* Add a border for better visual separation */
+            display: flex; /* Use flex to center the image within the wrapper */
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Hide overflow from cropper */
         }
         .cropper-container-wrapper img {
             display: block;
             max-width: 100%;
+            max-height: 100%; /* Ensure image fits within the wrapper */
+            /* Cropper.js will manage the actual display of this image */
+        }
+        .cropper-content h2 {
+            margin-bottom: 1.5rem;
+        }
+        .flex.justify-end.gap-4.mt-4 button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -200,9 +216,11 @@
                 cropperImage.src = ev.target.result;
                 cropperModal.style.display = 'flex'; // Show the modal
 
+                // Destroy previous instance if it exists to prevent issues
                 if (cropper) {
-                    cropper.destroy(); // Destroy previous instance if it exists
+                    cropper.destroy();
                 }
+                // Initialize Cropper.js
                 cropper = new Cropper(cropperImage, {
                     aspectRatio: 1 / 1, // Force 1:1 aspect ratio
                     viewMode: 1, // Restrict the crop box to not exceed the canvas
@@ -215,6 +233,7 @@
         // Crop and Apply button click
         cropAndApplyBtn.addEventListener('click', () => {
             if (cropper) {
+                // Get the cropped canvas data URL
                 croppedUserImageSrc = cropper.getCroppedCanvas({
                     width: 1920, // Desired output width for the cropped image
                     height: 1920, // Desired output height for the cropped image
@@ -233,7 +252,7 @@
                 checkReady();
 
                 cropperModal.style.display = 'none'; // Hide the modal
-                cropper.destroy(); // Destroy cropper instance
+                cropper.destroy(); // Destroy cropper instance to free up resources
             }
         });
 
@@ -244,6 +263,10 @@
                 cropper.destroy(); // Destroy cropper instance
             }
             uploadInput.value = ''; // Clear the input so user can re-upload if they want
+            // Optionally, you might want to clear the preview or disable buttons if no image is left
+            userImage.classList.add('hidden'); // Hide the preview image
+            croppedUserImageSrc = ''; // Clear the cropped image source
+            checkReady(); // Update button states
         });
 
 
@@ -265,7 +288,7 @@
         });
 
         function checkReady() {
-            const ready = croppedUserImageSrc && currentFrame; // Check for cropped image data
+            const ready = croppedUserImageSrc && currentFrame; // Check for cropped image data and selected frame
             downloadBtn.disabled = !ready;
             shareBtn.disabled = !ready;
         }
@@ -279,9 +302,9 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Set background to transparent
 
-            // Load cropped user image
+            // Load cropped user image (which is already 1:1)
             const hiResUser = new Image();
-            hiResUser.src = croppedUserImageSrc; // Use the cropped image source
+            hiResUser.src = croppedUserImageSrc; 
             await new Promise((resolve, reject) => {
                 hiResUser.onload = resolve;
                 hiResUser.onerror = () => reject(new Error('Failed to load cropped user image for high-res render.'));
@@ -290,7 +313,7 @@
             // Load frame image
             const hiResFrame = new Image();
             hiResFrame.src = frameImage.src;
-            hiResFrame.crossOrigin = 'anonymous'; 
+            hiResFrame.crossOrigin = 'anonymous'; // Important for cross-origin images to prevent tainted canvas
             await new Promise((resolve, reject) => {
                 hiResFrame.onload = resolve;
                 hiResFrame.onerror = () => reject(new Error('Failed to load frame image for high-res render.'));
@@ -298,32 +321,35 @@
 
             // --- Draw user image with transformations ---
             ctx.save();
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(rotation * Math.PI / 180);
-            ctx.scale(Math.abs(scale), Math.abs(scale));
+            ctx.translate(canvas.width / 2, canvas.height / 2); // Move origin to center for rotation/scaling
+            ctx.rotate(rotation * Math.PI / 180); // Apply rotation
+            ctx.scale(Math.abs(scale), Math.abs(scale)); // Apply scale
             ctx.translate(
-                (x / 100) * (canvas.width / 2),
-                (y / 100) * (canvas.height / 2)
+                (x / 100) * (canvas.width / 2), // Apply X translation relative to half canvas width
+                (y / 100) * (canvas.height / 2)  // Apply Y translation relative to half canvas height
             );
-
-            // Since the user image is already cropped to 1:1, we can draw it directly
-            // to fill the canvas area, centered.
+            
+            // Draw the already 1:1 cropped user image to fill the canvas area, centered.
             ctx.drawImage(hiResUser, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 
-            ctx.restore(); // Restore Canvas context
+            ctx.restore(); // Restore Canvas context to state before user image transforms
 
-            // --- Draw frame image ---
+            // --- Draw frame image (on top) ---
             ctx.drawImage(hiResFrame, 0, 0, canvas.width, canvas.height);
 
             return canvas;
         }
 
         downloadBtn.addEventListener('click', async () => {
+            if (!croppedUserImageSrc || !currentFrame) {
+                alert('กรุณาอัปโหลดรูปภาพและเลือกกรอบก่อนดาวน์โหลด');
+                return;
+            }
             try {
                 const canvas = await renderCanvas();
                 const link = document.createElement('a');
                 link.download = `gama-frame-${currentFrame}.jpg`;
-                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                link.href = canvas.toDataURL('image/jpeg', 0.9); // Generate JPEG with 90% quality
                 link.click();
             } catch (error) {
                 console.error("Error during download:", error);
@@ -332,6 +358,10 @@
         });
 
         shareBtn.addEventListener('click', async () => {
+            if (!croppedUserImageSrc || !currentFrame) {
+                alert('กรุณาอัปโหลดรูปภาพและเลือกกรอบก่อนแชร์');
+                return;
+            }
             try {
                 const canvas = await renderCanvas();
                 canvas.toBlob(blob => {
@@ -349,7 +379,7 @@
                     } else {
                         alert('อุปกรณ์ไม่รองรับการแชร์รูปภาพโดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
                     }
-                }, 'image/jpeg', 0.9);
+                }, 'image/jpeg', 0.9); // Generate JPEG with 90% quality
             } catch (error) {
                 console.error("Error during share preparation:", error);
                 alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อแชร์ กรุณาลองใหม่อีกครั้ง หรือใช้ปุ่ม "ดาวน์โหลด": ' + error.message);
