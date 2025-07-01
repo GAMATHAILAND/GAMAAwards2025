@@ -70,14 +70,14 @@
             object-fit: contain;
         }
         .cropper-modal {
-            display: none; /* Changed from !important to allow JS control */
+            display: none;
             position: fixed;
             z-index: 10000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.8); /* Darker overlay */
+            background-color: rgba(0,0,0,0.8);
             justify-content: center;
             align-items: center;
             padding: 15px;
@@ -85,7 +85,7 @@
         }
         .cropper-content {
             background: #fff;
-            padding: 20px; /* Adjusted padding */
+            padding: 20px;
             border-radius: 16px;
             width: 95%;
             max-width: 800px;
@@ -100,7 +100,6 @@
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
         }
-        /* Style for the image in the cropper modal */
         #image-to-crop {
             display: block;
             max-width: 100%;
@@ -127,7 +126,7 @@
                 <div class="img-container w-full max-w-md h-80 bg-gray-200 flex items-center justify-center overflow-hidden rounded-md mb-4">
                     <img id="cropImagePreview" src="" alt="Image to Crop" class="max-w-full max-h-full block">
                 </div>
-                <div class="flex space-x-4 mb-4">
+                <div class="flex flex-wrap justify-center gap-4 mb-4">
                     <button id="zoomIn" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">ซูมเข้า</button>
                     <button id="zoomOut" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">ซูมออก</button>
                     <button id="moveLeft" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">เลื่อนซ้าย</button>
