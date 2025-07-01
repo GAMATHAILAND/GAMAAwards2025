@@ -10,8 +10,39 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <style>
         body { font-family: 'Prompt', sans-serif; background: #fff; }
-        .frame-thumbnail img { width: 80px; height: 80px; object-fit: contain; margin: auto; }
-        .frame-thumbnail.selected { border: 3px solid #9333ea; }
+        .frame-thumbnail {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .frame-thumbnail:hover {
+            border-color: #a78bfa; /* purple-400 */
+            transform: translateY(-2px);
+        }
+        .frame-thumbnail img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            display: block; /* Ensure no extra space below image */
+        }
+        .frame-thumbnail.selected {
+            border: 3px solid #9333ea; /* purple-700 */
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.3);
+        }
+        .frame-thumbnail .text-sm {
+            margin-top: 4px;
+            font-size: 0.875rem; /* 14px */
+            color: #4b5563; /* gray-700 */
+            text-align: center;
+        }
+
+
         .preview-container {
             position: relative;
             width: 100%;
@@ -19,8 +50,9 @@
             aspect-ratio: 1 / 1;
             background: #f3f4f6;
             overflow: hidden; /* Ensures anything outside the square is hidden */
+            border-radius: 8px; /* Added for consistency */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05); /* Subtle shadow */
         }
-        /* Adjusted to avoid applying direct transform to img for proper scaling context */
         .preview-container .user-img-wrapper {
             position: absolute;
             top: 0;
@@ -30,12 +62,12 @@
             overflow: hidden; /* Important for object-fit: cover behavior */
         }
         .preview-container .user-img {
-            display: block; /* To prevent extra space below image */
+            display: block;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* User image will cover its parent div */
-            /* Transformations will be applied directly to this img */
-            transform-origin: center center; /* Ensures transformations are from the center */
+            object-fit: cover;
+            transform-origin: center center;
+            transition: transform 0.05s linear; /* Smooth slider adjustments */
         }
         .preview-container .frame-img {
             position: absolute;
@@ -44,12 +76,16 @@
             width: 100%;
             height: 100%;
             z-index: 10;
-            pointer-events: none;
+            pointer-events: none; /* Allows clicks/drags to pass through to user image if needed */
             object-fit: contain;
         }
-        #downloadBtn:disabled, #shareBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+        #downloadBtn:disabled, #shareBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            filter: grayscale(100%); /* Visually indicate disabled state */
+        }
 
-        /* Improved Cropper Modal Styles */
+        /* Cropper Modal Styles - Made more prominent and beautiful */
         .cropper-modal {
             display: none; /* Hidden by default */
             position: fixed;
@@ -58,45 +94,83 @@
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.8); /* Dark overlay */
-            justify-content: center;
-            align-items: center;
-            padding: 20px; /* Prevent content from touching edges on small screens */
+            overflow: auto; /* Allows scrolling if content is too large */
+            background-color: rgba(0,0,0,0.85); /* Darker, more prominent overlay */
+            display: flex; /* Use flexbox for centering */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            padding: 20px; /* Padding for smaller screens */
         }
         .cropper-content {
-            background-color: #fefefe;
-            margin: 20px; /* Ensure some margin from the viewport edges */
-            padding: 30px; /* Increased padding */
-            border-radius: 12px; /* More rounded corners */
-            width: 90%;
-            max-width: 700px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* More noticeable shadow */
+            background-color: #ffffff; /* Pure white background */
+            margin: auto; /* For older browsers / fallback centering */
+            padding: 35px; /* Generous padding */
+            border-radius: 16px; /* Even more rounded corners */
+            width: 95%; /* Wider on smaller screens */
+            max-width: 750px; /* Maximum width */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); /* Stronger shadow for depth */
             position: relative;
+            animation: fadeInScale 0.3s ease-out; /* Simple entry animation */
+        }
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
         .cropper-container-wrapper {
             width: 100%;
-            height: 400px; /* Fixed height for cropper to render well */
-            margin-bottom: 30px; /* Increased margin */
-            border: 1px solid #ccc; /* Add a border for better visual separation */
-            display: flex; /* Use flex to center the image within the wrapper */
+            height: 450px; /* Slightly taller for more cropping space */
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0; /* Light gray border */
+            background-color: #f8fafc; /* Very light background for contrast */
+            display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden; /* Hide overflow from cropper */
+            overflow: hidden; /* Ensure cropper content stays within bounds */
         }
         .cropper-container-wrapper img {
             display: block;
             max-width: 100%;
-            max-height: 100%; /* Ensure image fits within the wrapper */
-            /* Cropper.js will manage the actual display of this image */
+            /* Cropper.js will handle the specific sizing within its own canvas */
         }
         .cropper-content h2 {
+            font-size: 1.875rem; /* Bigger heading */
+            font-weight: 700;
+            color: #6d28d9; /* Deep purple */
             margin-bottom: 1.5rem;
+            text-align: center; /* Center heading */
         }
-        .flex.justify-end.gap-4.mt-4 button {
-            padding: 10px 20px;
-            font-size: 1rem;
-            border-radius: 8px;
+        .cropper-content .button-group {
+            display: flex;
+            justify-content: center; /* Center buttons */
+            gap: 1.5rem; /* More space between buttons */
+            margin-top: 1.5rem;
+        }
+        .cropper-content button {
+            flex-grow: 1; /* Allow buttons to grow */
+            max-width: 200px; /* Limit button width */
+            padding: 12px 25px; /* Larger padding */
+            font-size: 1.125rem; /* Larger font size */
+            font-weight: 600;
+            border-radius: 10px; /* More rounded buttons */
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-out;
+        }
+        .cropper-content button:hover {
+            transform: translateY(-1px);
+        }
+        .cropper-content #cancelCropBtn {
+            background-color: #e5e7eb; /* gray-200 */
+            color: #374151; /* gray-700 */
+            border: 1px solid #d1d5db; /* gray-300 */
+        }
+        .cropper-content #cancelCropBtn:hover {
+            background-color: #d1d5db; /* gray-300 */
+        }
+        .cropper-content #cropAndApplyBtn {
+            background-color: #22c55e; /* green-500 */
+            color: white;
+        }
+        .cropper-content #cropAndApplyBtn:hover {
+            background-color: #16a34a; /* green-600 */
         }
     </style>
 </head>
@@ -123,7 +197,7 @@
         <div class="mb-6">
             <div class="preview-container rounded mx-auto" id="preview">
                 <div class="user-img-wrapper">
-                    <img id="userImage" class="user-img hidden" alt="" />
+                    <img id="userImage" class="user-img hidden" alt="Your image" />
                 </div>
                 <img id="frameImage" class="frame-img hidden" alt="Selected Frame" />
             </div>
@@ -154,7 +228,7 @@
             <div class="cropper-container-wrapper">
                 <img id="cropperImage" src="" alt="Image to crop">
             </div>
-            <div class="flex justify-end gap-4 mt-4">
+            <div class="button-group">
                 <button id="cancelCropBtn" class="bg-gray-300 text-gray-800 py-2 px-4 rounded hover:bg-gray-400 transition duration-300">ยกเลิก</button>
                 <button id="cropAndApplyBtn" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition duration-300">ครอปและใช้รูปภาพ</button>
             </div>
@@ -206,7 +280,7 @@
             frameList.appendChild(btn);
         }
 
-        // Handle image upload - show cropper
+        // Handle image upload - show cropper modal FIRST
         uploadInput.addEventListener('change', e => {
             const file = e.target.files[0];
             if (!file) return;
@@ -225,6 +299,9 @@
                     aspectRatio: 1 / 1, // Force 1:1 aspect ratio
                     viewMode: 1, // Restrict the crop box to not exceed the canvas
                     autoCropArea: 0.8, // Automatically crop 80% of the image area
+                    // Optional: Add dragMode for better user experience
+                    dragMode: 'move', // Allows dragging the image instead of the crop box
+                    background: false, // Hide the grid background of cropper for cleaner look
                 });
             };
             reader.readAsDataURL(file);
@@ -233,7 +310,7 @@
         // Crop and Apply button click
         cropAndApplyBtn.addEventListener('click', () => {
             if (cropper) {
-                // Get the cropped canvas data URL
+                // Get the cropped canvas data URL (e.g., as JPEG)
                 croppedUserImageSrc = cropper.getCroppedCanvas({
                     width: 1920, // Desired output width for the cropped image
                     height: 1920, // Desired output height for the cropped image
@@ -242,14 +319,14 @@
                 userImage.src = croppedUserImageSrc;
                 userImage.classList.remove('hidden');
 
-                // Reset transformations for new cropped image
+                // Reset transformations for new cropped image (as it's a new "base" image)
                 scale = 1; x = 0; y = 0; rotation = 0;
                 document.getElementById('scaleSlider').value = 100;
                 document.getElementById('xSlider').value = 0;
                 document.getElementById('ySlider').value = 0;
                 document.getElementById('rotateSlider').value = 0;
                 applyTransform(); // Apply default (reset) transform
-                checkReady();
+                checkReady(); // Check if download/share buttons can be enabled
 
                 cropperModal.style.display = 'none'; // Hide the modal
                 cropper.destroy(); // Destroy cropper instance to free up resources
@@ -263,20 +340,19 @@
                 cropper.destroy(); // Destroy cropper instance
             }
             uploadInput.value = ''; // Clear the input so user can re-upload if they want
-            // Optionally, you might want to clear the preview or disable buttons if no image is left
-            userImage.classList.add('hidden'); // Hide the preview image
-            croppedUserImageSrc = ''; // Clear the cropped image source
-            checkReady(); // Update button states
+            // Clear and hide the preview image if the user cancels cropping
+            userImage.classList.add('hidden');
+            croppedUserImageSrc = '';
+            checkReady(); // Update button states (will likely disable them)
         });
 
-
+        // Function to apply transformations to the preview image (after cropping)
         function applyTransform() {
-            // These transformations directly apply to the preview image's style
-            const currentScale = Math.max(0.1, scale); 
+            const currentScale = Math.max(0.1, scale); // Prevent scale from being zero or negative for CSS preview
             userImage.style.transform = `translate(${x}%, ${y}%) scale(${currentScale}) rotate(${rotation}deg)`;
         }
 
-        // Apply transformations from sliders to the preview
+        // Event listeners for transformation sliders
         ['scaleSlider', 'xSlider', 'ySlider', 'rotateSlider'].forEach(id => {
             document.getElementById(id).addEventListener('input', () => {
                 scale = document.getElementById('scaleSlider').value / 100;
@@ -287,13 +363,14 @@
             });
         });
 
+        // Function to check if download/share buttons should be enabled
         function checkReady() {
-            const ready = croppedUserImageSrc && currentFrame; // Check for cropped image data and selected frame
+            const ready = croppedUserImageSrc && currentFrame; // Requires a cropped image AND a selected frame
             downloadBtn.disabled = !ready;
             shareBtn.disabled = !ready;
         }
 
-        // *** ฟังก์ชัน renderCanvas ใช้ Canvas API โดยตรง ***
+        // *** Function to render the final image onto a canvas for download/share ***
         async function renderCanvas() {
             const canvas = document.createElement('canvas');
             canvas.width = 1920;
@@ -302,7 +379,7 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Set background to transparent
 
-            // Load cropped user image (which is already 1:1)
+            // Load the cropped user image
             const hiResUser = new Image();
             hiResUser.src = croppedUserImageSrc; 
             await new Promise((resolve, reject) => {
@@ -310,36 +387,49 @@
                 hiResUser.onerror = () => reject(new Error('Failed to load cropped user image for high-res render.'));
             });
 
-            // Load frame image
+            // Load the frame image
             const hiResFrame = new Image();
             hiResFrame.src = frameImage.src;
-            hiResFrame.crossOrigin = 'anonymous'; // Important for cross-origin images to prevent tainted canvas
+            hiResFrame.crossOrigin = 'anonymous'; // Essential for cross-origin images to prevent "tainted canvas" error
             await new Promise((resolve, reject) => {
                 hiResFrame.onload = resolve;
                 hiResFrame.onerror = () => reject(new Error('Failed to load frame image for high-res render.'));
             });
 
             // --- Draw user image with transformations ---
-            ctx.save();
-            ctx.translate(canvas.width / 2, canvas.height / 2); // Move origin to center for rotation/scaling
-            ctx.rotate(rotation * Math.PI / 180); // Apply rotation
-            ctx.scale(Math.abs(scale), Math.abs(scale)); // Apply scale
+            ctx.save(); // Save the current state of the canvas context
+
+            // Move the origin to the center of the canvas for accurate rotation and scaling
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+
+            // Apply rotation around the new origin
+            ctx.rotate(rotation * Math.PI / 180);
+
+            // Apply scaling from the new origin
+            ctx.scale(Math.abs(scale), Math.abs(scale)); // Use Math.abs for scale to prevent issues if scale ever went negative
+
+            // Apply translation after scale and rotate, relative to the canvas dimensions
+            // x and y are in percentage, so convert to pixels based on half canvas size
             ctx.translate(
-                (x / 100) * (canvas.width / 2), // Apply X translation relative to half canvas width
-                (y / 100) * (canvas.height / 2)  // Apply Y translation relative to half canvas height
+                (x / 100) * (canvas.width / 2),
+                (y / 100) * (canvas.height / 2)
             );
             
-            // Draw the already 1:1 cropped user image to fill the canvas area, centered.
+            // Draw the already 1:1 cropped user image.
+            // It's drawn starting from -canvas.width/2, -canvas.height/2 to center it
+            // after the translate() operation, effectively filling the entire canvas area
+            // within the transformed coordinate space.
             ctx.drawImage(hiResUser, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
 
-            ctx.restore(); // Restore Canvas context to state before user image transforms
+            ctx.restore(); // Restore the canvas context to its state before all transformations
 
-            // --- Draw frame image (on top) ---
+            // --- Draw frame image (on top, always fills the entire canvas) ---
             ctx.drawImage(hiResFrame, 0, 0, canvas.width, canvas.height);
 
             return canvas;
         }
 
+        // Event listener for download button
         downloadBtn.addEventListener('click', async () => {
             if (!croppedUserImageSrc || !currentFrame) {
                 alert('กรุณาอัปโหลดรูปภาพและเลือกกรอบก่อนดาวน์โหลด');
@@ -348,7 +438,7 @@
             try {
                 const canvas = await renderCanvas();
                 const link = document.createElement('a');
-                link.download = `gama-frame-${currentFrame}.jpg`;
+                link.download = `gama-frame-${currentFrame}.jpg`; // Dynamic filename
                 link.href = canvas.toDataURL('image/jpeg', 0.9); // Generate JPEG with 90% quality
                 link.click();
             } catch (error) {
@@ -357,6 +447,7 @@
             }
         });
 
+        // Event listener for share button (Web Share API)
         shareBtn.addEventListener('click', async () => {
             if (!croppedUserImageSrc || !currentFrame) {
                 alert('กรุณาอัปโหลดรูปภาพและเลือกกรอบก่อนแชร์');
@@ -364,22 +455,25 @@
             }
             try {
                 const canvas = await renderCanvas();
+                // Convert canvas to Blob for sharing
                 canvas.toBlob(blob => {
                     const file = new File([blob], 'gama-frame.jpg', { type: 'image/jpeg' });
+                    // Check if Web Share API is supported and can share files
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        navigator.share({ files: [file], title: 'GAMA Awards Frame' })
+                        navigator.share({ files: [file], title: 'GAMA Awards Frame', text: 'Check out my GAMA Awards 2025 framed photo!' })
                             .catch(error => {
                                 console.error("Error sharing:", error);
                                 if (error.name === "AbortError") {
-                                    // User cancelled share, no alert
+                                    // User cancelled share, no need to alert
                                 } else {
                                     alert('ไม่สามารถแชร์รูปภาพได้โดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
                                 }
                             });
                     } else {
+                        // Fallback for unsupported browsers/devices
                         alert('อุปกรณ์ไม่รองรับการแชร์รูปภาพโดยตรง กรุณาใช้ปุ่ม "ดาวน์โหลดรูปภาพ" เพื่อบันทึกแล้วแชร์ด้วยตนเอง');
                     }
-                }, 'image/jpeg', 0.9); // Generate JPEG with 90% quality
+                }, 'image/jpeg', 0.9); // Generate JPEG Blob with 90% quality
             } catch (error) {
                 console.error("Error during share preparation:", error);
                 alert('เกิดข้อผิดพลาดในการเตรียมรูปภาพเพื่อแชร์ กรุณาลองใหม่อีกครั้ง หรือใช้ปุ่ม "ดาวน์โหลด": ' + error.message);
