@@ -11,93 +11,127 @@
     <style>
         body { 
             font-family: 'Prompt', sans-serif; 
-            background: #fff; 
-            /* กำหนด overflow default เพื่อให้เลื่อนได้ปกติ */
-            overflow-y: auto; /* หรือ auto */
+            background: #f0f2f5; /* Light gray background for the page */
+            overflow-y: auto; 
         }
-        /* ควบคุมการเลื่อนเมื่อ modal เปิดอยู่ */
         body.modal-open {
-            overflow-y: hidden; /* ป้องกันการเลื่อนของหน้าหลัก */
-            /* ลบ pointer-events: none; ออกจาก body โดยตรง เพราะจะไปควบคุมที่ modal แทน */
+            overflow-y: hidden;
         }
 
+        /* Card-like styling for sections */
+        .card-section {
+            background-color: #ffffff;
+            padding: 1.5rem; /* 24px */
+            border-radius: 0.75rem; /* 12px */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem; /* 24px */
+        }
+
+        .section-title {
+            font-size: 1.75rem; /* 28px */
+            font-weight: 700; /* bold */
+            color: #6d28d9; /* purple-700 */
+            margin-bottom: 1rem; /* 16px */
+            display: flex;
+            align-items: center;
+            gap: 0.75rem; /* 12px */
+        }
+        .section-title span {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 32px;
+            height: 32px;
+            background-color: #6d28d9;
+            color: white;
+            border-radius: 50%;
+            font-size: 1.25rem; /* 20px */
+            font-weight: 700;
+        }
+
+        /* Frame thumbnail adjustments */
         .frame-thumbnail {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 8px;
-            border: 2px solid transparent;
-            border-radius: 8px;
+            padding: 0.75rem; /* 12px */
+            border: 2px solid #e0e0e0; /* Light gray border */
+            border-radius: 0.75rem; /* 12px */
             cursor: pointer;
-            transition: all 0.2s ease-in-out;
+            transition: all 0.25s ease-in-out;
+            background-color: #fcfcfc;
         }
         .frame-thumbnail:hover {
             border-color: #a78bfa; /* purple-400 */
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
         }
         .frame-thumbnail img {
             width: 80px;
             height: 80px;
             object-fit: contain;
             display: block;
+            margin-bottom: 0.5rem;
         }
         .frame-thumbnail.selected {
             border: 3px solid #9333ea; /* purple-700 */
-            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.3);
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.4), 0 4px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
         }
         .frame-thumbnail .text-sm {
-            margin-top: 4px;
             font-size: 0.875rem; /* 14px */
             color: #4b5563; /* gray-700 */
             text-align: center;
+            font-weight: 600;
         }
 
-        .preview-container {
-            position: relative;
+        /* Slider styling for better appearance */
+        input[type="range"] {
+            -webkit-appearance: none;
             width: 100%;
-            max-width: 600px;
-            aspect-ratio: 1 / 1;
-            background: #f3f4f6;
-            overflow: hidden;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            height: 8px; /* Thicker slider track */
+            background: #e0e0e0;
+            outline: none;
+            border-radius: 5px;
+            opacity: 0.7;
+            transition: opacity .15s ease-in-out;
         }
-        .preview-container .user-img-wrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+        input[type="range"]:hover {
+            opacity: 1;
         }
-        .preview-container .user-img {
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transform-origin: center center;
-            transition: transform 0.05s linear;
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px; /* Larger thumb */
+            height: 20px; /* Larger thumb */
+            background: #9333ea; /* Purple thumb */
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: background-color 0.2s, transform 0.1s;
         }
-        .preview-container .frame-img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            pointer-events: none;
-            object-fit: contain;
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background-color: #7c2d12; /* Darker purple on hover */
+            transform: scale(1.1);
         }
-        #downloadBtn:disabled, #shareBtn:disabled, #openCropperBtn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            filter: grayscale(100%);
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #9333ea;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        input[type="range"]::-moz-range-thumb:hover {
+            background-color: #7c2d12;
+            transform: scale(1.1);
         }
 
-        /* Styles สำหรับ Cropper Modal */
+        /* Cropper Modal Styles - Confirmed full opacity */
         .cropper-modal {
-            display: none !important; /* ซ่อน modal ตั้งแต่แรก และใช้ !important */
+            display: none !important; 
             position: fixed;
             z-index: 10000; 
             left: 0;
@@ -106,17 +140,14 @@
             height: 100%;
             overflow: auto;
             background-color: #000000; /* Solid black for 100% opaque overlay */
-            
             justify-content: center;
             align-items: center;
             padding: 15px;
             box-sizing: border-box;
-            /* **จุดแก้ไข:** modal เองสามารถรับ pointer events ได้ */
             pointer-events: auto; 
         }
         .cropper-content {
             background-color: #FFFFFF; /* Solid white */
-            margin: auto;
             padding: 35px;
             border-radius: 16px;
             width: 95%;
@@ -128,7 +159,7 @@
             flex-direction: column;
             align-items: center;
             animation: fadeInScale 0.3s ease-out forwards;
-            pointer-events: auto; /* เนื้อหาภายใน modal สามารถโต้ตอบได้ */
+            pointer-events: auto; 
         }
         @keyframes fadeInScale {
             from { opacity: 0; transform: scale(0.9); }
@@ -199,77 +230,106 @@
         }
     </style>
 </head>
-<body class="p-6 bg-gray-100">
-    <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow" id="mainContent">
-        <div class="text-center mb-6">
-            <img src="https://gamathailand.github.io/GAMAAwards2025/logo-gama-awards.png" class="h-20 mx-auto" alt="GAMA Awards Logo" />
-            <h1 class="text-3xl font-bold text-purple-700 mt-4">สร้างกรอบรูปภาพ GAMA Awards 2025</h1>
-        </div>
+<body class="p-6">
+    <div class="max-w-4xl mx-auto" id="appContainer">
+        <header class="text-center mb-8 bg-white p-6 rounded-lg shadow-md">
+            <img src="https://gamathailand.github.io/GAMAAwards2025/logo-gama-awards.png" class="h-24 mx-auto mb-4" alt="GAMA Awards Logo" />
+            <h1 class="text-4xl font-extrabold text-purple-800 tracking-tight">สร้างกรอบรูปภาพ GAMA Awards 2025</h1>
+            <p class="text-gray-600 mt-2 text-lg">สร้างสรรค์ภาพของคุณด้วยกรอบ GAMA Awards เพื่อร่วมเฉลิมฉลองความสำเร็จ!</p>
+        </header>
 
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold text-purple-800 mb-2">1 อัปโหลดรูปภาพของคุณ</h2>
-            <label for="uploadInput" class="block mb-1 text-sm text-gray-600">
+        <section id="upload-section" class="card-section">
+            <h2 class="section-title"><span>1</span> อัปโหลดรูปภาพของคุณ</h2>
+            <p class="mb-4 text-gray-700">
                 กรุณาอัปโหลดภาพที่จะใช้สร้างกรอบ ภาพที่เหมาะสมคือภาพที่มีอัตราส่วน 1:1 หรือสี่เหลี่ยมจตุรัส เพื่อผลลัพธ์ที่ดีที่สุด.
-            </label>
-            <input type="file" id="uploadInput" accept="image/*" class="block w-full border-2 border-dashed border-purple-300 rounded p-4 text-center cursor-pointer" />
-        </div>
-
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold text-purple-800 mb-2">2 ปรับขนาดและครอปรูปภาพ</h2>
-            <p class="mb-3 text-sm text-gray-600">
-                คลิกปุ่มด้านล่างเพื่อเปิดเครื่องมือปรับขนาดและครอปภาพของคุณให้เป็นสี่เหลี่ยมจตุรัส.
             </p>
-            <button id="openCropperBtn" disabled class="w-full bg-blue-600 text-white py-3 rounded text-lg font-semibold hover:bg-blue-700 transition duration-300">
-                ปรับขนาดและครอปภาพ
+            <label for="uploadInput" class="block w-full text-center py-5 border-2 border-dashed border-purple-400 rounded-lg text-purple-700 font-semibold cursor-pointer hover:border-purple-600 hover:bg-purple-50 transition duration-300">
+                คลิกเพื่อเลือกไฟล์รูปภาพ
+                <input type="file" id="uploadInput" accept="image/*" class="hidden" />
+            </label>
+        </section>
+
+        <section id="crop-section" class="card-section">
+            <h2 class="section-title"><span>2</span> ปรับขนาดและครอปรูปภาพ</h2>
+            <p class="mb-4 text-gray-700">
+                เพื่อให้ภาพของคุณดูดีที่สุดในกรอบ ให้ปรับขนาดและครอปภาพของคุณให้เป็นสี่เหลี่ยมจตุรัส.
+            </p>
+            <button id="openCropperBtn" disabled class="w-full bg-blue-600 text-white py-3 rounded-lg text-xl font-semibold hover:bg-blue-700 transition duration-300 transform hover:scale-105">
+                <i class="fas fa-crop-alt mr-2"></i> ปรับขนาดและครอปภาพ
             </button>
-        </div>
+        </section>
 
-
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold text-purple-800 mb-2">3 เลือกกรอบ</h2>
-            <div id="frameList" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-4"></div>
-        </div>
-
-        <div class="mb-6">
-            <div class="preview-container rounded mx-auto" id="preview">
+        <section id="frame-selection-section" class="card-section">
+            <h2 class="section-title"><span>3</span> เลือกกรอบ</h2>
+            <p class="mb-4 text-gray-700">
+                เลือกกรอบ GAMA Awards ที่คุณต้องการใช้กับรูปภาพของคุณ.
+            </p>
+            <div id="frameList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                </div>
+        </section>
+        
+        <section id="preview-adjustment-section" class="card-section">
+            <h2 class="section-title"><span>4</span> ดูตัวอย่างและปรับแต่ง</h2>
+            <p class="mb-4 text-gray-700">
+                ปรับตำแหน่ง, ขนาด, และการหมุนของรูปภาพของคุณให้เข้ากับกรอบ.
+            </p>
+            <div class="preview-container rounded-lg mx-auto mb-6 border border-gray-200">
                 <div class="user-img-wrapper">
                     <img id="userImage" class="user-img hidden" alt="Your image" />
                 </div>
                 <img id="frameImage" class="frame-img hidden" alt="Selected Frame" />
             </div>
-        </div>
 
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold text-purple-800 mb-2">4 ปรับแต่งรูปภาพ</h2>
-            <label for="scaleSlider" class="block mb-1">ขยาย/ย่อ</label>
-            <input type="range" id="scaleSlider" min="50" max="200" value="100" class="w-full mb-2">
-            <label for="xSlider" class="block mb-1">ตำแหน่งแนวนอน</label>
-            <input type="range" id="xSlider" min="-100" max="100" value="0" class="w-full mb-2">
-            <label for="ySlider" class="block mb-1">ตำแหน่งแนวตั้ง</label>
-            <input type="range" id="ySlider" min="-100" max="100" value="0" class="w-full mb-2">
-            <label for="rotateSlider" class="block mb-1">หมุน</label>
-            <input type="range" id="rotateSlider" min="-180" max="180" value="0" class="w-full mb-2">
-        </div>
+            <div class="space-y-4">
+                <div>
+                    <label for="scaleSlider" class="block text-gray-700 font-medium mb-1">ขยาย/ย่อ</label>
+                    <input type="range" id="scaleSlider" min="50" max="200" value="100" class="w-full">
+                </div>
+                <div>
+                    <label for="xSlider" class="block text-gray-700 font-medium mb-1">ตำแหน่งแนวนอน</label>
+                    <input type="range" id="xSlider" min="-100" max="100" value="0" class="w-full">
+                </div>
+                <div>
+                    <label for="ySlider" class="block text-gray-700 font-medium mb-1">ตำแหน่งแนวตั้ง</label>
+                    <input type="range" id="ySlider" min="-100" max="100" value="0" class="w-full">
+                </div>
+                <div>
+                    <label for="rotateSlider" class="block text-gray-700 font-medium mb-1">หมุน</label>
+                    <input type="range" id="rotateSlider" min="-180" max="180" value="0" class="w-full">
+                </div>
+            </div>
+        </section>
 
-        <div class="mb-4">
-            <h2 class="text-xl font-semibold text-purple-800 mb-2">5 ดาวน์โหลดรูปภาพของคุณ</h2>
-            <button id="downloadBtn" disabled class="w-full bg-purple-600 text-white py-3 rounded text-lg font-semibold hover:bg-purple-700 transition duration-300">Android/คอมพิวเตอร์</button>
-            <button id="shareBtn" disabled class="w-full mt-3 bg-blue-500 text-white py-3 rounded text-lg font-semibold hover:bg-blue-600 transition duration-300">iOS(บันทึกภาพ)</button>
-        </div>
+        <section id="download-share-section" class="card-section">
+            <h2 class="section-title"><span>5</span> ดาวน์โหลดและแชร์</h2>
+            <p class="mb-4 text-gray-700">
+                เมื่อพอใจแล้ว คุณสามารถดาวน์โหลดรูปภาพหรือแชร์ไปยังเพื่อนๆ ได้เลย!
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button id="downloadBtn" disabled class="w-full bg-purple-600 text-white py-3 rounded-lg text-lg font-semibold hover:bg-purple-700 transition duration-300 transform hover:scale-105">
+                    <i class="fas fa-download mr-2"></i> ดาวน์โหลด (Android/PC)
+                </button>
+                <button id="shareBtn" disabled class="w-full bg-blue-500 text-white py-3 rounded-lg text-lg font-semibold hover:bg-blue-600 transition duration-300 transform hover:scale-105">
+                    <i class="fas fa-share-alt mr-2"></i> แชร์ (iOS/อื่นๆ)
+                </button>
+            </div>
+        </section>
     </div>
 
     <div id="cropperModal" class="cropper-modal">
         <div class="cropper-content">
-            <h2 class="text-xl font-semibold text-purple-800 mb-4">ปรับขนาดและครอปรูปภาพ</h2>
+            <h2 class="text-3xl font-bold text-purple-800 mb-6">ปรับขนาดและครอปรูปภาพ</h2>
             <div class="cropper-container-wrapper">
                 <img id="cropperImage" src="" alt="Image to crop">
             </div>
             <div class="button-group">
-                <button id="cancelCropBtn" class="bg-gray-300 text-gray-800 py-2 px-4 rounded hover:bg-gray-400 transition duration-300">ยกเลิก</button>
-                <button id="cropAndApplyBtn" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition duration-300">ครอปและใช้รูปภาพ</button>
+                <button id="cancelCropBtn">ยกเลิก</button>
+                <button id="cropAndApplyBtn">ครอปและใช้รูปภาพ</button>
             </div>
         </div>
     </div>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script>
@@ -291,7 +351,7 @@
         const uploadInput = document.getElementById('uploadInput');
         const openCropperBtn = document.getElementById('openCropperBtn');
         const bodyElement = document.body;
-        const mainContent = document.getElementById('mainContent'); // อ้างอิงถึง div หลักของเนื้อหา
+        const appContainer = document.getElementById('appContainer'); // อ้างอิงถึง div หลักของเนื้อหา
 
         const cropperModal = document.getElementById('cropperModal');
         const cropperImage = document.getElementById('cropperImage');
@@ -306,8 +366,8 @@
         // Populate frame list
         for (let key in frameUrls) {
             const btn = document.createElement('div');
-            btn.className = 'frame-thumbnail p-2 border rounded cursor-pointer text-center';
-            btn.innerHTML = `<img src="${frameUrls[key]}" alt="${key}"><div class='mt-1 text-sm'>${key}</div>`;
+            btn.className = 'frame-thumbnail';
+            btn.innerHTML = `<img src="${frameUrls[key]}" alt="${key}"><div class='text-sm'>${key}</div>`;
             btn.onclick = () => {
                 document.querySelectorAll('.frame-thumbnail').forEach(el => el.classList.remove('selected'));
                 btn.classList.add('selected');
@@ -351,10 +411,10 @@
             }
             cropperImage.src = originalUserImageSrc;
             cropperModal.style.display = 'flex'; // Show the modal
-            bodyElement.classList.add('modal-open'); // เพิ่ม class เพื่อควบคุม body overflow
+            bodyElement.classList.add('modal-open'); // Add class to body to control body overflow
             
             // **จุดแก้ไข:** ป้องกันการคลิกที่เนื้อหาหลักเมื่อ modal เปิด
-            mainContent.style.pointerEvents = 'none'; 
+            appContainer.style.pointerEvents = 'none'; 
 
             // Destroy previous instance if it exists to prevent issues
             if (cropper) {
@@ -391,10 +451,10 @@
                 checkReady();
 
                 cropperModal.style.display = 'none'; // Hide the modal
-                bodyElement.classList.remove('modal-open'); // ลบ class ออกจาก body
+                bodyElement.classList.remove('modal-open'); // Remove class from body
                 
                 // **จุดแก้ไข:** คืนค่า pointer-events ให้เนื้อหาหลัก
-                mainContent.style.pointerEvents = 'auto'; 
+                appContainer.style.pointerEvents = 'auto'; 
 
                 cropper.destroy(); // ทำลาย Cropper instance
             }
@@ -403,10 +463,10 @@
         // Cancel Crop button click (within the modal)
         cancelCropBtn.addEventListener('click', () => {
             cropperModal.style.display = 'none'; // Hide the modal
-            bodyElement.classList.remove('modal-open'); // ลบ class ออกจาก body
+            bodyElement.classList.remove('modal-open'); // Remove class from body
 
             // **จุดแก้ไข:** คืนค่า pointer-events ให้เนื้อหาหลัก
-            mainContent.style.pointerEvents = 'auto'; 
+            appContainer.style.pointerEvents = 'auto'; 
 
             if (cropper) {
                 cropper.destroy(); // ทำลาย Cropper instance
