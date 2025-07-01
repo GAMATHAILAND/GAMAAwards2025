@@ -9,10 +9,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Prompt', sans-serif; background: #fff; }
+        body { 
+            font-family: 'Prompt', sans-serif; 
+            background: #fff; 
+        }
         /* Prevent scrolling and interaction when modal is open */
         body.modal-open {
             overflow: hidden;
+            /* CRITICAL FIX: Disable pointer events on the body when modal is active */
+            pointer-events: none; /* */
         }
 
         .frame-thumbnail {
@@ -91,26 +96,27 @@
 
         /* Cropper Modal Styles */
         .cropper-modal {
-            display: none;
+            display: none; /* Hidden by default, shown by JS */
             position: fixed;
-            z-index: 10000;
+            z-index: 10000; /* Very high to ensure it's on top */
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             overflow: auto;
-            /* Make the overlay darker and less transparent for better separation */
-            background-color: rgba(0,0,0,0.95); /* Increased opacity to 0.95 */
+            /* CRITICAL FIX: Make overlay fully opaque black */
+            background-color: #000000; /* Solid black for 100% opacity overlay */
+            display: flex; /* For centering content */
             justify-content: center;
             align-items: center;
             padding: 15px;
             box-sizing: border-box;
-            /* Ensure interaction with elements *behind* the modal is blocked */
-            pointer-events: auto; /* The modal itself is interactive */
+            /* The modal itself should be interactive when displayed */
+            pointer-events: auto; /* */
         }
         .cropper-content {
-            /* Ensure this background is completely solid white */
-            background-color: #ffffff; /* Solid white, no transparency */
+            /* CRITICAL FIX: Ensure content background is solid white */
+            background-color: #FFFFFF; /* Solid white, no transparency issues */
             margin: auto;
             padding: 35px;
             border-radius: 16px;
@@ -284,21 +290,19 @@
         const downloadBtn = document.getElementById('downloadBtn');
         const shareBtn = document.getElementById('shareBtn');
         const uploadInput = document.getElementById('uploadInput');
-        const openCropperBtn = document.getElementById('openCropperBtn'); // New button
-        const bodyElement = document.body; // Reference to the body element
+        const openCropperBtn = document.getElementById('openCropperBtn');
+        const bodyElement = document.body;
 
-        // Cropper elements
         const cropperModal = document.getElementById('cropperModal');
         const cropperImage = document.getElementById('cropperImage');
         const cropAndApplyBtn = document.getElementById('cropAndApplyBtn');
         const cancelCropBtn = document.getElementById('cancelCropBtn');
 
         let currentFrame = null, scale = 1, x = 0, y = 0, rotation = 0;
-        let originalUserImageSrc = null; // Store the original uploaded image DataURL
-        let croppedUserImageSrc = ''; // To store the cropped image data URL
-        let cropper; // Cropper.js instance
+        let originalUserImageSrc = null;
+        let croppedUserImageSrc = '';
+        let cropper;
 
-        // Populate frame list
         for (let key in frameUrls) {
             const btn = document.createElement('div');
             btn.className = 'frame-thumbnail p-2 border rounded cursor-pointer text-center';
@@ -314,51 +318,41 @@
             frameList.appendChild(btn);
         }
 
-        // Handle image upload: load to originalUserImageSrc and enable crop button
         uploadInput.addEventListener('change', e => {
             const file = e.target.files[0];
             if (!file) {
                 originalUserImageSrc = null;
                 userImage.classList.add('hidden');
-                openCropperBtn.disabled = true; // Disable crop button if no file
-                croppedUserImageSrc = ''; // Clear cropped image if new upload is cancelled/empty
-                checkReady(); // Update button states
+                openCropperBtn.disabled = true;
+                croppedUserImageSrc = '';
+                checkReady();
                 return;
             }
 
             const reader = new FileReader();
             reader.onload = ev => {
-                originalUserImageSrc = ev.target.result; // Store original
-                userImage.src = originalUserImageSrc; // Display original in preview initially
+                originalUserImageSrc = ev.target.result;
+                userImage.src = originalUserImageSrc;
                 userImage.classList.remove('hidden');
-                openCropperBtn.disabled = false; // Enable crop button
-                croppedUserImageSrc = ''; // Ensure cropped source is cleared until user crops
-                checkReady(); // Update download/share buttons
+                openCropperBtn.disabled = false;
+                croppedUserImageSrc = '';
+                checkReady();
             };
             reader.readAsDataURL(file);
         });
 
-        // Event listener for the new "Adjust & Crop Image" button
         openCropperBtn.addEventListener('click', () => {
             if (!originalUserImageSrc) {
                 alert('กรุณาอัปโหลดรูปภาพก่อน');
                 return;
             }
-            cropperImage.src = originalUserImageSrc; // Load original image into cropper modal
+            cropperImage.src = originalUserImageSrc;
             cropperModal.style.display = 'flex'; // Show the modal
-            bodyElement.classList.add('modal-open'); // Add class to body to disable interaction (only overflow for now)
-
-            // To truly block interaction with underlying elements, we'll temporarily add pointer-events: none
-            // to the main content area, but ensure cropper modal is still interactive.
-            // A more robust solution might involve adding a class to the main content div,
-            // or setting pointer-events: none on body and then pointer-events: auto on the modal.
-            // For this specific issue, ensuring the modal covers and is opaque might be enough.
+            bodyElement.classList.add('modal-open'); // Add class to body to control overflow and pointer-events
             
-            // Destroy previous instance if it exists to prevent issues
             if (cropper) {
                 cropper.destroy();
             }
-            // Initialize Cropper.js
             cropper = new Cropper(cropperImage, {
                 aspectRatio: 1 / 1,
                 viewMode: 1,
@@ -368,8 +362,6 @@
             });
         });
 
-
-        // Crop and Apply button click (within the modal)
         cropAndApplyBtn.addEventListener('click', () => {
             if (cropper) {
                 croppedUserImageSrc = cropper.getCroppedCanvas({
@@ -377,10 +369,9 @@
                     height: 1920,
                 }).toDataURL('image/jpeg', 0.9);
 
-                userImage.src = croppedUserImageSrc; // Update preview with cropped image
-                userImage.classList.remove('hidden'); // Ensure it's visible
+                userImage.src = croppedUserImageSrc;
+                userImage.classList.remove('hidden');
 
-                // Reset transformations for new cropped image
                 scale = 1; x = 0; y = 0; rotation = 0;
                 document.getElementById('scaleSlider').value = 100;
                 document.getElementById('xSlider').value = 0;
@@ -390,38 +381,32 @@
                 checkReady();
 
                 cropperModal.style.display = 'none'; // Hide the modal
-                bodyElement.classList.remove('modal-open'); // Re-enable interaction (remove overflow)
+                bodyElement.classList.remove('modal-open'); // Remove class from body
                 cropper.destroy();
             }
         });
 
-        // Cancel Crop button click (within the modal)
         cancelCropBtn.addEventListener('click', () => {
             cropperModal.style.display = 'none'; // Hide the modal
-            bodyElement.classList.remove('modal-open'); // Re-enable interaction (remove overflow)
+            bodyElement.classList.remove('modal-open'); // Remove class from body
             if (cropper) {
                 cropper.destroy();
             }
-            // If user cancels cropping, the preview goes back to the original image (if loaded)
-            // or stays hidden if no original image was loaded.
-            userImage.src = originalUserImageSrc || ''; // Revert to original if available
+            userImage.src = originalUserImageSrc || '';
             if (!originalUserImageSrc) {
-                userImage.classList.add('hidden'); // Hide if no original
+                userImage.classList.add('hidden');
             } else {
-                 userImage.classList.remove('hidden'); // Ensure it's visible if original exists
+                 userImage.classList.remove('hidden');
             }
-            // Clear cropped source, so download/share requires re-cropping or new upload
-            croppedUserImageSrc = ''; 
+            croppedUserImageSrc = '';
             checkReady();
         });
 
-        // Function to apply transformations to the preview image (after cropping or just displaying original)
         function applyTransform() {
             const currentScale = Math.max(0.1, scale);
             userImage.style.transform = `translate(${x}%, ${y}%) scale(${currentScale}) rotate(${rotation}deg)`;
         }
 
-        // Event listeners for transformation sliders
         ['scaleSlider', 'xSlider', 'ySlider', 'rotateSlider'].forEach(id => {
             document.getElementById(id).addEventListener('input', () => {
                 scale = document.getElementById('scaleSlider').value / 100;
@@ -432,43 +417,36 @@
             });
         });
 
-        // Function to check if download/share buttons should be enabled
         function checkReady() {
-            // Now, download/share requires a *cropped* image AND a selected frame
             const ready = croppedUserImageSrc && currentFrame;
             downloadBtn.disabled = !ready;
             shareBtn.disabled = !ready;
-            // The openCropperBtn state is managed by uploadInput.
         }
-        
-        // *** Function to render the final image onto a canvas for download/share ***
+
         async function renderCanvas() {
             const canvas = document.createElement('canvas');
             canvas.width = 1920;
             canvas.height = 1920;
             const ctx = canvas.getContext('2d');
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Set background to transparent
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Load the *cropped* user image
             const hiResUser = new Image();
-            hiResUser.src = croppedUserImageSrc; 
+            hiResUser.src = croppedUserImageSrc;
             await new Promise((resolve, reject) => {
                 hiResUser.onload = resolve;
                 hiResUser.onerror = () => reject(new Error('Failed to load cropped user image for high-res render.'));
             });
 
-            // Load the frame image
             const hiResFrame = new Image();
             hiResFrame.src = frameImage.src;
-            hiResFrame.crossOrigin = 'anonymous'; 
+            hiResFrame.crossOrigin = 'anonymous';
             await new Promise((resolve, reject) => {
                 hiResFrame.onload = resolve;
                 hiResFrame.onerror = () => reject(new Error('Failed to load frame image for high-res render.'));
             });
 
-            // --- Draw user image with transformations ---
-            ctx.save(); 
+            ctx.save();
             ctx.translate(canvas.width / 2, canvas.height / 2);
             ctx.rotate(rotation * Math.PI / 180);
             ctx.scale(Math.abs(scale), Math.abs(scale));
@@ -479,13 +457,11 @@
             ctx.drawImage(hiResUser, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
             ctx.restore();
 
-            // --- Draw frame image (on top) ---
             ctx.drawImage(hiResFrame, 0, 0, canvas.width, canvas.height);
 
             return canvas;
         }
 
-        // Event listener for download button
         downloadBtn.addEventListener('click', async () => {
             if (!croppedUserImageSrc || !currentFrame) {
                 alert('กรุณาอัปโหลดรูปภาพและเลือกกรอบก่อนดาวน์โหลด');
@@ -503,7 +479,6 @@
             }
         });
 
-        // Event listener for share button (Web Share API)
         shareBtn.addEventListener('click', async () => {
             if (!croppedUserImageSrc || !currentFrame) {
                 alert('กรุณาอัปโหลดรูปภาพและเลือกกรอบก่อนแชร์');
@@ -533,7 +508,6 @@
             }
         });
         
-        // Initial check on page load
         checkReady();
     </script>
 </body>
